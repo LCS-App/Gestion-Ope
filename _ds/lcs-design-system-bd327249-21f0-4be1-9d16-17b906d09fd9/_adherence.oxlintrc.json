@@ -1,0 +1,288 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": [
+          {
+            "element": "button",
+            "message": "Use <Button> from the design system instead of <button>."
+          }
+        ]
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "components/boutons/Button/**",
+              "components/boutons/ButtonGroup/**",
+              "components/boutons/IconButton/**",
+              "components/cartes/Card/**",
+              "components/cartes/HeroCard/**",
+              "components/cartes/PhotoCard/**",
+              "components/cartes/ServiceCard/**",
+              "components/cartes/StatsCard/**",
+              "components/navigation/Breadcrumb/**",
+              "components/navigation/Footer/**",
+              "components/navigation/Header/**",
+              "components/navigation/SideNav/**",
+              "components/typographie/Body/**",
+              "components/typographie/Caption/**",
+              "components/typographie/DisplayHeading/**",
+              "components/typographie/Heading/**",
+              "components/typographie/Label/**",
+              "components/typographie/Quote/**",
+              "components/typographie/Subheading/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:DK Lemon Yellow Sun|MuseoSans))/i]",
+        "message": "Font not provided by the design system. Available: DK Lemon Yellow Sun, MuseoSans."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Body'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|weight|color|style|key|ref|className|style|children)$/]",
+        "message": "<Body> doesn't accept that prop. Declared props: children, weight, color, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Breadcrumb'] > JSXAttribute > JSXIdentifier[name!=/^(?:items|style|key|ref|className|style|children)$/]",
+        "message": "<Breadcrumb> doesn't accept that prop. Declared props: items, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|variant|size|disabled|onClick|icon|style|key|ref|className|style|children)$/]",
+        "message": "<Button> doesn't accept that prop. Declared props: children, variant, size, disabled, onClick, icon, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:primary|secondary|ghost|ghost-yellow|cream)$/]",
+        "message": "<Button> variant must be one of 'primary' | 'secondary' | 'ghost' | 'ghost-yellow' | 'cream'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='size'] > Literal[value!=/^(?:sm|md|lg)$/]",
+        "message": "<Button> size must be one of 'sm' | 'md' | 'lg'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ButtonGroup'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|style|key|ref|className|style|children)$/]",
+        "message": "<ButtonGroup> doesn't accept that prop. Declared props: children, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Caption'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|color|style|key|ref|className|style|children)$/]",
+        "message": "<Caption> doesn't accept that prop. Declared props: children, color, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Card'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|variant|padding|shadow|style|key|ref|className|style|children)$/]",
+        "message": "<Card> doesn't accept that prop. Declared props: children, variant, padding, shadow, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Card'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:cream|white|yellow|black|gray)$/]",
+        "message": "<Card> variant must be one of 'cream' | 'white' | 'yellow' | 'black' | 'gray'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Card'] > JSXAttribute[name.name='padding'] > Literal[value!=/^(?:sm|md|lg)$/]",
+        "message": "<Card> padding must be one of 'sm' | 'md' | 'lg'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='DisplayHeading'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|color|style|key|ref|className|style|children)$/]",
+        "message": "<DisplayHeading> doesn't accept that prop. Declared props: children, color, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Footer'] > JSXAttribute > JSXIdentifier[name!=/^(?:links|copyright|style|key|ref|className|style|children)$/]",
+        "message": "<Footer> doesn't accept that prop. Declared props: links, copyright, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Header'] > JSXAttribute > JSXIdentifier[name!=/^(?:logoSrc|logoAlt|navLinks|ctaLabel|onCtaClick|dark|style|key|ref|className|style|children)$/]",
+        "message": "<Header> doesn't accept that prop. Declared props: logoSrc, logoAlt, navLinks, ctaLabel, onCtaClick, dark, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Heading'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|level|color|style|key|ref|className|style|children)$/]",
+        "message": "<Heading> doesn't accept that prop. Declared props: children, level, color, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='HeroCard'] > JSXAttribute > JSXIdentifier[name!=/^(?:title|subtitle|description|cta|image|overlay|style|key|ref|className|style|children)$/]",
+        "message": "<HeroCard> doesn't accept that prop. Declared props: title, subtitle, description, cta, image, overlay, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='IconButton'] > JSXAttribute > JSXIdentifier[name!=/^(?:icon|label|variant|size|onClick|style|key|ref|className|style|children)$/]",
+        "message": "<IconButton> doesn't accept that prop. Declared props: icon, label, variant, size, onClick, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='IconButton'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:primary|secondary|ghost|ghost-yellow|cream)$/]",
+        "message": "<IconButton> variant must be one of 'primary' | 'secondary' | 'ghost' | 'ghost-yellow' | 'cream'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='IconButton'] > JSXAttribute[name.name='size'] > Literal[value!=/^(?:sm|md|lg)$/]",
+        "message": "<IconButton> size must be one of 'sm' | 'md' | 'lg'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Label'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|variant|style|key|ref|className|style|children)$/]",
+        "message": "<Label> doesn't accept that prop. Declared props: children, variant, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Label'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:cream|yellow|black)$/]",
+        "message": "<Label> variant must be one of 'cream' | 'yellow' | 'black'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='PhotoCard'] > JSXAttribute > JSXIdentifier[name!=/^(?:image|alt|caption|style|key|ref|className|style|children)$/]",
+        "message": "<PhotoCard> doesn't accept that prop. Declared props: image, alt, caption, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Quote'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|style|key|ref|className|style|children)$/]",
+        "message": "<Quote> doesn't accept that prop. Declared props: children, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ServiceCard'] > JSXAttribute > JSXIdentifier[name!=/^(?:icon|title|description|accent|style|key|ref|className|style|children)$/]",
+        "message": "<ServiceCard> doesn't accept that prop. Declared props: icon, title, description, accent, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SideNav'] > JSXAttribute > JSXIdentifier[name!=/^(?:items|activeHref|style|key|ref|className|style|children)$/]",
+        "message": "<SideNav> doesn't accept that prop. Declared props: items, activeHref, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='StatsCard'] > JSXAttribute > JSXIdentifier[name!=/^(?:value|label|sublabel|style|key|ref|className|style|children)$/]",
+        "message": "<StatsCard> doesn't accept that prop. Declared props: value, label, sublabel, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Subheading'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|color|style|key|ref|className|style|children)$/]",
+        "message": "<Subheading> doesn't accept that prop. Declared props: children, color, style."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {
+      "Body": {
+        "replaces": []
+      },
+      "Breadcrumb": {
+        "replaces": []
+      },
+      "Button": {
+        "replaces": [
+          "button"
+        ]
+      },
+      "ButtonGroup": {
+        "replaces": []
+      },
+      "Caption": {
+        "replaces": []
+      },
+      "Card": {
+        "replaces": []
+      },
+      "DisplayHeading": {
+        "replaces": []
+      },
+      "Footer": {
+        "replaces": []
+      },
+      "Header": {
+        "replaces": []
+      },
+      "Heading": {
+        "replaces": []
+      },
+      "HeroCard": {
+        "replaces": []
+      },
+      "IconButton": {
+        "replaces": []
+      },
+      "Label": {
+        "replaces": []
+      },
+      "PhotoCard": {
+        "replaces": []
+      },
+      "Quote": {
+        "replaces": []
+      },
+      "ServiceCard": {
+        "replaces": []
+      },
+      "SideNav": {
+        "replaces": []
+      },
+      "StatsCard": {
+        "replaces": []
+      },
+      "Subheading": {
+        "replaces": []
+      }
+    },
+    "tokens": [
+      "--lcs-black",
+      "--lcs-cream",
+      "--lcs-font-body",
+      "--lcs-font-display",
+      "--lcs-gray-dark",
+      "--lcs-gray-light",
+      "--lcs-radius",
+      "--lcs-radius-full",
+      "--lcs-radius-sm",
+      "--lcs-shadow-md",
+      "--lcs-shadow-sm",
+      "--lcs-space-2xl",
+      "--lcs-space-lg",
+      "--lcs-space-md",
+      "--lcs-space-sm",
+      "--lcs-space-xl",
+      "--lcs-space-xs",
+      "--lcs-white",
+      "--lcs-yellow"
+    ],
+    "tokenKinds": {
+      "--lcs-yellow": "color",
+      "--lcs-black": "color",
+      "--lcs-gray-dark": "color",
+      "--lcs-white": "color",
+      "--lcs-gray-light": "color",
+      "--lcs-cream": "color",
+      "--lcs-font-display": "font",
+      "--lcs-font-body": "font",
+      "--lcs-space-xs": "spacing",
+      "--lcs-space-sm": "spacing",
+      "--lcs-space-md": "spacing",
+      "--lcs-space-lg": "spacing",
+      "--lcs-space-xl": "spacing",
+      "--lcs-space-2xl": "spacing",
+      "--lcs-radius": "radius",
+      "--lcs-radius-sm": "radius",
+      "--lcs-radius-full": "radius",
+      "--lcs-shadow-sm": "shadow",
+      "--lcs-shadow-md": "shadow"
+    },
+    "fontFamilies": [
+      "DK Lemon Yellow Sun",
+      "MuseoSans"
+    ]
+  }
+}

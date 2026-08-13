@@ -1,0 +1,2787 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion Opé</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<template id="__bundler_thumbnail" data-bg-color="#0F100F">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#0F100F"/>
+    <rect x="470" y="300" width="260" height="200" rx="40" fill="#FCD727"/>
+    <rect x="525" y="270" width="18" height="70" rx="9" fill="#FCD727"/>
+    <rect x="657" y="270" width="18" height="70" rx="9" fill="#FCD727"/>
+    <rect x="470" y="358" width="260" height="16" fill="#0F100F"/>
+    <g fill="#0F100F">
+      <rect x="505" y="398" width="40" height="26" rx="6"/>
+      <rect x="560" y="398" width="40" height="26" rx="6"/>
+      <rect x="615" y="398" width="40" height="26" rx="6"/>
+      <rect x="505" y="438" width="40" height="26" rx="6"/>
+      <rect x="560" y="438" width="40" height="26" rx="6"/>
+    </g>
+  </svg>
+</template>
+<style>
+/* ── TOKENS ──────────────────────────────── */
+:root {
+  color-scheme: dark;
+  --bg: #0F100F;
+  --white: #171816;
+  --surf2: #1F211E;
+  --border: rgba(255,255,255,.08);
+  --border-strong: rgba(255,255,255,.16);
+  --blue: #FCD727;
+  --blue-light: rgba(252,215,39,.14);
+  --blue-mid: #FCD727;
+  --green: #74C79C;
+  --green-light: rgba(116,199,156,.13);
+  --orange: #E6B06A;
+  --orange-light: rgba(224,164,88,.15);
+  --red: #E8897F;
+  --red-light: rgba(226,109,99,.14);
+  --purple: #C3AEF0;
+  --purple-light: rgba(160,130,240,.16);
+  --yellow: #E0B45F;
+  --yellow-light: rgba(224,180,95,.15);
+  --text: #ECECEA;
+  --text2: #9A9C97;
+  --text3: #62645E;
+  --nav-w: 52px;
+  --panel-w: 420px;
+  --header-h: 54px;
+  --font: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  --radius: 10px;
+  --radius-sm: 7px;
+  --shadow: 0 1px 2px rgba(0,0,0,.4);
+  --shadow-md: 0 8px 24px rgba(0,0,0,.45);
+  --shadow-lg: 0 16px 48px rgba(0,0,0,.55);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HEADER ─────────────────────────────── */
+.header {
+  height: var(--header-h);
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px 0 0;
+  gap: 0;
+  flex-shrink: 0;
+  z-index: 50;
+}
+
+.header-brand {
+  width: var(--nav-w);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+}
+
+.brand-mark {
+  width: 30px; height: 30px;
+  background: var(--blue);
+  color: #000;
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+
+.header-week {
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-right: 1px solid var(--border);
+}
+
+.week-nav-btn {
+  width: 28px; height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .12s;
+}
+.week-nav-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+.week-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.week-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+.week-badge-a { background: var(--purple-light); color: var(--purple); }
+.week-badge-b { background: var(--yellow-light); color: var(--yellow); }
+
+.header-filters {
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  overflow: visible;
+}
+#tournee-filters { display: inline-flex; gap: 8px; flex-shrink: 0; }
+
+.filter-chip {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .12s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.filter-chip:hover { border-color: var(--blue); color: var(--blue); }
+.filter-chip.active { background: var(--blue); border-color: var(--blue); color: #000; }
+
+/* ── FILTRE PORTÉE (tournée + site unifié) ─── */
+.scope-filter { position: relative; flex-shrink: 0; }
+.scope-btn {
+  height: 32px;
+  max-width: 260px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: border-color .12s, color .12s;
+  white-space: nowrap;
+}
+.scope-btn:hover { border-color: var(--border-strong); }
+.scope-btn.filtered { border-color: var(--blue); color: var(--blue); }
+.scope-btn .scope-funnel { color: var(--text3); }
+.scope-btn.filtered .scope-funnel { color: var(--blue); }
+.scope-btn .chev { color: var(--text3); transition: transform .16s; }
+.scope-btn.open .chev { transform: rotate(180deg); }
+.scope-btn-label { overflow: hidden; text-overflow: ellipsis; }
+
+.scope-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 326px;
+  max-height: min(460px, 72vh);
+  background: var(--white);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  z-index: 60;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+.scope-menu.open { display: flex; }
+.scope-search {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+.scope-search input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 13px;
+  font-family: var(--font);
+}
+.scope-list { overflow-y: auto; padding: 6px; }
+.scope-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-family: var(--font);
+  text-align: left;
+  cursor: pointer;
+  transition: background .1s;
+}
+.scope-opt:hover { background: var(--surf2); }
+.scope-opt > span.lbl { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scope-opt .scope-ic { flex-shrink: 0; color: var(--text2); }
+.scope-opt .check { flex-shrink: 0; color: var(--blue); opacity: 0; }
+.scope-opt.active { color: var(--blue); font-weight: 600; }
+.scope-opt.active .check { opacity: 1; }
+.scope-opt.active .scope-ic { color: var(--blue); }
+.scope-group-opt { font-weight: 700; }
+.scope-group-opt .scope-count {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  background: var(--surf2);
+  border-radius: 20px;
+  padding: 1px 8px;
+}
+.scope-site { padding-left: 14px; }
+.scope-site .scope-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--text3); flex-shrink: 0; margin: 0 7px;
+}
+.scope-opt.active .scope-dot { background: var(--blue); }
+.scope-grouplabel {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--text3);
+  padding: 12px 12px 5px;
+}
+.scope-sep { height: 1px; background: var(--border); margin: 6px 4px; }
+.scope-empty { padding: 22px; text-align: center; color: var(--text3); font-size: 13px; }
+
+/* ── Segmented control (portée permutation) ── */
+.seg {
+  display: flex;
+  gap: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 3px;
+}
+.seg-btn {
+  flex: 1;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text2);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: var(--font);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.seg-btn:hover { color: var(--text); }
+.seg-btn.active { background: var(--purple); color: #14120B; }
+.seg-hint { font-size: 11px; color: var(--text3); margin-top: 6px; }
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding-left: 16px;
+}
+
+.btn-absence {
+  height: 32px;
+  padding: 0 14px;
+  background: var(--blue);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all .12s;
+  white-space: nowrap;
+}
+.btn-absence:hover { background: #E5C21F; }
+
+.absence-count {
+  background: #0F100F;
+  color: var(--blue);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 5px;
+  display: none;
+}
+
+/* ── LAYOUT ──────────────────────────────── */
+.app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+.panel-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+  z-index: 40;
+}
+.panel-scrim.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── NAV RAIL ────────────────────────────── */
+.nav-rail {
+  width: var(--nav-w);
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.nav-sep {
+  width: 28px;
+  height: 1px;
+  background: var(--border);
+  margin: 6px 0;
+}
+
+.nav-btn {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  transition: all .12s;
+  position: relative;
+}
+.nav-btn:hover { background: var(--bg); color: var(--text2); }
+.nav-btn.active { background: var(--blue-light); color: var(--blue); }
+.nav-btn .tooltip {
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #000;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 9px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .15s;
+  z-index: 100;
+}
+.nav-btn:hover .tooltip { opacity: 1; }
+
+/* ── MAIN CONTENT ────────────────────────── */
+.main-content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.view { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+.view.active { display: flex; }
+
+/* ── VUE SEMAINE — PLANNING GANTT ─────────── */
+.planning-container {
+  flex: 1;
+  overflow: auto;
+  padding: 16px 20px;
+}
+
+.planning-header-row {
+  display: grid;
+  grid-template-columns: 160px repeat(5, 1fr);
+  gap: 0;
+  margin-bottom: 2px;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+  padding-bottom: 8px;
+}
+
+.ph-agent-col { }
+.ph-day {
+  text-align: center;
+  padding: 6px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.ph-day .ph-day-num {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+.ph-day.today .ph-day-num {
+  color: var(--blue);
+}
+.ph-day.today { position: relative; }
+.ph-day.today::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+
+.agent-row {
+  display: grid;
+  grid-template-columns: 160px repeat(5, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--border);
+  min-height: 52px;
+  align-items: stretch;
+}
+.agent-row:last-child { border-bottom: 1px solid var(--border); }
+.agent-row:hover { background: rgba(27,79,255,.02); }
+
+.agent-label {
+  padding: 10px 12px 10px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  cursor: pointer;
+}
+.agent-label:hover .agent-name { color: var(--blue); }
+.agent-name {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.3;
+  transition: color .12s;
+}
+.agent-sub {
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+
+.day-cell {
+  padding: 6px 4px;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  justify-content: center;
+}
+
+/* Barres Gantt */
+.shift-bar {
+  height: 28px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  gap: 5px;
+  cursor: pointer;
+  transition: filter .12s;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.shift-bar:hover { filter: brightness(1.12); }
+
+.shift-bar-present {
+  background: var(--green-light);
+  color: var(--green);
+  border-left: 3px solid var(--green);
+}
+.shift-permuted {
+  background: var(--purple-light) !important;
+  color: var(--purple) !important;
+  border-left: 3px solid var(--purple) !important;
+}
+.shift-bar-absent {
+  background: var(--red-light);
+  color: var(--red);
+  border-left: 3px solid var(--red);
+}
+.shift-bar-remplace {
+  background: var(--orange-light);
+  color: var(--orange);
+  border-left: 3px solid var(--orange);
+}
+
+.shift-site {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+.shift-time {
+  opacity: .7;
+  font-weight: 500;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.day-empty { color: var(--text3); font-size: 11px; text-align: center; padding: 8px 4px; }
+
+/* Alert band */
+.alert-band {
+  background: var(--red-light);
+  border-bottom: 1px solid rgba(226,109,99,.32);
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--red);
+  font-weight: 500;
+  display: none;
+}
+.alert-band.visible { display: flex; }
+.alert-band-count {
+  background: var(--red);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+
+/* ── PANNEAU DROIT ───────────────────────── */
+.side-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--panel-w);
+  max-width: 100%;
+  background: var(--white);
+  border-left: 1px solid var(--border);
+  overflow: hidden;
+  transform: translateX(100%);
+  transition: transform .24s cubic-bezier(.4,0,.2,1);
+  box-shadow: -16px 0 48px rgba(0,0,0,.4);
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+  will-change: transform;
+}
+.side-panel.open { transform: translateX(0); }
+
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.panel-title { font-size: 15px; font-weight: 700; }
+.panel-close {
+  width: 28px; height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+}
+.panel-close:hover { background: var(--bg); }
+
+.panel-body { flex: 1; overflow-y: auto; padding: 20px; }
+.panel-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ── VUES SECONDAIRES ────────────────────── */
+.view-page {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px;
+}
+
+.page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.page-heading h1 { font-size: 18px; font-weight: 700; }
+.page-heading-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+/* ── COMPOSANTS ──────────────────────────── */
+.btn {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all .12s;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--blue); color: #000; }
+.btn-primary:hover { background: #E5C21F; }
+.btn-secondary { background: var(--white); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--blue); color: var(--blue); }
+.btn-danger { background: var(--red-light); color: var(--red); border: 1px solid rgba(226,109,99,.32); }
+.btn-danger:hover { background: var(--red); color: #0F100F; }
+.btn-sm { height: 26px; padding: 0 10px; font-size: 12px; }
+.btn-icon {
+  width: 28px; height: 28px; padding: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text3);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  transition: all .12s;
+}
+.btn-icon:hover { background: var(--bg); color: var(--text2); }
+.btn-icon.red:hover { border-color: var(--red); color: var(--red); background: var(--red-light); }
+
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+}
+.badge-green { background: var(--green-light); color: var(--green); }
+.badge-red { background: var(--red-light); color: var(--red); }
+.badge-orange { background: var(--orange-light); color: var(--orange); }
+.badge-blue { background: var(--blue-light); color: var(--blue); }
+.badge-purple { background: var(--purple-light); color: var(--purple); }
+.badge-gray { background: var(--bg); color: var(--text2); border: 1px solid var(--border); }
+
+/* Formulaires */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.form-input {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--white);
+  transition: border-color .12s;
+}
+.form-input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(252,215,39,.22); }
+textarea.form-input { height: auto; padding: 8px 10px; resize: vertical; min-height: 70px; }
+select.form-input { cursor: pointer; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-section {
+  margin: 16px 0 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--text3);
+}
+
+/* Jours */
+.jours-row { display: flex; gap: 4px; }
+.jour-pill {
+  height: 30px; width: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--text2);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .12s;
+  display: flex; align-items: center; justify-content: center;
+}
+.jour-pill.on { background: var(--blue); border-color: var(--blue); color: #000; }
+
+/* Toggle */
+.toggle-row { display: flex; align-items: center; gap: 10px; }
+.toggle {
+  width: 36px; height: 20px;
+  border-radius: 10px;
+  background: var(--border);
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: background .15s;
+  flex-shrink: 0;
+}
+.toggle.on { background: var(--blue); }
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  background: white;
+  border-radius: 50%;
+  top: 3px; left: 3px;
+  transition: left .15s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.toggle.on::after { left: 19px; }
+.toggle-label { font-size: 13px; color: var(--text2); }
+
+/* Cards grille */
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: box-shadow .12s;
+}
+.card:hover { box-shadow: var(--shadow-md); }
+
+/* Table */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  text-align: left;
+  padding: 8px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.data-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text2);
+}
+.data-table td:first-child { color: var(--text); font-weight: 500; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--blue-light); }
+
+/* Search */
+.search-bar {
+  position: relative;
+  margin-bottom: 16px;
+}
+.search-bar input {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px 0 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  background: var(--white);
+  color: var(--text);
+}
+.search-bar input:focus { outline: none; border-color: var(--blue); }
+.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 14px; pointer-events: none; }
+
+/* Tabs */
+.tabs { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.tab {
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all .12s;
+}
+.tab:hover { color: var(--text); }
+.tab.on { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+
+/* Empty */
+.empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text3);
+}
+.empty-icon { font-size: 32px; margin-bottom: 10px; }
+.empty-text { font-size: 14px; }
+.empty-sub { font-size: 12px; margin-top: 4px; color: var(--text3); }
+
+/* Absence items */
+.abs-item {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.abs-item.urgent { border-left: 3px solid var(--red); }
+.abs-item.covered { border-left: 3px solid var(--green); }
+
+/* Affect items */
+.affect-row {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--white);
+}
+.affect-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--blue);
+  flex-shrink: 0;
+}
+.affect-info { flex: 1; }
+.affect-site { font-weight: 600; font-size: 13px; }
+.affect-detail { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+.semaine-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.semaine-a { background: var(--purple-light); color: var(--purple); }
+.semaine-b { background: var(--yellow-light); color: var(--yellow); }
+.semaine-all { background: var(--blue-light); color: var(--blue-mid); }
+
+/* Pointage */
+.pt-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.pt-item:last-child { border-bottom: none; }
+
+/* Toast */
+#toast {
+  position: fixed;
+  bottom: 20px; right: 20px;
+  background: #000;
+  color: #fff;
+  padding: 11px 16px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(60px);
+  opacity: 0;
+  transition: all .25s;
+  z-index: 200;
+  display: flex; align-items: center; gap: 8px;
+}
+#toast.show { transform: translateY(0); opacity: 1; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+/* Divider */
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+/* ── DARK POLISH ──────────────── */
+body{ -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+input,select,textarea{ color-scheme:dark; }
+input::placeholder, textarea::placeholder{ color: var(--text3); }
+.nav-btn:hover{ background: var(--surf2); }
+::selection{ background: rgba(252,215,39,.3); color:#fff; }
+svg{ stroke-linecap:round; stroke-linejoin:round; }
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══════════════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-brand">
+    <div class="brand-mark"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg></div>
+  </div>
+
+  <div class="header-week" id="header-week-section">
+    <button class="week-nav-btn" onclick="changeWeek(-1)"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <div>
+      <div class="week-label" id="week-label-header">—</div>
+    </div>
+    <span class="week-badge" id="week-badge-ab"></span>
+    <button class="week-nav-btn" onclick="changeWeek(1)"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="week-nav-btn" onclick="goCurrentWeek()" title="Aujourd'hui" style="font-size:11px;padding:0 6px;width:auto">Auj.</button>
+  </div>
+
+  <div class="header-filters" id="header-filters">
+    <div class="scope-filter" id="scope-filter">
+      <button class="scope-btn" id="scope-btn" onclick="toggleScopeMenu(event)">
+        <svg class="scope-funnel" viewBox="0 0 24 24" style="width:15px;height:15px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M3 5h18l-7 8.2V20l-4 1.5v-8.3z"/></svg>
+        <span class="scope-btn-label" id="scope-label">Tous les sites</span>
+        <svg class="chev" viewBox="0 0 24 24" style="width:14px;height:14px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="scope-menu" id="scope-menu">
+        <div class="scope-search">
+          <svg viewBox="0 0 24 24" style="width:15px;height:15px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg>
+          <input type="text" id="scope-search-input" placeholder="Rechercher une tournée ou un site…" oninput="renderScopeMenu(this.value)" autocomplete="off">
+        </div>
+        <div class="scope-list" id="scope-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="header-actions">
+    <div id="sync-bar" style="display:flex;align-items:center;margin-right:8px"></div>
+    <button onclick="openDataModal()" style="height:32px;padding:0 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--white);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M7 7h12l-3.2-3.2M17 17H5l3.2 3.2"/></svg> Sync
+    </button>
+    <button class="btn-absence" onclick="openPanel('panel-absence')">
+      <span><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3.6l9 15.4H3z"/><path d="M12 9.6v4.6M12 17.2v.4"/></svg></span> Absence
+      <span class="absence-count" id="absence-count-badge">0</span>
+    </button>
+  </div>
+</header>
+
+<!-- ══ BODY ════════════════════════════════════════════════════ -->
+<div class="app-body">
+
+  <!-- NAV RAIL -->
+  <nav class="nav-rail">
+    <button class="nav-btn active" onclick="showView('planning')" id="nav-planning">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>
+      <span class="tooltip">Planning semaine</span>
+    </button>
+    <button class="nav-btn" onclick="showView('absences')" id="nav-absences">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M6 9a6 6 0 1112 0c0 5 2 6.5 2 6.5H4S6 14 6 9"/><path d="M10 20.5a2 2 0 004 0"/></svg>
+      <span class="tooltip">Absences</span>
+    </button>
+    <button class="nav-btn" onclick="showView('historique')" id="nav-historique">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3.2h8v4H8z"/><path d="M8 11h8M8 15h6"/></svg>
+      <span class="tooltip">Historique</span>
+    </button>
+    <button class="nav-btn" onclick="showView('pointage')" id="nav-pointage">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8.5V12.5l3 1.8M9.5 3h5"/></svg>
+      <span class="tooltip">Retards & H.Sup</span>
+    </button>
+
+    <div class="nav-sep"></div>
+
+    <button class="nav-btn" onclick="showView('agents')" id="nav-agents">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg>
+      <span class="tooltip">Agents</span>
+    </button>
+    <button class="nav-btn" onclick="showView('sites')" id="nav-sites">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>
+      <span class="tooltip">Sites</span>
+    </button>
+    <button class="nav-btn" onclick="showView('affect')" id="nav-affect">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="4" y="4" width="7" height="7" rx="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.6"/><rect x="13" y="13" width="7" height="7" rx="1.6"/></svg>
+      <span class="tooltip">Planning agents</span>
+    </button>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <!-- ── VUE PLANNING ─────────────────── -->
+    <div class="view active" id="view-planning">
+      <div class="alert-band" id="alert-band">
+        <span><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3.6l9 15.4H3z"/><path d="M12 9.6v4.6M12 17.2v.4"/></svg></span>
+        <span id="alert-band-text"></span>
+        <span class="alert-band-count" id="alert-band-count"></span>
+        <button class="btn btn-sm" style="background:var(--red);color:#0F100F;margin-left:4px" onclick="showView('absences')">Voir les absences</button>
+      </div>
+      <div class="planning-container" id="planning-container">
+        <div class="planning-header-row" id="planning-header"></div>
+        <div id="planning-rows"></div>
+      </div>
+    </div>
+
+    <!-- ── ABSENCES ──────────────────────── -->
+    <div class="view" id="view-absences">
+      <div class="view-page">
+        <div class="page-heading">
+          <div>
+            <h1>Absences</h1>
+            <div class="page-heading-sub">Déclaration et suivi des absences</div>
+          </div>
+          <button class="btn btn-primary" onclick="openPanel('panel-absence')">+ Déclarer une absence</button>
+        </div>
+        <div class="tabs">
+          <button class="tab on" onclick="tabAbsences('tous',this)">Toutes</button>
+          <button class="tab" onclick="tabAbsences('urgent',this)">Sans remplaçant</button>
+          <button class="tab" onclick="tabAbsences('covered',this)">Remplacées</button>
+        </div>
+        <div id="absences-list"></div>
+      </div>
+    </div>
+
+    <!-- ── HISTORIQUE ────────────────────── -->
+    <div class="view" id="view-historique">
+      <div class="view-page">
+        <div class="page-heading">
+          <div><h1>Historique des remplacements</h1></div>
+        </div>
+        <div class="card" style="overflow:hidden;padding:0">
+          <table class="data-table">
+            <thead><tr>
+              <th>Date</th><th>Site</th><th>Absent</th><th>Remplaçant</th><th>Statut</th>
+            </tr></thead>
+            <tbody id="histo-tbody"></tbody>
+          </table>
+          <div id="histo-empty" class="empty"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3.2h8v4H8z"/><path d="M8 11h8M8 15h6"/></svg></div><div class="empty-text">Aucun remplacement enregistré</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RETARDS & H.SUP ───────────────── -->
+    <div class="view" id="view-pointage">
+      <div class="view-page">
+        <div class="page-heading">
+          <div><h1>Retards & Heures Sup.</h1></div>
+          <button class="btn btn-primary" onclick="openPanel('panel-pointage')">+ Ajouter</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px" id="pt-stats"></div>
+        <div class="tabs">
+          <button class="tab on" onclick="tabPointage('tous',this)">Tous</button>
+          <button class="tab" onclick="tabPointage('retard',this)">Retards</button>
+          <button class="tab" onclick="tabPointage('hsup',this)">Heures Sup.</button>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div id="pt-list"></div>
+          <div id="pt-empty" class="empty"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8.5V12.5l3 1.8M9.5 3h5"/></svg></div><div class="empty-text">Aucun événement enregistré</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── AGENTS ────────────────────────── -->
+    <div class="view" id="view-agents">
+      <div class="view-page">
+        <div class="page-heading">
+          <div><h1>Agents</h1><div class="page-heading-sub" id="agents-sub"></div></div>
+          <button class="btn btn-primary" onclick="openPanel('panel-agent',null)">+ Ajouter un agent</button>
+        </div>
+        <div class="tabs">
+          <button class="tab on" onclick="tabAgents('tous',this)">Tous</button>
+          <button class="tab" onclick="tabAgents('remplacant',this)">Remplaçants</button>
+          <button class="tab" onclick="tabAgents('fixe',this)">Postes fixes</button>
+        </div>
+        <div class="search-bar">
+          <span class="search-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg></span>
+          <input type="text" placeholder="Rechercher un agent…" id="search-agents" oninput="renderAgents()">
+        </div>
+        <div class="card-grid" id="agents-grid"></div>
+      </div>
+    </div>
+
+    <!-- ── SITES ─────────────────────────── -->
+    <div class="view" id="view-sites">
+      <div class="view-page">
+        <div class="page-heading">
+          <div><h1>Sites</h1><div class="page-heading-sub" id="sites-sub"></div></div>
+          <button class="btn btn-primary" onclick="openPanel('panel-site',null)">+ Ajouter un site</button>
+        </div>
+        <div class="search-bar">
+          <span class="search-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg></span>
+          <input type="text" placeholder="Rechercher un site…" id="search-sites" oninput="renderSites()">
+        </div>
+        <div class="card-grid" id="sites-grid"></div>
+      </div>
+    </div>
+
+    <!-- ── PLANNING AGENTS ───────────────── -->
+    <div class="view" id="view-affect">
+      <div class="view-page">
+        <div class="page-heading">
+          <div><h1>Planning agents</h1><div class="page-heading-sub">Affectations agent → site avec horaires</div></div>
+          <button class="btn btn-primary" onclick="openPanel('panel-affect',null)">+ Nouvelle affectation</button>
+        </div>
+        <div class="search-bar">
+          <span class="search-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg></span>
+          <input type="text" placeholder="Rechercher par agent ou site…" id="search-affect" oninput="renderAffect()">
+        </div>
+        <div id="affect-list"></div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+
+  <!-- ══ PANNEAU DROIT ════════════════════════════════ -->
+    <div class="panel-scrim" id="panel-scrim" onclick="closePanel()"></div>
+  <aside class="side-panel" id="side-panel">
+    <div class="panel-header">
+      <div class="panel-title" id="panel-title">—</div>
+      <button class="panel-close" onclick="closePanel()">×</button>
+    </div>
+    <div class="panel-body" id="panel-body"></div>
+    <div class="panel-footer" id="panel-footer"></div>
+  </aside>
+
+</div><!-- /app-body -->
+
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════
+   STORAGE
+═══════════════════════════════════════ */
+const DB = {
+  get(k){ try{ return JSON.parse(localStorage.getItem('gope2_'+k)||'[]') }catch{ return [] } },
+  set(k,v){ localStorage.setItem('gope2_'+k,JSON.stringify(v)) },
+  id(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,5) }
+};
+const gs = () => DB.get('sites');       const ss = v => DB.set('sites',v);
+const ga = () => DB.get('agents');      const sa = v => DB.set('agents',v);
+const gaf = () => DB.get('affec');      const saf = v => DB.set('affec',v);
+const gab = () => DB.get('absences');   const sab = v => DB.set('absences',v);
+const gr = () => DB.get('rempl');       const sr = v => DB.set('rempl',v);
+const gpt = () => DB.get('pointage');   const spt = v => DB.set('pointage',v);
+const gperm = () => DB.get('permut');   const sperm = v => DB.set('permut',v);
+
+// Permutation ponctuelle : { id, siteId, weekKey, agent1Id, agent2Id, createdBy, createdAt }
+// Permutation : { id, siteId, scope:'jour'|'semaine', dateStr?, weekKey, agent1Id, agent2Id, createdBy, createdAt }
+// scope 'jour' → ne s'applique qu'à dateStr ; scope 'semaine' (ou ancien format sans scope) → toute la semaine weekKey
+function getWeekKey(date){ return `${date.getFullYear()}-W${String(getWeekNum(date)).padStart(2,'0')}`; }
+
+function getDayPermutation(siteId, dateStr){
+  return gperm().find(p => p.siteId===siteId && p.scope==='jour' && p.dateStr===dateStr);
+}
+function getWeekPermutation(siteId, weekKey){
+  return gperm().find(p => p.siteId===siteId && (p.scope==='semaine'||!p.scope) && p.weekKey===weekKey);
+}
+// Permutation effective pour un jour donné : le jour précis prime sur la semaine
+function getPermutationForDay(siteId, dateStr, weekKey){
+  return getDayPermutation(siteId, dateStr) || getWeekPermutation(siteId, weekKey);
+}
+
+function savePermutation(siteId, agent1Id, agent2Id, scope='semaine', dateStr=null){
+  const weekKey = getWeekKey(weekStart);
+  let perms = gperm();
+  if(scope==='jour'){
+    perms = perms.filter(p => !(p.siteId===siteId && p.scope==='jour' && p.dateStr===dateStr)); // remplace l'existante du même jour
+    perms.push({ id:DB.id(), siteId, scope:'jour', dateStr, weekKey, agent1Id, agent2Id, createdBy:getCurrentUser(), createdAt:new Date().toISOString() });
+  } else {
+    perms = perms.filter(p => !(p.siteId===siteId && (p.scope==='semaine'||!p.scope) && p.weekKey===weekKey));
+    perms.push({ id:DB.id(), siteId, scope:'semaine', weekKey, agent1Id, agent2Id, createdBy:getCurrentUser(), createdAt:new Date().toISOString() });
+  }
+  sperm(perms);
+  toast(scope==='jour' ? 'Permutation enregistrée pour ce jour' : 'Permutation enregistrée pour la semaine');
+  closePanel();
+  renderPlanning();
+}
+
+function deletePermutationById(id){
+  sperm(gperm().filter(p => p.id!==id));
+  toast('Permutation annulée');
+  closePanel();
+  renderPlanning();
+}
+
+function segPick(btn){
+  const seg=btn.parentElement;
+  seg.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const hint=document.getElementById('perm-scope-hint');
+  if(hint) hint.textContent = btn.dataset.scope==='jour' ? hint.dataset.day : hint.dataset.week;
+}
+
+/* ═══════════════════════════════════════
+   SEED
+═══════════════════════════════════════ */
+function seed(){
+  if(gs().length) return;
+  const sites=[
+    {id:DB.id(),nom:'Aéroport de Bordeaux',adresse:'Aéroport Bordeaux Mérignac',groupe:'Tournée Michael',creneaux:[{jours:['Lun','Mar','Mer','Jeu','Ven'],debut:'09:00',fin:'12:00'},{jours:['Lun','Mar','Mer','Jeu','Ven'],debut:'13:00',fin:'17:00'}]},
+    {id:DB.id(),nom:'Darwin',adresse:'Darwin Ecosystem, Bordeaux',groupe:'Tournée Karima',creneaux:[{jours:['Lun','Mar','Mer','Jeu','Ven'],debut:'09:00',fin:'17:00'}]},
+    {id:DB.id(),nom:'Campus F. d\'Assise',adresse:'Bordeaux',groupe:'Tournée Karima',creneaux:[{jours:['Lun','Mar','Mer','Jeu','Ven'],debut:'08:00',fin:'12:00'},{jours:['Lun','Mar','Mer','Jeu','Ven'],debut:'13:00',fin:'17:00'}]},
+    {id:DB.id(),nom:'BM / Alfred Daney',adresse:'85/87 bd Alfred Daney, Bordeaux',groupe:'Tournée Karima',creneaux:[{jours:['Mar'],debut:'10:00',fin:'11:00'}]},
+    {id:DB.id(),nom:'Arcachon',adresse:'22 bd du Général Leclerc, Arcachon',groupe:'Tournée Elvira',creneaux:[{jours:['Lun','Mar','Mer','Jeu','Ven'],debut:'10:30',fin:'13:00'},{jours:['Lun','Mar','Mer','Jeu','Ven'],debut:'13:30',fin:'17:30'}]},
+  ];
+  ss(sites);
+  const agents=[
+    {id:DB.id(),nom:'NIPHON Michael',tel:'06 00 00 00 01',email:'michael@exemple.fr',notes:'Agent multisite — Tournée logistique',remplacant:false},
+    {id:DB.id(),nom:'EL HIMER Karima',tel:'06 79 10 68 56',email:'karima@exemple.fr',notes:'Tournées logistiques — Bordeaux Métropole',remplacant:false},
+    {id:DB.id(),nom:'AUGRAUD Charlie',tel:'06 32 46 68 39',email:'charlie@exemple.fr',notes:'Agent multisite — Remplaçant principal',remplacant:true},
+    {id:DB.id(),nom:'BIWOLÉ Amélie',tel:'06 87 70 04 10',email:'amelie@exemple.fr',notes:'Remplaçante disponible',remplacant:true},
+    {id:DB.id(),nom:'MICHITTU Aurélie',tel:'06 00 00 00 05',email:'aurelie@exemple.fr',notes:'Campus F. d\'Assise',remplacant:false},
+    {id:DB.id(),nom:'TAILLEFER Eloïse',tel:'06 00 00 00 06',email:'eloise@exemple.fr',notes:'Arcachon',remplacant:false},
+  ];
+  sa(agents);
+  const s=gs(), a=ga();
+  saf([
+    {id:DB.id(),agentId:a[0].id,siteId:s[0].id,jours:['Lun','Mer','Ven'],debut:'09:00',fin:'12:00',semaine:'toutes',notes:'Accueil matin'},
+    {id:DB.id(),agentId:a[0].id,siteId:s[1].id,jours:['Mar','Jeu'],debut:'09:00',fin:'17:00',semaine:'toutes',notes:''},
+    {id:DB.id(),agentId:a[1].id,siteId:s[1].id,jours:['Lun','Mar','Mer','Jeu','Ven'],debut:'09:00',fin:'12:00',semaine:'A',notes:'Semaine A'},
+    {id:DB.id(),agentId:a[1].id,siteId:s[1].id,jours:['Lun','Mar','Mer','Jeu','Ven'],debut:'13:00',fin:'17:00',semaine:'B',notes:'Semaine B'},
+    {id:DB.id(),agentId:a[4].id,siteId:s[2].id,jours:['Lun','Mar','Mer','Jeu','Ven'],debut:'08:00',fin:'12:00',semaine:'toutes',notes:''},
+    {id:DB.id(),agentId:a[4].id,siteId:s[2].id,jours:['Lun','Mar','Mer','Jeu','Ven'],debut:'13:00',fin:'17:00',semaine:'toutes',notes:''},
+    {id:DB.id(),agentId:a[5].id,siteId:s[4].id,jours:['Lun','Mar','Mer','Jeu','Ven'],debut:'10:30',fin:'17:30',semaine:'toutes',notes:''},
+  ]);
+}
+
+/* ═══════════════════════════════════════
+   UTILS
+═══════════════════════════════════════ */
+const JOURS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+const JOURS_FULL=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+
+function fmtDate(d){ if(!d) return ''; return new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}); }
+function siteNom(id){ return gs().find(s=>s.id===id)?.nom||'—'; }
+function agentNom(id){ return ga().find(a=>a.id===id)?.nom||'—'; }
+
+function getMonday(date){
+  const d=new Date(date); const day=d.getDay();
+  d.setDate(d.getDate()-day+(day===0?-6:1)); d.setHours(0,0,0,0); return d;
+}
+function getWeekNum(date){
+  const d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));
+  const dn=d.getUTCDay()||7; d.setUTCDate(d.getUTCDate()+4-dn);
+  const ys=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return Math.ceil((((d-ys)/86400000)+1)/7);
+}
+function isWeekA(date){ return getWeekNum(date)%2===1; }
+
+function toast(msg,ok=true){
+  const t=document.getElementById('toast');
+  t.textContent=(ok?'✓ ':'✕ ')+msg;
+  t.style.background=ok?'#0D0D0D':'var(--red)';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+function fillSel(id,items,ph=''){
+  const el=document.getElementById(id); if(!el) return;
+  el.innerHTML=ph?`<option value="">— ${ph} —`:'';
+  items.forEach(i=>el.innerHTML+=`<option value="${i.v}">${i.l}`);
+}
+
+/* ═══════════════════════════════════════
+   NAVIGATION VUES
+═══════════════════════════════════════ */
+let currentView='planning';
+
+function showView(v){
+  currentView=v;
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v)?.classList.add('active');
+  document.getElementById('nav-'+v)?.classList.add('active');
+
+  const isPlanning = v==='planning';
+  document.getElementById('header-week-section').style.display = isPlanning?'flex':'none';
+  document.getElementById('header-filters').style.display = isPlanning?'flex':'none';
+
+  closePanel();
+  const renders={
+    planning:renderPlanning,absences:renderAbsences,
+    historique:renderHistorique,pointage:renderPointage,
+    agents:renderAgents,sites:renderSites,affect:renderAffect
+  };
+  renders[v]?.();
+}
+
+/* ═══════════════════════════════════════
+   PANNEAU DROIT
+═══════════════════════════════════════ */
+let currentPanel=null;
+let currentPanelData=null;
+
+function openPanel(panelId, data=null){
+  currentPanel=panelId;
+  currentPanelData=data;
+  const panel=document.getElementById('side-panel');
+  panel.classList.add('open');
+  const sc=document.getElementById('panel-scrim'); if(sc) sc.classList.add('show');
+  buildPanel(panelId,data);
+}
+
+function closePanel(){
+  document.getElementById('side-panel').classList.remove('open');
+  const sc=document.getElementById('panel-scrim'); if(sc) sc.classList.remove('show');
+  currentPanel=null;
+}
+
+function buildPanel(id,data){
+  const titles={
+    'panel-absence':'Déclarer une absence',
+    'panel-agent': data?'Modifier l\'agent':'Nouvel agent',
+    'panel-site': data?'Modifier le site':'Nouveau site',
+    'panel-affect': data?'Modifier l\'affectation':'Nouvelle affectation',
+    'panel-pointage':'Ajouter un événement',
+    'panel-remplacer':'Attribuer un remplaçant',
+    'panel-agent-detail':'Fiche agent',
+    'panel-creneau':'Détail du créneau',
+  };
+  document.getElementById('panel-title').textContent=titles[id]||'';
+
+  const body=document.getElementById('panel-body');
+  const footer=document.getElementById('panel-footer');
+
+  const renders={
+    'panel-absence': buildPanelAbsence,
+    'panel-agent': buildPanelAgent,
+    'panel-site': buildPanelSite,
+    'panel-affect': buildPanelAffect,
+    'panel-pointage': buildPanelPointage,
+    'panel-remplacer': buildPanelRemplacer,
+    'panel-agent-detail': buildPanelAgentDetail,
+    'panel-creneau': buildPanelCreneau,
+  };
+  renders[id]?.(body,footer,data);
+}
+
+/* ═══════════════════════════════════════
+   SEMAINE
+═══════════════════════════════════════ */
+let weekStart=getMonday(new Date());
+
+function changeWeek(d){
+  weekStart=new Date(weekStart); weekStart.setDate(weekStart.getDate()+d*7);
+  renderPlanning();
+}
+function goCurrentWeek(){ weekStart=getMonday(new Date()); renderPlanning(); }
+
+function updateWeekHeader(){
+  const we=new Date(weekStart); we.setDate(we.getDate()+4);
+  const wn=getWeekNum(weekStart);
+  const isA=isWeekA(weekStart);
+  document.getElementById('week-label-header').textContent=
+    `Sem. ${wn} · ${weekStart.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})} – ${we.toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})}`;
+  const badge=document.getElementById('week-badge-ab');
+  badge.textContent=`Sem. ${isA?'A':'B'}`;
+  badge.className='week-badge '+(isA?'week-badge-a':'week-badge-b');
+}
+
+/* ═══════════════════════════════════════
+   PLANNING (vue principale)
+═══════════════════════════════════════ */
+let groupeFilter='';
+
+function renderPlanning(){
+  updateWeekHeader();
+  buildTourneeFilters();
+
+  const isA=isWeekA(weekStart);
+  const today=new Date(); today.setHours(0,0,0,0);
+
+  // 5 jours Lun→Ven
+  const days=[];
+  for(let i=0;i<5;i++){
+    const d=new Date(weekStart); d.setDate(d.getDate()+i);
+    days.push({date:d, label:JOURS[i], full:JOURS_FULL[i]});
+  }
+
+  // Header
+  const hdr=document.getElementById('planning-header');
+  hdr.innerHTML=`<div class="ph-agent-col"></div>`+
+    days.map(d=>{
+      const isToday=d.date.getTime()===today.getTime();
+      return `<div class="ph-day${isToday?' today':''}">
+        ${d.full.slice(0,3).toUpperCase()}
+        <span class="ph-day-num">${d.date.getDate()}</span>
+      </div>`;
+    }).join('');
+
+  // Affectations filtrées selon tournée OU site
+  let affecs=gaf();
+  let agents=ga();
+
+  if(siteFilter){
+    affecs=affecs.filter(a=>a.siteId===siteFilter);
+    const agentIds=[...new Set(affecs.map(a=>a.agentId))];
+    agents=agents.filter(a=>agentIds.includes(a.id));
+  } else if(groupeFilter){
+    const sitesFiltres=gs().filter(s=>s.groupe===groupeFilter).map(s=>s.id);
+    affecs=affecs.filter(a=>sitesFiltres.includes(a.siteId));
+    const agentIds=[...new Set(affecs.map(a=>a.agentId))];
+    agents=agents.filter(a=>agentIds.includes(a.id));
+  } else {
+    const agentIds=[...new Set(affecs.map(a=>a.agentId))];
+    agents=agents.filter(a=>agentIds.includes(a.id));
+  }
+
+  // Absences semaine
+  const we=new Date(weekStart); we.setDate(we.getDate()+6);
+  const absences=gab().filter(ab=>{
+    const s=new Date(ab.dateDebut+'T00:00:00');
+    const e=ab.dateFin?new Date(ab.dateFin+'T23:59:59'):new Date(ab.dateDebut+'T23:59:59');
+    return s<=we && e>=weekStart;
+  });
+
+  // Alerte band
+  const urgent=absences.filter(ab=>ab.needsReplacement&&!ab.remplacantId);
+  const band=document.getElementById('alert-band');
+  if(urgent.length>0){
+    band.classList.add('visible');
+    document.getElementById('alert-band-text').textContent=
+      urgent.length===1?'1 agent absent sans remplaçant cette semaine':`${urgent.length} agents absents sans remplaçant cette semaine`;
+    document.getElementById('alert-band-count').textContent=urgent.length;
+  } else {
+    band.classList.remove('visible');
+  }
+
+  // Rows
+  const rows=document.getElementById('planning-rows');
+  if(agents.length===0){
+    rows.innerHTML=`<div class="empty" style="padding:60px 20px"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></div><div class="empty-text">Aucune affectation trouvée</div><div class="empty-sub">Ajoutez des agents et créez des affectations</div></div>`;
+    return;
+  }
+
+  rows.innerHTML=agents.map(agent=>{
+    const agentAffecs=affecs.filter(af=>af.agentId===agent.id);
+
+    const cells=days.map(day=>{
+      const dayAffecs=agentAffecs.filter(af=>{
+        if(!af.jours.includes(day.label)) return false;
+        if(af.semaine==='A'&&!isA) return false;
+        if(af.semaine==='B'&&isA) return false;
+        return true;
+      });
+
+      if(dayAffecs.length===0) return `<div class="day-cell"><div class="day-empty">—</div></div>`;
+
+      // Absence ce jour ?
+      const dayAbs=absences.find(ab=>{
+        if(ab.agentId!==agent.id) return false;
+        const d=day.date;
+        const s=new Date(ab.dateDebut+'T00:00:00');
+        const e=ab.dateFin?new Date(ab.dateFin+'T23:59:59'):new Date(ab.dateDebut+'T23:59:59');
+        return d>=s&&d<=e;
+      });
+
+      const bars=dayAffecs.map(af=>{
+        const nom=siteNom(af.siteId);
+        const short=nom.length>15?nom.slice(0,15)+'…':nom;
+        const dateStr=day.date.toISOString().split('T')[0];
+        const weekKey=getWeekKey(weekStart);
+
+        // Permutation effective ce jour (jour précis prioritaire sur la semaine)
+        const perm=getPermutationForDay(af.siteId, dateStr, weekKey);
+        let displayAgentId = agent.id;
+        if(perm && (perm.agent1Id===agent.id || perm.agent2Id===agent.id)){
+          // Cet agent est dans un binôme permuté — on affiche le flag
+          displayAgentId = perm.agent1Id===agent.id ? perm.agent2Id : perm.agent1Id;
+        }
+        const isPermuted = perm && (perm.agent1Id===agent.id || perm.agent2Id===agent.id);
+
+        if(dayAbs){
+          if(dayAbs.remplacantId){
+            return `<div class="shift-bar shift-bar-remplace" onclick="openPanel('panel-creneau','${af.id}|${agent.id}|${dateStr}|${dayAbs.id}')">
+              <span class="shift-site">${short}</span>
+              <span class="shift-time"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M7 7h12l-3.2-3.2M17 17H5l3.2 3.2"/></svg> ${agentNom(dayAbs.remplacantId).split(' ')[0]}</span>
+            </div>`;
+          }
+          return `<div class="shift-bar shift-bar-absent" onclick="openPanel('panel-creneau','${af.id}|${agent.id}|${dateStr}|${dayAbs.id}')">
+            <span class="shift-site">${short}</span>
+            <span class="shift-time"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3.6l9 15.4H3z"/><path d="M12 9.6v4.6M12 17.2v.4"/></svg> Absent</span>
+          </div>`;
+        }
+        return `<div class="shift-bar shift-bar-present${isPermuted?' shift-permuted':''}" onclick="openPanel('panel-creneau','${af.id}|${agent.id}|${dateStr}|')">
+          <span class="shift-site">${short}</span>
+          <span class="shift-time">${isPermuted?'<svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M7 7h12l-3.2-3.2M17 17H5l3.2 3.2"/></svg> ':''} ${af.debut}</span>
+        </div>`;
+      }).join('');
+
+      return `<div class="day-cell">${bars}</div>`;
+    }).join('');
+
+    return `<div class="agent-row">
+      <div class="agent-label" onclick="openPanel('panel-agent-detail','${agent.id}')">
+        <div class="agent-name">${agent.nom}</div>
+        ${agent.remplacant?'<div class="agent-sub"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M7 7h12l-3.2-3.2M17 17H5l3.2 3.2"/></svg> Remplaçant</div>':''}
+      </div>
+      ${cells}
+    </div>`;
+  }).join('');
+
+  updateAbsenceBadge();
+}
+
+function buildTourneeFilters(){
+  updateScopeLabel();
+  const menu=document.getElementById('scope-menu');
+  if(menu && menu.classList.contains('open')){
+    renderScopeMenu(document.getElementById('scope-search-input').value);
+  }
+}
+
+function updateScopeLabel(){
+  const btn=document.getElementById('scope-btn');
+  const lbl=document.getElementById('scope-label');
+  if(!btn||!lbl) return;
+  let text='Tous les sites', filtered=false;
+  if(siteFilter){ const s=gs().find(x=>x.id===siteFilter); text=s?s.nom:'Site'; filtered=true; }
+  else if(groupeFilter){ text=groupeFilter; filtered=true; }
+  lbl.textContent=text;
+  btn.classList.toggle('filtered', filtered);
+}
+
+function _ic(path,extra){ return `<svg class="scope-ic" viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round${extra||''}">${path}</svg>`; }
+const _CHECK=`<svg class="check" viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+function _escA(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function _escH(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderScopeMenu(q=''){
+  q=(q||'').toLowerCase().trim();
+  const sites=gs();
+  const tournees=[...new Set(sites.map(s=>s.groupe).filter(Boolean))].sort();
+  const ungrouped=sites.filter(s=>!s.groupe).sort((a,b)=>a.nom.localeCompare(b.nom));
+  const allActive=!groupeFilter&&!siteFilter;
+  let html='';
+
+  if(!q){
+    html+=`<button class="scope-opt${allActive?' active':''}" data-stype="all">`+
+      _ic('<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/>')+
+      `<span class="lbl">Tous les sites</span>${_CHECK}</button>`;
+    html+=`<div class="scope-sep"></div>`;
+  }
+
+  const routeIc=_ic('<circle cx="6" cy="6.5" r="2.4"/><circle cx="18" cy="17.5" r="2.4"/><path d="M8.4 6.5H15a3 3 0 010 6H9a3 3 0 000 6h6.6"/>');
+  tournees.forEach(g=>{
+    const gsites=sites.filter(s=>s.groupe===g).sort((a,b)=>a.nom.localeCompare(b.nom));
+    const gMatch=g.toLowerCase().includes(q);
+    const shownSites=gsites.filter(s=>!q||gMatch||s.nom.toLowerCase().includes(q));
+    if(q&&!gMatch&&shownSites.length===0) return;
+    const gActive=groupeFilter===g;
+    html+=`<button class="scope-opt scope-group-opt${gActive?' active':''}" data-stype="groupe" data-sval="${_escA(g)}">`+
+      routeIc+`<span class="lbl">${_escH(g)}</span><span class="scope-count">${gsites.length}</span>${_CHECK}</button>`;
+    shownSites.forEach(s=>{
+      const sActive=siteFilter===s.id;
+      html+=`<button class="scope-opt scope-site${sActive?' active':''}" data-stype="site" data-sval="${s.id}"><span class="scope-dot"></span><span class="lbl">${_escH(s.nom)}</span>${_CHECK}</button>`;
+    });
+  });
+
+  if(ungrouped.length){
+    const us=ungrouped.filter(s=>!q||s.nom.toLowerCase().includes(q));
+    if(us.length){
+      html+=`<div class="scope-grouplabel">Sans tournée</div>`;
+      us.forEach(s=>{
+        const sActive=siteFilter===s.id;
+        html+=`<button class="scope-opt scope-site${sActive?' active':''}" data-stype="site" data-sval="${s.id}"><span class="scope-dot"></span><span class="lbl">${_escH(s.nom)}</span>${_CHECK}</button>`;
+      });
+    }
+  }
+
+  const list=document.getElementById('scope-list');
+  list.innerHTML=html||`<div class="scope-empty">Aucun résultat</div>`;
+}
+
+function selectScope(type,val){
+  if(type==='groupe'){ groupeFilter=val; siteFilter=''; }
+  else if(type==='site'){ siteFilter=val; groupeFilter=''; }
+  else { groupeFilter=''; siteFilter=''; }
+  closeScopeMenu();
+  renderPlanning();
+}
+
+function toggleScopeMenu(e){
+  e.stopPropagation();
+  const menu=document.getElementById('scope-menu'), btn=document.getElementById('scope-btn');
+  const willOpen=!menu.classList.contains('open');
+  menu.classList.toggle('open',willOpen);
+  btn.classList.toggle('open',willOpen);
+  if(willOpen){
+    const si=document.getElementById('scope-search-input');
+    si.value=''; renderScopeMenu('');
+    setTimeout(()=>si.focus(),30);
+  }
+}
+function closeScopeMenu(){
+  document.getElementById('scope-menu').classList.remove('open');
+  document.getElementById('scope-btn').classList.remove('open');
+}
+
+let siteFilter='';
+function setGroupe(g){ selectScope(g?'groupe':'all', g); }
+function setSiteFilter(v){ selectScope(v?'site':'all', v); }
+
+function updateAbsenceBadge(){
+  const n=gab().filter(ab=>ab.needsReplacement&&!ab.remplacantId).length;
+  const badge=document.getElementById('absence-count-badge');
+  badge.textContent=n;
+  badge.style.display=n>0?'inline-block':'none';
+}
+
+/* ═══════════════════════════════════════
+   PANEL — ABSENCE
+═══════════════════════════════════════ */
+let absNeedsRepl=true;
+
+function buildPanelAbsence(body,footer){
+  const agents=ga().map(a=>({v:a.id,l:a.nom}));
+  const today=new Date().toISOString().split('T')[0];
+  body.innerHTML=`
+    <div class="form-group">
+      <label class="form-label">Agent absent *</label>
+      <select class="form-input" id="pa-agent"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Date début *</label>
+        <input class="form-input" type="date" id="pa-debut" value="${today}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date fin</label>
+        <input class="form-input" type="date" id="pa-fin">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Motif</label>
+      <select class="form-input" id="pa-motif">
+        <option value="maladie">Maladie</option>
+        <option value="conges">Congés</option>
+        <option value="formation">Formation</option>
+        <option value="autre">Autre</option>
+      </select>
+    </div>
+    <div class="divider"></div>
+    <div class="form-group">
+      <div class="toggle-row">
+        <button class="toggle on" id="pa-toggle" onclick="this.classList.toggle('on');absNeedsRepl=this.classList.contains('on');document.getElementById('pa-repl-section').style.display=absNeedsRepl?'block':'none'"></button>
+        <span class="toggle-label">Remplacement nécessaire</span>
+      </div>
+    </div>
+    <div id="pa-repl-section">
+      <div class="form-group">
+        <label class="form-label">Créneaux concernés</label>
+        <div id="pa-creneaux" style="font-size:12px;color:var(--text3)">Sélectionnez un agent</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Remplaçant</label>
+        <select class="form-input" id="pa-rempl"></select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea class="form-input" id="pa-notes" placeholder="Informations complémentaires…"></textarea>
+    </div>`;
+
+  fillSel('pa-agent',agents,'Choisir un agent');
+  const rempl=ga().filter(a=>a.remplacant).map(a=>({v:a.id,l:a.nom}));
+  fillSel('pa-rempl',rempl,'Choisir un remplaçant');
+
+  document.getElementById('pa-agent').addEventListener('change',function(){
+    const afs=gaf().filter(af=>af.agentId===this.value);
+    const el=document.getElementById('pa-creneaux');
+    if(!afs.length){ el.textContent='Aucune affectation trouvée'; return; }
+    el.innerHTML=afs.map(af=>`<div class="affect-row" style="margin-bottom:4px">
+      <div class="affect-dot"></div>
+      <div style="font-size:12px"><strong>${siteNom(af.siteId)}</strong> — ${af.jours.join('+')} ${af.debut}–${af.fin}</div>
+    </div>`).join('');
+  });
+
+  absNeedsRepl=true;
+  footer.innerHTML=`
+    <button class="btn btn-secondary" onclick="closePanel()">Annuler</button>
+    <button class="btn btn-primary" onclick="saveAbsence()">Enregistrer</button>`;
+}
+
+function saveAbsence(){
+  const agentId=document.getElementById('pa-agent').value;
+  const debut=document.getElementById('pa-debut').value;
+  if(!agentId||!debut){ toast('Agent et date requis',false); return; }
+  const af=gaf().find(a=>a.agentId===agentId);
+  const abs=gab();
+  const replId=document.getElementById('pa-rempl')?.value||null;
+  abs.push({
+    id:DB.id(), agentId, dateDebut:debut,
+    dateFin:document.getElementById('pa-fin').value||null,
+    motif:document.getElementById('pa-motif').value,
+    needsReplacement:absNeedsRepl,
+    remplacantId:replId||null,
+    siteId:af?.siteId||null,
+    notes:document.getElementById('pa-notes').value,
+    createdAt:new Date().toISOString()
+  });
+  if(replId){
+    const r=gr();
+    r.push({id:DB.id(),agentAbsentId:agentId,remplacantId:replId,siteId:af?.siteId||'',date:debut,statut:'confirme',createdAt:new Date().toISOString()});
+    sr(r);
+  }
+  sab(abs);
+  closePanel();
+  toast('Absence enregistrée');
+  if(currentView==='planning') renderPlanning();
+  else renderAbsences();
+  updateAbsenceBadge();
+}
+
+/* ═══════════════════════════════════════
+   PANEL — REMPLACER
+═══════════════════════════════════════ */
+function buildPanelRemplacer(body,footer,absId){
+  const absence=gab().find(a=>a.id===absId);
+  if(!absence){ body.innerHTML='Absence introuvable'; return; }
+  const rempl=ga().filter(a=>a.remplacant&&a.id!==absence.agentId).map(a=>({v:a.id,l:a.nom}));
+
+  body.innerHTML=`
+    <div style="background:var(--red-light);border:1px solid rgba(226,109,99,.32);border-radius:var(--radius);padding:14px;margin-bottom:20px;font-size:13px">
+      <div style="font-weight:600;color:var(--red);margin-bottom:4px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3.6l9 15.4H3z"/><path d="M12 9.6v4.6M12 17.2v.4"/></svg> Absence sans remplaçant</div>
+      <div><strong>Agent :</strong> ${agentNom(absence.agentId)}</div>
+      <div><strong>Période :</strong> ${fmtDate(absence.dateDebut)}${absence.dateFin?' → '+fmtDate(absence.dateFin):''}</div>
+      <div><strong>Motif :</strong> ${absence.motif}</div>
+      ${absence.siteId?`<div><strong>Site :</strong> ${siteNom(absence.siteId)}</div>`:''}
+    </div>
+    <div class="form-group">
+      <label class="form-label">Choisir un remplaçant *</label>
+      <select class="form-input" id="pr-agent"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes pour le remplaçant</label>
+      <textarea class="form-input" id="pr-notes" placeholder="Informations pratiques, consignes…"></textarea>
+    </div>`;
+
+  fillSel('pr-agent',rempl,'Choisir un remplaçant');
+  footer.innerHTML=`
+    <button class="btn btn-secondary" onclick="closePanel()">Annuler</button>
+    <button class="btn btn-primary" onclick="confirmerRepl('${absId}')">Confirmer le remplacement</button>`;
+}
+
+function confirmerRepl(absId){
+  const replId=document.getElementById('pr-agent').value;
+  if(!replId){ toast('Choisissez un remplaçant',false); return; }
+  const abs=gab(); const absence=abs.find(a=>a.id===absId);
+  absence.remplacantId=replId;
+  sab(abs);
+  const r=gr();
+  r.push({id:DB.id(),agentAbsentId:absence.agentId,remplacantId:replId,siteId:absence.siteId||'',date:absence.dateDebut,notes:document.getElementById('pr-notes').value,statut:'confirme',createdAt:new Date().toISOString()});
+  sr(r);
+  closePanel();
+  toast('Remplacement confirmé ✓');
+  renderPlanning();
+  updateAbsenceBadge();
+}
+
+/* ═══════════════════════════════════════
+   ABSENCES VIEW
+═══════════════════════════════════════ */
+let absTab='tous';
+function tabAbsences(t,btn){
+  absTab=t;
+  document.querySelectorAll('#view-absences .tab').forEach(el=>el.classList.remove('on'));
+  btn.classList.add('on');
+  renderAbsences();
+}
+
+function renderAbsences(){
+  let abs=gab().sort((a,b)=>new Date(b.dateDebut)-new Date(a.dateDebut));
+  if(absTab==='urgent') abs=abs.filter(a=>a.needsReplacement&&!a.remplacantId);
+  if(absTab==='covered') abs=abs.filter(a=>a.remplacantId);
+  const el=document.getElementById('absences-list');
+  if(!abs.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="8.5"/><path d="M8.3 12.3l2.4 2.4 4.9-5"/></svg></div><div class="empty-text">Aucune absence à afficher</div></div>`;
+    return;
+  }
+  el.innerHTML=abs.map(a=>{
+    const urgent=a.needsReplacement&&!a.remplacantId;
+    const cls=urgent?'urgent':a.remplacantId?'covered':'';
+    const badge=a.remplacantId
+      ?`<span class="badge badge-green">Remplacé · ${agentNom(a.remplacantId)}</span>`
+      :(a.needsReplacement?`<span class="badge badge-red">Sans remplaçant</span>`:`<span class="badge badge-gray">Sans remplacement</span>`);
+    return `<div class="abs-item ${cls}">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+          <span style="font-weight:700;font-size:14px">${agentNom(a.agentId)}</span>
+          ${badge}
+          <span class="badge badge-gray">${a.motif}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2)">
+          <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg> ${fmtDate(a.dateDebut)}${a.dateFin?' → '+fmtDate(a.dateFin):''}
+          ${a.siteId?' · <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg> '+siteNom(a.siteId):''}
+          ${a.notes?' · '+a.notes:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        ${urgent?`<button class="btn btn-primary btn-sm" onclick="openPanel('panel-remplacer','${a.id}')">Attribuer</button>`:''}
+        <button class="btn-icon red" onclick="delAbsence('${a.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4.5 7h15M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function delAbsence(id){
+  if(!confirm('Supprimer cette absence ?')) return;
+  sab(gab().filter(a=>a.id!==id));
+  renderAbsences(); updateAbsenceBadge();
+  toast('Absence supprimée');
+}
+
+/* ═══════════════════════════════════════
+   HISTORIQUE
+═══════════════════════════════════════ */
+function renderHistorique(){
+  const r=gr().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const empty=document.getElementById('histo-empty');
+  const tbody=document.getElementById('histo-tbody');
+  if(!r.length){ empty.style.display='block'; tbody.innerHTML=''; return; }
+  empty.style.display='none';
+  tbody.innerHTML=r.map(x=>`<tr>
+    <td>${fmtDate(x.date)}</td>
+    <td>${siteNom(x.siteId)}</td>
+    <td>${agentNom(x.agentAbsentId)}</td>
+    <td>${agentNom(x.remplacantId)}</td>
+    <td><span class="badge badge-green">Confirmé</span></td>
+  </tr>`).join('');
+}
+
+/* ═══════════════════════════════════════
+   POINTAGE
+═══════════════════════════════════════ */
+let ptTab='tous';
+function tabPointage(t,btn){
+  ptTab=t;
+  document.querySelectorAll('#view-pointage .tab').forEach(el=>el.classList.remove('on'));
+  btn.classList.add('on');
+  renderPointage();
+}
+
+function renderPointage(){
+  const all=gpt();
+  const retards=all.filter(p=>p.type==='retard');
+  const hsups=all.filter(p=>p.type==='hsup');
+  document.getElementById('pt-stats').innerHTML=`
+    <div class="card" style="text-align:center;padding:14px">
+      <div style="font-size:24px;font-weight:800;color:var(--red)">${retards.length}</div>
+      <div style="font-size:12px;color:var(--text2)">Retards</div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px">
+      <div style="font-size:24px;font-weight:800;color:var(--orange)">${retards.reduce((s,p)=>s+Number(p.duree),0)}<span style="font-size:14px">min</span></div>
+      <div style="font-size:12px;color:var(--text2)">Total retards</div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px">
+      <div style="font-size:24px;font-weight:800;color:var(--blue)">${hsups.length}</div>
+      <div style="font-size:12px;color:var(--text2)">H.Sup</div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px">
+      <div style="font-size:24px;font-weight:800;color:var(--green)">${hsups.reduce((s,p)=>s+Number(p.duree),0)}<span style="font-size:14px">min</span></div>
+      <div style="font-size:12px;color:var(--text2)">Total H.Sup</div>
+    </div>`;
+
+  let pts=all.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(ptTab!=='tous') pts=pts.filter(p=>p.type===ptTab);
+  const empty=document.getElementById('pt-empty');
+  const list=document.getElementById('pt-list');
+  if(!pts.length){ empty.style.display='block'; list.innerHTML=''; return; }
+  empty.style.display='none';
+  list.innerHTML=pts.map(p=>`<div class="pt-item">
+    <div style="flex:1">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+        <span style="font-weight:600">${agentNom(p.agentId)}</span>
+        ${p.type==='retard'?'<span class="badge badge-orange">Retard</span>':'<span class="badge badge-blue">H.Sup</span>'}
+        <span style="font-size:12px;color:var(--text2)">${p.duree} min</span>
+      </div>
+      <div style="font-size:12px;color:var(--text3)">${fmtDate(p.date)}${p.siteId?' · '+siteNom(p.siteId):''}${p.notes?' · '+p.notes:''}</div>
+    </div>
+    <button class="btn-icon red" onclick="delPointage('${p.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4.5 7h15M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg></button>
+  </div>`).join('');
+}
+
+function buildPanelPointage(body,footer){
+  const today=new Date().toISOString().split('T')[0];
+  body.innerHTML=`
+    <div class="form-group">
+      <label class="form-label">Type *</label>
+      <select class="form-input" id="ppt-type">
+        <option value="retard">Retard</option>
+        <option value="hsup">Heure supplémentaire</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Agent *</label>
+      <select class="form-input" id="ppt-agent"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Site</label>
+      <select class="form-input" id="ppt-site"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Date *</label>
+        <input class="form-input" type="date" id="ppt-date" value="${today}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Durée (minutes) *</label>
+        <input class="form-input" type="number" id="ppt-duree" min="1" placeholder="20">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea class="form-input" id="ppt-notes"></textarea>
+    </div>`;
+  fillSel('ppt-agent',ga().map(a=>({v:a.id,l:a.nom})),'Choisir un agent');
+  fillSel('ppt-site',[{v:'',l:'— Aucun —'},...gs().map(s=>({v:s.id,l:s.nom}))]);
+  footer.innerHTML=`
+    <button class="btn btn-secondary" onclick="closePanel()">Annuler</button>
+    <button class="btn btn-primary" onclick="savePointage()">Enregistrer</button>`;
+}
+
+function savePointage(){
+  const agentId=document.getElementById('ppt-agent').value;
+  const date=document.getElementById('ppt-date').value;
+  const duree=document.getElementById('ppt-duree').value;
+  if(!agentId||!date||!duree){ toast('Champs requis manquants',false); return; }
+  const pts=gpt();
+  pts.push({id:DB.id(),type:document.getElementById('ppt-type').value,agentId,siteId:document.getElementById('ppt-site').value,date,duree:Number(duree),notes:document.getElementById('ppt-notes').value,createdAt:new Date().toISOString()});
+  spt(pts); closePanel(); toast('Événement enregistré'); renderPointage();
+}
+
+function delPointage(id){
+  if(!confirm('Supprimer ?')) return;
+  spt(gpt().filter(p=>p.id!==id)); renderPointage(); toast('Supprimé');
+}
+
+/* ═══════════════════════════════════════
+   AGENTS
+═══════════════════════════════════════ */
+let agTab='tous';
+function tabAgents(t,btn){
+  agTab=t;
+  document.querySelectorAll('#view-agents .tab').forEach(el=>el.classList.remove('on'));
+  btn.classList.add('on');
+  renderAgents();
+}
+
+function renderAgents(){
+  let agents=ga();
+  const q=(document.getElementById('search-agents')?.value||'').toLowerCase();
+  if(q) agents=agents.filter(a=>a.nom.toLowerCase().includes(q));
+  if(agTab==='remplacant') agents=agents.filter(a=>a.remplacant);
+  if(agTab==='fixe') agents=agents.filter(a=>!a.remplacant);
+  document.getElementById('agents-sub').textContent=`${agents.length} agent${agents.length>1?'s':''}`;
+  const grid=document.getElementById('agents-grid');
+  if(!agents.length){ grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg></div><div class="empty-text">Aucun agent trouvé</div></div>`; return; }
+  grid.innerHTML=agents.map(a=>{
+    const afs=gaf().filter(af=>af.agentId===a.id);
+    return `<div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--blue-light);color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0">${a.nom.charAt(0)}</div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13px">${a.nom}</div>
+          ${a.remplacant?'<span class="badge badge-orange" style="font-size:10px">Remplaçant</span>':''}
+        </div>
+        <button class="btn-icon" onclick="openPanel('panel-agent','${a.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></button>
+        <button class="btn-icon red" onclick="delAgent('${a.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4.5 7h15M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg></button>
+      </div>
+      ${a.tel?`<div style="font-size:12px;color:var(--text3);margin-bottom:3px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M5 4h3l1.5 4-2 1.5a11 11 0 005 5l1.5-2 4 1.5v3a2 2 0 01-2 2A15 15 0 014 6a2 2 0 011-2z"/></svg> ${a.tel}</div>`:''}
+      ${a.email?`<div style="font-size:12px;color:var(--text3);margin-bottom:3px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M4 7.5l8 5.5 8-5.5"/></svg> ${a.email}</div>`:''}
+      ${a.notes?`<div style="font-size:12px;color:var(--text2);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">${a.notes}</div>`:''}
+      ${afs.length?`<div style="font-size:11px;color:var(--text3);margin-top:8px">${afs.length} affectation${afs.length>1?'s':''}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function buildPanelAgent(body,footer,id){
+  const a=id?ga().find(x=>x.id===id):null;
+  body.innerHTML=`
+    <div class="form-group">
+      <label class="form-label">Nom *</label>
+      <input class="form-input" type="text" id="pa2-nom" value="${a?.nom||''}" placeholder="NOM Prénom">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Téléphone</label>
+        <input class="form-input" type="text" id="pa2-tel" value="${a?.tel||''}" placeholder="06 xx xx xx xx">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="pa2-email" value="${a?.email||''}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea class="form-input" id="pa2-notes">${a?.notes||''}</textarea>
+    </div>
+    <div class="form-group">
+      <div class="toggle-row">
+        <button class="toggle${a?.remplacant?' on':''}" id="pa2-toggle" onclick="this.classList.toggle('on')"></button>
+        <span class="toggle-label">Disponible comme remplaçant</span>
+      </div>
+    </div>
+    <input type="hidden" id="pa2-id" value="${id||''}">`;
+  footer.innerHTML=`
+    <button class="btn btn-secondary" onclick="closePanel()">Annuler</button>
+    <button class="btn btn-primary" onclick="saveAgent()">Enregistrer</button>`;
+}
+
+function saveAgent(){
+  const nom=document.getElementById('pa2-nom').value.trim();
+  if(!nom){ toast('Nom requis',false); return; }
+  const id=document.getElementById('pa2-id').value;
+  const agents=ga();
+  const data={nom,tel:document.getElementById('pa2-tel').value,email:document.getElementById('pa2-email').value,notes:document.getElementById('pa2-notes').value,remplacant:document.getElementById('pa2-toggle').classList.contains('on')};
+  if(id){ const i=agents.findIndex(a=>a.id===id); agents[i]={...agents[i],...data}; }
+  else agents.push({id:DB.id(),...data});
+  sa(agents); closePanel(); toast(id?'Agent modifié':'Agent ajouté'); renderAgents();
+}
+
+function delAgent(id){
+  if(!confirm('Supprimer cet agent ?')) return;
+  sa(ga().filter(a=>a.id!==id));
+  saf(gaf().filter(af=>af.agentId!==id));
+  renderAgents(); toast('Agent supprimé');
+}
+
+function buildPanelAgentDetail(body,footer,id){
+  const a=ga().find(x=>x.id===id);
+  if(!a){ body.innerHTML='Agent introuvable'; return; }
+  const afs=gaf().filter(af=>af.agentId===id);
+  body.innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--blue-light);color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px">${a.nom.charAt(0)}</div>
+      <div>
+        <div style="font-size:16px;font-weight:700">${a.nom}</div>
+        ${a.remplacant?'<span class="badge badge-orange">Remplaçant</span>':''}
+      </div>
+    </div>
+    ${a.tel?`<div style="font-size:13px;margin-bottom:8px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M5 4h3l1.5 4-2 1.5a11 11 0 005 5l1.5-2 4 1.5v3a2 2 0 01-2 2A15 15 0 014 6a2 2 0 011-2z"/></svg> ${a.tel}</div>`:''}
+    ${a.email?`<div style="font-size:13px;margin-bottom:8px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M4 7.5l8 5.5 8-5.5"/></svg> ${a.email}</div>`:''}
+    ${a.notes?`<div style="font-size:13px;color:var(--text2);margin-bottom:16px">${a.notes}</div>`:''}
+    <div class="form-section">Affectations</div>
+    ${afs.length?afs.map(af=>`<div class="affect-row">
+      <div class="affect-dot"></div>
+      <div class="affect-info">
+        <div class="affect-site">${siteNom(af.siteId)}</div>
+        <div class="affect-detail">${af.jours.join(', ')} · ${af.debut}–${af.fin}
+          <span class="semaine-tag ${af.semaine==='A'?'semaine-a':af.semaine==='B'?'semaine-b':'semaine-all'}">${af.semaine==='toutes'?'Toutes sem.':'Sem. '+af.semaine}</span>
+        </div>
+      </div>
+    </div>`).join(''):`<div style="font-size:13px;color:var(--text3)">Aucune affectation</div>`}`;
+  footer.innerHTML=`<button class="btn btn-secondary" onclick="openPanel('panel-agent','${id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg> Modifier</button>`;
+}
+
+/* ═══════════════════════════════════════
+   SITES
+═══════════════════════════════════════ */
+let siteCrns=[];
+
+function renderSites(){
+  let sites=gs();
+  const q=(document.getElementById('search-sites')?.value||'').toLowerCase();
+  if(q) sites=sites.filter(s=>s.nom.toLowerCase().includes(q)||(s.groupe||'').toLowerCase().includes(q));
+  document.getElementById('sites-sub').textContent=`${sites.length} site${sites.length>1?'s':''}`;
+  const grid=document.getElementById('sites-grid');
+  if(!sites.length){ grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg></div><div class="empty-text">Aucun site</div></div>`; return; }
+  grid.innerHTML=sites.map(s=>{
+    const afs=gaf().filter(af=>af.siteId===s.id);
+    const agents=[...new Set(afs.map(af=>af.agentId))];
+    return `<div class="card">
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
+        <div style="font-size:20px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg></div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13px">${s.nom}</div>
+          ${s.groupe?`<span class="badge badge-blue" style="font-size:10px">${s.groupe}</span>`:''}
+        </div>
+        <button class="btn-icon" onclick="openPanel('panel-site','${s.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></button>
+        <button class="btn-icon red" onclick="delSite('${s.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4.5 7h15M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg></button>
+      </div>
+      ${s.adresse?`<div style="font-size:12px;color:var(--text3);margin-bottom:6px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> ${s.adresse}</div>`:''}
+      ${s.creneaux?.length?`<div style="font-size:12px;color:var(--text2)"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8.5V12.5l3 1.8"/></svg> ${s.creneaux.map(c=>c.jours.slice(0,2).join('+')+' '+c.debut+'–'+c.fin).join(' · ')}</div>`:''}
+      ${agents.length?`<div style="font-size:11px;color:var(--text3);margin-top:6px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg> ${agents.length} agent${agents.length>1?'s':''}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function buildPanelSite(body,footer,id){
+  const s=id?gs().find(x=>x.id===id):null;
+  siteCrns=s?JSON.parse(JSON.stringify(s.creneaux||[])):[];
+  body.innerHTML=`
+    <div class="form-group">
+      <label class="form-label">Nom *</label>
+      <input class="form-input" type="text" id="ps-nom" value="${s?.nom||''}" placeholder="Ex: Aéroport de Bordeaux">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Adresse</label>
+        <input class="form-input" type="text" id="ps-adresse" value="${s?.adresse||''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Groupe / Tournée</label>
+        <input class="form-input" type="text" id="ps-groupe" value="${s?.groupe||''}" placeholder="Ex: Tournée Karima">
+      </div>
+    </div>
+    <div class="form-section">Contact sur site</div>
+    <div class="form-group">
+      <label class="form-label">Nom du contact</label>
+      <input class="form-input" type="text" id="ps-contact" value="${s?.contact||''}" placeholder="Ex: Jean Dupont — Responsable accueil">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Téléphone</label>
+        <input class="form-input" type="text" id="ps-tel" value="${s?.tel||''}" placeholder="05 xx xx xx xx">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="ps-email" value="${s?.email||''}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Particularités / Notes</label>
+      <textarea class="form-input" id="ps-notes" placeholder="Accès, code badge, consignes particulières…">${s?.notes||''}</textarea>
+    </div>
+    <div class="form-section">Créneaux d'ouverture</div>
+    <div id="ps-crns"></div>
+    <button class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="addSiteCrn()">+ Ajouter un créneau</button>
+    <input type="hidden" id="ps-id" value="${id||''}">`;
+  renderSiteCrns();
+  footer.innerHTML=`
+    <button class="btn btn-secondary" onclick="closePanel()">Annuler</button>
+    <button class="btn btn-primary" onclick="saveSite()">Enregistrer</button>`;
+}
+
+function renderSiteCrns(){
+  const el=document.getElementById('ps-crns');
+  if(!el) return;
+  if(!siteCrns.length){ el.innerHTML=`<div style="font-size:12px;color:var(--text3);padding:8px 0">Aucun créneau</div>`; return; }
+  el.innerHTML=siteCrns.map((c,i)=>`<div class="affect-row">
+    <div class="affect-dot" style="background:var(--green)"></div>
+    <div class="affect-info">
+      <div style="font-size:12px;font-weight:600">${c.jours.join(', ')}</div>
+      <div style="font-size:11px;color:var(--text3)">${c.debut} – ${c.fin}</div>
+    </div>
+    <button class="btn-icon red" onclick="siteCrns.splice(${i},1);renderSiteCrns()"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4.5 7h15M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg></button>
+  </div>`).join('');
+}
+
+function addSiteCrn(){
+  const j=prompt('Jours (ex: Lun,Mar,Mer,Jeu,Ven) :'); if(!j) return;
+  const d=prompt('Heure début (ex: 09:00) :'); if(!d) return;
+  const f=prompt('Heure fin (ex: 17:00) :'); if(!f) return;
+  siteCrns.push({jours:j.split(',').map(x=>x.trim()),debut:d,fin:f});
+  renderSiteCrns();
+}
+
+function saveSite(){
+  const nom=document.getElementById('ps-nom').value.trim();
+  if(!nom){ toast('Nom requis',false); return; }
+  const id=document.getElementById('ps-id').value;
+  const sites=gs();
+  const data={nom,adresse:document.getElementById('ps-adresse').value,groupe:document.getElementById('ps-groupe').value,contact:document.getElementById('ps-contact').value,tel:document.getElementById('ps-tel').value,email:document.getElementById('ps-email').value,notes:document.getElementById('ps-notes').value,creneaux:siteCrns};
+  if(id){ const i=sites.findIndex(s=>s.id===id); sites[i]={...sites[i],...data}; }
+  else sites.push({id:DB.id(),...data});
+  ss(sites); closePanel(); toast(id?'Site modifié':'Site ajouté'); renderSites();
+  buildTourneeFilters();
+}
+
+function delSite(id){
+  if(!confirm('Supprimer ce site ?')) return;
+  ss(gs().filter(s=>s.id!==id));
+  saf(gaf().filter(af=>af.siteId!==id));
+  renderSites(); toast('Site supprimé'); buildTourneeFilters();
+}
+
+/* ═══════════════════════════════════════
+   AFFECTATIONS
+═══════════════════════════════════════ */
+function renderAffect(){
+  const q=(document.getElementById('search-affect')?.value||'').toLowerCase();
+  let agents=ga();
+  const afs=gaf();
+  if(q){
+    const matched=agents.filter(a=>{
+      if(a.nom.toLowerCase().includes(q)) return true;
+      return afs.filter(af=>af.agentId===a.id).some(af=>siteNom(af.siteId).toLowerCase().includes(q));
+    });
+    agents=matched;
+  }
+  const el=document.getElementById('affect-list');
+  if(!agents.length){ el.innerHTML=`<div class="empty"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="4" y="4" width="7" height="7" rx="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.6"/><rect x="13" y="13" width="7" height="7" rx="1.6"/></svg></div><div class="empty-text">Aucun résultat</div></div>`; return; }
+  el.innerHTML=agents.map(a=>{
+    const agAfs=afs.filter(af=>af.agentId===a.id);
+    return `<div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:${agAfs.length?'12px':'0'}">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--blue-light);color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">${a.nom.charAt(0)}</div>
+        <div style="flex:1;font-weight:700">${a.nom}</div>
+        <button class="btn btn-secondary btn-sm" onclick="openPanel('panel-affect',{agentId:'${a.id}'})">+ Créneau</button>
+      </div>
+      ${agAfs.map(af=>`<div class="affect-row">
+        <div class="affect-dot"></div>
+        <div class="affect-info">
+          <div class="affect-site">${siteNom(af.siteId)}</div>
+          <div class="affect-detail">${af.jours.join(', ')} · ${af.debut}–${af.fin}
+            <span class="semaine-tag ${af.semaine==='A'?'semaine-a':af.semaine==='B'?'semaine-b':'semaine-all'}">${af.semaine==='toutes'?'Toutes':'Sem. '+af.semaine}</span>
+            ${af.notes?'· '+af.notes:''}
+          </div>
+        </div>
+        <button class="btn-icon" onclick="openPanel('panel-affect','${af.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></button>
+        <button class="btn-icon red" onclick="delAffect('${af.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4.5 7h15M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg></button>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function buildPanelAffect(body,footer,data){
+  // data peut être un id d'affectation (string) ou {agentId} (objet)
+  const isEdit=typeof data==='string';
+  const af=isEdit?gaf().find(x=>x.id===data):null;
+  const preAgent=typeof data==='object'&&data?.agentId?data.agentId:'';
+  const JOURS_LABELS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+  body.innerHTML=`
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Agent *</label>
+        <select class="form-input" id="paf-agent"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Site *</label>
+        <select class="form-input" id="paf-site"></select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Jours *</label>
+      <div class="jours-row" id="paf-jours">
+        ${JOURS_LABELS.map(j=>`<button class="jour-pill${af?.jours.includes(j)?' on':''}" data-j="${j}" onclick="this.classList.toggle('on')">${j}</button>`).join('')}
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Heure début *</label>
+        <input class="form-input" type="time" id="paf-debut" value="${af?.debut||''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Heure fin *</label>
+        <input class="form-input" type="time" id="paf-fin" value="${af?.fin||''}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Récurrence</label>
+      <select class="form-input" id="paf-sem">
+        <option value="toutes" ${af?.semaine==='toutes'||!af?'selected':''}>Toutes les semaines</option>
+        <option value="A" ${af?.semaine==='A'?'selected':''}>Semaine A uniquement</option>
+        <option value="B" ${af?.semaine==='B'?'selected':''}>Semaine B uniquement</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <input class="form-input" type="text" id="paf-notes" value="${af?.notes||''}" placeholder="Ex: Accueil principal">
+    </div>
+    <input type="hidden" id="paf-id" value="${isEdit?data:''}">`;
+
+  fillSel('paf-agent',ga().map(a=>({v:a.id,l:a.nom})),'Choisir un agent');
+  fillSel('paf-site',gs().map(s=>({v:s.id,l:s.nom})),'Choisir un site');
+  if(af){ document.getElementById('paf-agent').value=af.agentId; document.getElementById('paf-site').value=af.siteId; }
+  else if(preAgent) document.getElementById('paf-agent').value=preAgent;
+
+  footer.innerHTML=`
+    <button class="btn btn-secondary" onclick="closePanel()">Annuler</button>
+    <button class="btn btn-primary" onclick="saveAffect()">Enregistrer</button>`;
+}
+
+function saveAffect(){
+  const agentId=document.getElementById('paf-agent').value;
+  const siteId=document.getElementById('paf-site').value;
+  const jours=[...document.querySelectorAll('#paf-jours .jour-pill.on')].map(b=>b.dataset.j);
+  const debut=document.getElementById('paf-debut').value;
+  const fin=document.getElementById('paf-fin').value;
+  if(!agentId||!siteId||!jours.length||!debut||!fin){ toast('Tous les champs requis',false); return; }
+  const id=document.getElementById('paf-id').value;
+  const afs=gaf();
+  const data={agentId,siteId,jours,debut,fin,semaine:document.getElementById('paf-sem').value,notes:document.getElementById('paf-notes').value};
+  if(id){ const i=afs.findIndex(a=>a.id===id); afs[i]={...afs[i],...data}; }
+  else afs.push({id:DB.id(),...data});
+  saf(afs); closePanel(); toast(id?'Affectation modifiée':'Affectation créée'); renderAffect();
+}
+
+function delAffect(id){
+  if(!confirm('Supprimer ?')) return;
+  saf(gaf().filter(a=>a.id!==id)); renderAffect(); toast('Supprimée');
+}
+
+/* ═══════════════════════════════════════
+   PANEL — DÉTAIL CRÉNEAU
+   data = "afId|agentId|dateStr|absId"
+═══════════════════════════════════════ */
+function buildPanelCreneau(body,footer,raw){
+  const [afId,agentId,dateStr,absId]=raw.split('|');
+  const af=gaf().find(x=>x.id===afId);
+  const agent=ga().find(x=>x.id===agentId);
+  const site=gs().find(x=>x.id===af?.siteId);
+  const absence=absId?gab().find(x=>x.id===absId):null;
+  const dateLabel=new Date(dateStr+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+
+  if(!af||!agent||!site){ body.innerHTML='<div class="empty"><div class="empty-text">Créneau introuvable</div></div>'; return; }
+
+  // Statut
+  let statusHtml='';
+  if(absence){
+    if(absence.remplacantId){
+      const repl=ga().find(a=>a.id===absence.remplacantId);
+      statusHtml=`<div style="background:var(--orange-light);border:1px solid rgba(224,164,88,.32);border-radius:var(--radius);padding:14px;margin-bottom:20px">
+        <div style="font-weight:700;color:var(--orange);margin-bottom:6px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M7 7h12l-3.2-3.2M17 17H5l3.2 3.2"/></svg> Créneau remplacé</div>
+        <div style="font-size:13px">Agent absent : <strong>${agent.nom}</strong></div>
+        <div style="font-size:13px">Remplaçant : <strong>${repl?.nom||'—'}</strong></div>
+        ${repl?.tel?`<div style="font-size:12px;color:var(--text2);margin-top:4px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M5 4h3l1.5 4-2 1.5a11 11 0 005 5l1.5-2 4 1.5v3a2 2 0 01-2 2A15 15 0 014 6a2 2 0 011-2z"/></svg> ${repl.tel}</div>`:''}
+        ${repl?.email?`<div style="font-size:12px;color:var(--text2)"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M4 7.5l8 5.5 8-5.5"/></svg> ${repl.email}</div>`:''}
+      </div>`;
+    } else {
+      statusHtml=`<div style="background:var(--red-light);border:1px solid rgba(226,109,99,.32);border-radius:var(--radius);padding:14px;margin-bottom:20px">
+        <div style="font-weight:700;color:var(--red);margin-bottom:4px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3.6l9 15.4H3z"/><path d="M12 9.6v4.6M12 17.2v.4"/></svg> Agent absent — sans remplaçant</div>
+        <div style="font-size:12px;color:var(--text2)">Motif : ${absence.motif} · ${absence.notes||''}</div>
+      </div>`;
+    }
+  } else {
+    statusHtml=`<div style="background:var(--green-light);border:1px solid rgba(116,199,156,.32);border-radius:var(--radius);padding:10px 14px;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+      <span style="color:var(--green);font-size:16px">✓</span>
+      <span style="font-weight:600;color:var(--green);font-size:13px">Présent</span>
+    </div>`;
+  }
+
+  // Infos créneau
+  const semTag=af.semaine==='A'?'<span class="semaine-tag semaine-a">Sem. A</span>':af.semaine==='B'?'<span class="semaine-tag semaine-b">Sem. B</span>':'<span class="semaine-tag semaine-all">Toutes semaines</span>';
+
+  body.innerHTML=`
+    <!-- Date -->
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:16px">${dateLabel}</div>
+
+    ${statusHtml}
+
+    <!-- Agent -->
+    <div class="form-section">Agent</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;cursor:pointer" onclick="openPanel('panel-agent-detail','${agent.id}')">
+      <div style="width:38px;height:38px;border-radius:50%;background:var(--blue-light);color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0">${agent.nom.charAt(0)}</div>
+      <div>
+        <div style="font-weight:700;font-size:14px">${agent.nom}</div>
+        ${agent.remplacant?'<span class="badge badge-orange" style="font-size:10px">Remplaçant</span>':''}
+        ${agent.tel?`<div style="font-size:12px;color:var(--text2)"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M5 4h3l1.5 4-2 1.5a11 11 0 005 5l1.5-2 4 1.5v3a2 2 0 01-2 2A15 15 0 014 6a2 2 0 011-2z"/></svg> ${agent.tel}</div>`:''}
+      </div>
+      <span style="margin-left:auto;color:var(--text3);font-size:12px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </div>
+
+    <!-- Créneau -->
+    <div class="form-section">Créneau</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px">
+        <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Horaires</div>
+        <div style="font-size:16px;font-weight:700">${af.debut}<span style="color:var(--text3)"> – </span>${af.fin}</div>
+      </div>
+      <div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px">
+        <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Jours</div>
+        <div style="font-size:13px;font-weight:600">${af.jours.join(' · ')}</div>
+        <div style="margin-top:4px">${semTag}</div>
+      </div>
+    </div>
+    ${af.notes?`<div style="font-size:12px;color:var(--text2);font-style:italic;margin-bottom:16px">💬 ${af.notes}</div>`:''}
+
+    <!-- Site -->
+    <div class="form-section">Site</div>
+    <div style="background:var(--bg);border-radius:var(--radius);padding:14px;margin-bottom:8px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:6px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg> ${site.nom}</div>
+      ${site.groupe?`<div style="margin-bottom:6px"><span class="badge badge-blue" style="font-size:10px">${site.groupe}</span></div>`:''}
+      ${site.adresse?`<div style="font-size:12px;color:var(--text2);margin-bottom:4px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> ${site.adresse}</div>`:''}
+      ${site.contact?`<div style="font-size:12px;color:var(--text2);margin-bottom:2px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg> Contact : ${site.contact}</div>`:''}
+      ${site.tel?`<div style="font-size:12px;color:var(--text2);margin-bottom:2px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M5 4h3l1.5 4-2 1.5a11 11 0 005 5l1.5-2 4 1.5v3a2 2 0 01-2 2A15 15 0 014 6a2 2 0 011-2z"/></svg> ${site.tel}</div>`:''}
+      ${site.email?`<div style="font-size:12px;color:var(--text2);margin-bottom:2px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M4 7.5l8 5.5 8-5.5"/></svg> ${site.email}</div>`:''}
+      ${site.notes?`<div style="font-size:12px;color:var(--text2);margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-style:italic">${site.notes}</div>`:''}
+      ${site.creneaux?.length?`<div style="font-size:11px;color:var(--text3);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8.5V12.5l3 1.8"/></svg> Plages site : ${site.creneaux.map(c=>c.debut+'–'+c.fin).join(' · ')}</div>`:''}
+    </div>`;
+
+  // Footer selon statut
+  if(absence && !absence.remplacantId){
+    footer.innerHTML=`
+      <button class="btn btn-secondary" onclick="closePanel()">Fermer</button>
+      <button class="btn btn-danger" onclick="openPanel('panel-remplacer','${absence.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3.6l9 15.4H3z"/><path d="M12 9.6v4.6M12 17.2v.4"/></svg> Trouver un remplaçant</button>`;
+  } else if(!absence){
+    // Chercher binôme sur le même site (même créneau, même jours)
+    const binome=gaf().filter(b=>b.siteId===af.siteId && b.id!==af.id && b.agentId!==agent.id && b.jours.some(j=>af.jours.includes(j)));
+    const weekKey=getWeekKey(weekStart);
+    const dayPerm=getDayPermutation(af.siteId, dateStr);
+    const weekPerm=getWeekPermutation(af.siteId, weekKey);
+    const swapIc='<svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M7 7h12l-3.2-3.2M17 17H5l3.2 3.2"/></svg>';
+
+    let permHTML='';
+    if(binome.length>0){
+      const existing=[];
+      if(dayPerm) existing.push({p:dayPerm,label:'ce jour'});
+      if(weekPerm) existing.push({p:weekPerm,label:'cette semaine'});
+      if(existing.length){
+        permHTML=`<div class="form-section">Permutation de shift</div>`+existing.map(({p,label})=>`
+          <div style="background:var(--purple-light);border:1px solid rgba(160,130,240,.32);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;font-size:13px">
+            ${swapIc} Shifts permutés <strong>${label}</strong> avec <strong>${agentNom(p.agent1Id===agent.id?p.agent2Id:p.agent1Id)}</strong>
+            <br><span style="font-size:11px;color:var(--text3)">Par ${p.createdBy}</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:12px" onclick="deletePermutationById('${p.id}')">Annuler la permutation (${label})</button>`).join('');
+      } else {
+        const binomeOptions=binome.map(b=>`<option value="${b.agentId}">${agentNom(b.agentId)} (${b.debut}–${b.fin})</option>`).join('');
+        permHTML=`
+          <div class="form-section">Permutation de shift</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Échanger les shifts avec un autre agent du site.</div>
+          <div class="form-group">
+            <label class="form-label">Permuter avec</label>
+            <select class="form-input" id="perm-binome">${binomeOptions}</select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Portée de la permutation</label>
+            <div class="seg" id="perm-scope-seg">
+              <button type="button" class="seg-btn active" data-scope="jour" onclick="segPick(this)">Cette journée</button>
+              <button type="button" class="seg-btn" data-scope="semaine" onclick="segPick(this)">Toute la semaine</button>
+            </div>
+            <div class="seg-hint" id="perm-scope-hint" data-day="Uniquement le ${dateLabel}." data-week="Toute la semaine en cours (lun → ven).">Uniquement le ${dateLabel}.</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:8px;border-color:var(--purple);color:var(--purple)" onclick="savePermutation('${af.siteId}','${agent.id}',document.getElementById('perm-binome').value,document.querySelector('#perm-scope-seg .seg-btn.active').dataset.scope,'${dateStr}')">${swapIc} Valider la permutation</button>`;
+      }
+    }
+
+    // Injecter dans le body avant le footer
+    const existingPerm=body.querySelector('#perm-section');
+    if(!existingPerm && permHTML){
+      body.insertAdjacentHTML('beforeend', `<div id="perm-section">${permHTML}</div>`);
+    }
+
+    footer.innerHTML=`
+      <button class="btn btn-secondary" onclick="closePanel()">Fermer</button>
+      <button class="btn btn-primary" onclick="absenceDepuisCreneau('${agentId}','${dateStr}','${af.siteId}')">Déclarer absent</button>`;
+  } else {
+    footer.innerHTML=`<button class="btn btn-secondary" onclick="closePanel()">Fermer</button>`;
+  }
+}
+
+function absenceDepuisCreneau(agentId, dateStr, siteId){
+  // Pré-remplit le panneau absence avec l'agent et la date déjà renseignés
+  openPanel('panel-absence');
+  // Attendre que le DOM soit rendu puis pré-remplir
+  setTimeout(()=>{
+    const sel=document.getElementById('pa-agent');
+    if(sel){ sel.value=agentId; sel.dispatchEvent(new Event('change')); }
+    const dt=document.getElementById('pa-debut');
+    if(dt) dt.value=dateStr;
+    const dtf=document.getElementById('pa-fin');
+    if(dtf) dtf.value=dateStr;
+  },50);
+}
+
+/* ═══════════════════════════════════════
+   VERSIONING & UTILISATEUR
+═══════════════════════════════════════ */
+const DATA_KEYS = ['sites','agents','affec','absences','rempl','pointage','permut'];
+let _loadedVersion = 0;     // version du fichier qu'on a chargé
+let _loadedMeta = null;     // meta du fichier chargé
+let _pendingImportData = null; // données en attente si conflit
+
+function getCurrentUser(){
+  return localStorage.getItem('gope_username') || '';
+}
+function setCurrentUser(name){
+  localStorage.setItem('gope_username', name);
+}
+
+function fmtRelative(isoStr){
+  if(!isoStr) return '—';
+  const diff = Date.now() - new Date(isoStr).getTime();
+  const min = Math.floor(diff/60000);
+  const h = Math.floor(min/60);
+  const d = Math.floor(h/24);
+  if(min < 1) return 'à l\'instant';
+  if(min < 60) return `il y a ${min} min`;
+  if(h < 24) return `il y a ${h}h`;
+  return `il y a ${d}j`;
+}
+
+function updateSyncBar(meta){
+  const el = document.getElementById('sync-bar');
+  if(!el || !meta) return;
+  const v = meta._version || '—';
+  const who = meta._lastModifiedBy || '—';
+  const when = fmtRelative(meta._lastModifiedAt);
+  el.innerHTML = `<span style="color:var(--text3);font-size:11px">v${v} · ${who} · ${when}</span>`;
+}
+
+/* ═══════════════════════════════════════
+   IMPORT / EXPORT
+═══════════════════════════════════════ */
+function exportData(){
+  const user = getCurrentUser();
+  if(!user){ toast('Définissez votre nom avant d\'exporter', false); openDataModal(); return; }
+
+  const data = {};
+  DATA_KEYS.forEach(k => data[k] = DB.get(k));
+  data._version = (_loadedVersion || 0) + 1;
+  data._lastModifiedBy = user;
+  data._lastModifiedAt = new Date().toISOString();
+  data._appVersion = '2.1';
+
+  // Met à jour la version locale
+  _loadedVersion = data._version;
+  _loadedMeta = data;
+  updateSyncBar(data);
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'gestion-ope-data.json';
+  a.click();
+  toast(`v${data._version} exportée — remplacez le fichier partagé`);
+}
+
+function importData(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+
+      // Vérifier conflit : version chargée < version du fichier ET on a des données locales
+      const hasLocalData = DB.get('agents').length > 0;
+      const fileVersion = data._version || 0;
+      if(hasLocalData && _loadedVersion > 0 && fileVersion < _loadedVersion){
+        // Notre version est plus récente — pas de conflit, on écrase le fichier
+      }
+      if(hasLocalData && _loadedVersion > 0 && fileVersion > _loadedVersion){
+        // Le fichier est plus récent — OK, on charge
+      }
+      if(hasLocalData && _loadedVersion > 0 && fileVersion === _loadedVersion &&
+         data._lastModifiedBy && data._lastModifiedBy !== getCurrentUser()){
+        // Même version mais modifié par quelqu'un d'autre — conflit potentiel
+        _pendingImportData = data;
+        showConflictWarning(data);
+        return;
+      }
+
+      applyImport(data);
+    } catch {
+      toast('Fichier invalide', false);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function applyImport(data){
+  DATA_KEYS.forEach(k => { if(data[k]) DB.set(k, data[k]); });
+  _loadedVersion = data._version || 0;
+  _loadedMeta = data;
+  updateSyncBar(data);
+  closeDataModal();
+  hideConflictWarning();
+  toast(`v${_loadedVersion} chargée ✓`);
+  updateAbsenceBadge();
+  showView('planning');
+}
+
+function showConflictWarning(data){
+  const el = document.getElementById('conflict-warning');
+  if(!el) return;
+  const who = data._lastModifiedBy || '?';
+  const when = fmtRelative(data._lastModifiedAt);
+  document.getElementById('conflict-text').innerHTML =
+    `<svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3.6l9 15.4H3z"/><path d="M12 9.6v4.6M12 17.2v.4"/></svg> Ce fichier a été modifié par <strong>${who}</strong> ${when}.<br>
+     Charger ce fichier remplacera vos données locales non exportées.`;
+  el.style.display = 'block';
+}
+
+function hideConflictWarning(){
+  const el = document.getElementById('conflict-warning');
+  if(el) el.style.display = 'none';
+  _pendingImportData = null;
+}
+
+function confirmImport(){
+  if(_pendingImportData) applyImport(_pendingImportData);
+}
+
+function openDataModal(){
+  // Si pas de nom utilisateur → montrer l'étape nom d'abord
+  const user = getCurrentUser();
+  document.getElementById('step-name').style.display = user ? 'none' : 'block';
+  document.getElementById('step-sync').style.display = user ? 'block' : 'none';
+  if(user) document.getElementById('modal-username-display').textContent = user;
+  hideConflictWarning();
+  document.getElementById('data-modal').style.display = 'flex';
+}
+
+function closeDataModal(){
+  document.getElementById('data-modal').style.display = 'none';
+}
+
+function skipImport(){
+  const user = getCurrentUser();
+  if(!user){ toast('Entrez votre nom pour continuer', false); return; }
+  closeDataModal();
+  updateAbsenceBadge();
+  showView('planning');
+}
+
+function saveName(){
+  const name = document.getElementById('input-username').value.trim();
+  if(!name){ toast('Entrez votre prénom', false); return; }
+  setCurrentUser(name);
+  document.getElementById('step-name').style.display = 'none';
+  document.getElementById('step-sync').style.display = 'block';
+  document.getElementById('modal-username-display').textContent = name;
+}
+
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', function(){
+  seed();
+  updateAbsenceBadge();
+  const sl=document.getElementById('scope-list');
+  if(sl) sl.addEventListener('click', e=>{
+    const btn=e.target.closest('.scope-opt'); if(!btn) return;
+    selectScope(btn.dataset.stype, btn.dataset.sval||'');
+  });
+  document.addEventListener('click', e=>{
+    if(!e.target.closest('#scope-filter')) closeScopeMenu();
+  });
+  openDataModal();
+});
+</script>
+
+<!-- ══ MODAL DONNÉES ══════════════════════════════════════════ -->
+<div id="data-modal" style="
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.55); z-index:999;
+  align-items:center; justify-content:center;
+">
+  <div style="
+    background:var(--white); border-radius:12px;
+    padding:36px 40px; max-width:420px; width:90%;
+    box-shadow:0 8px 32px rgba(0,0,0,.18);
+  ">
+
+    <!-- Étape 1 : nom utilisateur -->
+    <div id="step-name">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:28px;margin-bottom:10px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M6 9a6 6 0 1112 0c0 5 2 6.5 2 6.5H4S6 14 6 9"/><path d="M10 20.5a2 2 0 004 0"/></svg></div>
+        <div style="font-size:17px;font-weight:800;margin-bottom:6px">Bienvenue sur Gestion Opé</div>
+        <div style="font-size:13px;color:var(--text2)">Entrez votre prénom pour qu'on sache qui modifie les données.</div>
+      </div>
+      <input type="text" id="input-username" placeholder="Votre prénom (ex: Jonathan)"
+        style="width:100%;height:38px;padding:0 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:12px;font-family:var(--font)"
+        onkeydown="if(event.key==='Enter') saveName()">
+      <button onclick="saveName()" style="
+        width:100%;height:40px;background:var(--blue);color:#000;
+        border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;
+      ">Continuer →</button>
+    </div>
+
+    <!-- Étape 2 : sync -->
+    <div id="step-sync" style="display:none">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:28px;margin-bottom:10px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 6.5A1.5 1.5 0 015.5 5h4l2 2.5h7A1.5 1.5 0 0120 9v9.5A1.5 1.5 0 0118.5 20h-13A1.5 1.5 0 014 18.5z"/></svg></div>
+        <div style="font-size:17px;font-weight:800;margin-bottom:4px">Synchroniser les données</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:2px">Connecté en tant que : <strong id="modal-username-display"></strong>
+          <button onclick="localStorage.removeItem('gope_username');openDataModal()" style="background:none;border:none;color:var(--blue);font-size:11px;cursor:pointer;margin-left:4px">changer</button>
+        </div>
+      </div>
+
+      <!-- Alerte conflit -->
+      <div id="conflict-warning" style="
+        display:none; background:var(--orange-light);
+        border:1px solid rgba(224,164,88,.32); border-radius:8px;
+        padding:12px 14px; margin-bottom:14px;
+        font-size:13px; line-height:1.5;
+      ">
+        <div id="conflict-text"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="confirmImport()" style="flex:1;padding:7px;background:var(--orange);color:#000;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">Charger quand même</button>
+          <button onclick="hideConflictWarning()" style="flex:1;padding:7px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer">Annuler</button>
+        </div>
+      </div>
+
+      <label style="
+        display:block; width:100%;
+        background:var(--blue); color:#000;
+        padding:11px 0; border-radius:8px; text-align:center;
+        font-size:14px; font-weight:700;
+        cursor:pointer; margin-bottom:10px;
+      ">
+        <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 4v10M8 11l4 4 4-4M5 20h14"/></svg> Charger le fichier partagé
+        <input type="file" accept=".json" style="display:none"
+          onchange="importData(this.files[0])">
+      </label>
+
+      <button onclick="exportData()" style="
+        display:block; width:100%;
+        background:var(--bg); color:var(--text);
+        border:1px solid var(--border); padding:10px 0; text-align:center;
+        border-radius:8px; font-size:13px; font-weight:600;
+        cursor:pointer; margin-bottom:10px;
+      "><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 16V6M8 9l4-4 4 4M5 20h14"/></svg> Exporter mes données</button>
+
+      <button onclick="skipImport()" style="
+        display:block; width:100%; background:none; border:none;
+        color:var(--text3); font-size:13px;
+        cursor:pointer; text-decoration:underline; text-align:center;
+      ">Continuer sans synchroniser</button>
+
+      <div style="font-size:11px;color:var(--text3);margin-top:16px;line-height:1.5;text-align:center">
+        <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.5.4.5 1 .5 1.6h6c0-.6 0-1.2.5-1.6A6 6 0 0012 3z"/></svg> Après chaque modification, exportez et remplacez<br>le fichier <strong>gestion-ope-data.json</strong> sur l'espace partagé.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

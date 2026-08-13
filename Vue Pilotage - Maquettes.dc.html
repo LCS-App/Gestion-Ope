@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F100F; --white:#171816; --surf2:#1F211E;
+    --border:rgba(255,255,255,.08); --border-strong:rgba(255,255,255,.16);
+    --yellow-acc:#FCD727; --yellow-l:rgba(252,215,39,.14);
+    --green:#74C79C; --green-l:rgba(116,199,156,.13);
+    --orange:#E6B06A; --orange-l:rgba(224,164,88,.15);
+    --red:#E8897F; --red-l:rgba(226,109,99,.14);
+    --purple:#C3AEF0; --purple-l:rgba(160,130,240,.16);
+    --text:#ECECEA; --text2:#9A9C97; --text3:#62645E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#080908;font-family:'Hanken Grotesk',system-ui,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
+</style>
+</helmet>
+
+<section style="padding:56px 48px 90px;min-width:1500px">
+  <div style="max-width:1400px;margin:0 auto 40px">
+    <div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--yellow-acc);margin-bottom:8px">Exploration · Vue Pilotage</div>
+    <h1 style="font-size:32px;font-weight:800;letter-spacing:-.02em;margin-bottom:12px">3 directions pour une vue « aide à la décision »</h1>
+    <p style="font-size:15px;line-height:1.6;color:var(--text2);max-width:760px">La vue <strong style="color:var(--text)">semaine</strong> sert à <em>regarder</em> et construire le planning. La vue <strong style="color:var(--text)">pilotage</strong> doit servir à <em>agir</em> : elle ne remontre pas le planning, elle isole ce qui demande une décision aujourd'hui. Trois partis pris ci-dessous — référence-les en chat par leur badge (<a href="#1a" style="color:var(--yellow-acc)">1a</a>, <a href="#1b" style="color:var(--yellow-acc)">1b</a>, <a href="#1c" style="color:var(--yellow-acc)">1c</a>).</p>
+  </div>
+
+  <div style="display:flex;gap:28px;flex-wrap:wrap;justify-content:center;align-items:flex-start">
+
+    <!-- ===== OPTION 1a : Résolution d'absence ===== -->
+    <div id="1a" style="width:440px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <span style="background:var(--yellow-acc);color:#000;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px">1a</span>
+        <div>
+          <div style="font-weight:700;font-size:15px">Résolution d'absence</div>
+          <div style="font-size:12px;color:var(--text3)">On agit sur un problème à la fois, remplaçants comparés</div>
+        </div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+          <span style="width:9px;height:9px;border-radius:50%;background:var(--red)"></span>
+          <span style="font-weight:800;font-size:15px">Pilotage — Lun 6 juil.</span>
+          <span style="margin-left:auto;font-size:11px;font-weight:700;color:var(--red);background:var(--red-l);padding:3px 9px;border-radius:20px">2 à traiter</span>
+        </div>
+        <div style="display:flex">
+          <!-- colonne problèmes -->
+          <div style="width:150px;border-right:1px solid var(--border);flex-shrink:0">
+            <div style="padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">À couvrir</div>
+            <div style="padding:11px 12px;border-left:3px solid var(--red);background:var(--red-l)">
+              <div style="font-weight:700;font-size:13px">Camille</div>
+              <div style="font-size:11px;color:var(--text2)">Campus F. d'Assise</div>
+              <div style="font-size:11px;color:var(--red);margin-top:2px">08:30–17:30</div>
+            </div>
+            <div style="padding:11px 12px;border-left:3px solid transparent">
+              <div style="font-weight:700;font-size:13px;color:var(--text2)">Christophe</div>
+              <div style="font-size:11px;color:var(--text3)">Lafite-Rothschild</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px">07:00–15:00</div>
+            </div>
+          </div>
+          <!-- panneau résolution -->
+          <div style="flex:1;padding:14px">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Remplaçant pour</div>
+            <div style="font-weight:800;font-size:15px;margin-bottom:2px">Campus F. d'Assise · 08:30–17:30</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:14px">Camille absente (congés)</div>
+
+            <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Remplaçants possibles</div>
+
+            <!-- candidat dispo -->
+            <div style="border:1px solid var(--green);background:var(--green-l);border-radius:10px;padding:11px 12px;margin-bottom:9px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:30px;height:30px;border-radius:50%;background:var(--green-l);color:var(--green);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px">C</div>
+                <div style="flex:1">
+                  <div style="font-weight:700;font-size:13px">Charlie AUGRAUD</div>
+                  <div style="font-size:11px;color:var(--green)">✓ Libre toute la journée</div>
+                </div>
+                <button style="background:var(--green);color:#0F100F;border:none;font-weight:700;font-size:12px;padding:6px 12px;border-radius:7px;cursor:pointer">Affecter</button>
+              </div>
+              <div style="margin-top:8px;font-size:10px;color:var(--text3)">Journée : aucune affectation aujourd'hui</div>
+            </div>
+
+            <!-- candidat partiel -->
+            <div style="border:1px solid var(--border);border-radius:10px;padding:11px 12px;margin-bottom:9px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:30px;height:30px;border-radius:50%;background:var(--yellow-l);color:var(--yellow-acc);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px">A</div>
+                <div style="flex:1">
+                  <div style="font-weight:700;font-size:13px">Amélie BIWOLÉ</div>
+                  <div style="font-size:11px;color:var(--orange)">⚠ Occupée 08:30–13:30 (Mexens)</div>
+                </div>
+                <button style="background:transparent;color:var(--text2);border:1px solid var(--border-strong);font-weight:700;font-size:12px;padding:6px 12px;border-radius:7px;cursor:pointer">Partiel</button>
+              </div>
+              <div style="margin-top:8px;display:flex;gap:3px;height:6px;border-radius:3px;overflow:hidden">
+                <div style="flex:5;background:var(--orange)"></div><div style="flex:9;background:var(--green)"></div>
+              </div>
+              <div style="margin-top:4px;font-size:10px;color:var(--text3)">Dispo à partir de 13:30</div>
+            </div>
+
+            <!-- candidat -->
+            <div style="border:1px solid var(--border);border-radius:10px;padding:11px 12px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:30px;height:30px;border-radius:50%;background:var(--yellow-l);color:var(--yellow-acc);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px">A</div>
+                <div style="flex:1">
+                  <div style="font-weight:700;font-size:13px">Aurélie MICHITTU</div>
+                  <div style="font-size:11px;color:var(--green)">✓ Libre · connaît le site</div>
+                </div>
+                <button style="background:transparent;color:var(--text2);border:1px solid var(--border-strong);font-weight:700;font-size:12px;padding:6px 12px;border-radius:7px;cursor:pointer">Affecter</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:12.5px;line-height:1.55;color:var(--text2);margin-top:14px">C'est <strong style="color:var(--text)">ton idée</strong> : on choisit un absent, l'app propose les remplaçants avec leur charge du jour et leurs fenêtres libres, puis on affecte en un clic. Idéal quand le quotidien = « boucher les trous ».</p>
+    </div>
+
+    <!-- ===== OPTION 1b : Tableau de bord d'exceptions ===== -->
+    <div id="1b" style="width:440px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <span style="background:var(--yellow-acc);color:#000;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px">1b</span>
+        <div>
+          <div style="font-weight:700;font-size:15px">Tableau de bord d'exceptions</div>
+          <div style="font-size:12px;color:var(--text3)">Tout ce qui cloche aujourd'hui, trié par urgence</div>
+        </div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+          <span style="font-weight:800;font-size:15px">Pilotage — Lun 6 juil.</span>
+          <span style="margin-left:auto;font-size:11px;color:var(--text3)">Semaine B</span>
+        </div>
+        <!-- kpi strip -->
+        <div style="display:flex;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border)">
+          <div style="flex:1;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--red)">1</div><div style="font-size:10px;color:var(--text2)">Site à découvert</div></div>
+          <div style="flex:1;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--orange)">2</div><div style="font-size:10px;color:var(--text2)">Sans remplaçant</div></div>
+          <div style="flex:1;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--purple)">1</div><div style="font-size:10px;color:var(--text2)">Conflit horaire</div></div>
+          <div style="flex:1;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--green)">21</div><div style="font-size:10px;color:var(--text2)">OK</div></div>
+        </div>
+        <div style="padding:14px;max-height:430px">
+          <!-- bloc rouge -->
+          <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--red);margin-bottom:8px">🔴 Site ouvert sans agent</div>
+          <div style="border:1px solid var(--red);background:var(--red-l);border-radius:10px;padding:11px 12px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="flex:1"><div style="font-weight:700;font-size:13px">Ubisoft</div><div style="font-size:11px;color:var(--text2)">Créneau 09:00–12:00 · personne d'affecté</div></div>
+              <button style="background:var(--red);color:#0F100F;border:none;font-weight:700;font-size:12px;padding:6px 12px;border-radius:7px;cursor:pointer">Affecter</button>
+            </div>
+          </div>
+          <!-- bloc orange -->
+          <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--orange);margin-bottom:8px">🟠 Absents sans remplaçant</div>
+          <div style="border:1px solid var(--border);border-radius:10px;padding:11px 12px;margin-bottom:9px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="flex:1"><div style="font-weight:700;font-size:13px">Camille <span style="color:var(--text3);font-weight:500">· Campus F. d'Assise</span></div><div style="font-size:11px;color:var(--text2)">08:30–17:30 · congés</div></div>
+              <button style="background:transparent;color:var(--yellow-acc);border:1px solid var(--yellow-acc);font-weight:700;font-size:12px;padding:6px 12px;border-radius:7px;cursor:pointer">Résoudre</button>
+            </div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:10px;padding:11px 12px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="flex:1"><div style="font-weight:700;font-size:13px">Christophe <span style="color:var(--text3);font-weight:500">· Lafite-Rothschild</span></div><div style="font-size:11px;color:var(--text2)">07:00–15:00 · arrêt maladie</div></div>
+              <button style="background:transparent;color:var(--yellow-acc);border:1px solid var(--yellow-acc);font-weight:700;font-size:12px;padding:6px 12px;border-radius:7px;cursor:pointer">Résoudre</button>
+            </div>
+          </div>
+          <!-- bloc violet -->
+          <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--purple);margin-bottom:8px">🟣 Conflit d'horaire</div>
+          <div style="border:1px solid var(--border);border-radius:10px;padding:11px 12px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="flex:1"><div style="font-weight:700;font-size:13px">Morgane</div><div style="font-size:11px;color:var(--text2)">Savencia 09:00–11:00 chevauche Darwin 09:00</div></div>
+              <button style="background:transparent;color:var(--text2);border:1px solid var(--border-strong);font-weight:700;font-size:12px;padding:6px 12px;border-radius:7px;cursor:pointer">Voir</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:12.5px;line-height:1.55;color:var(--text2);margin-top:14px">Une <strong style="color:var(--text)">salle de contrôle</strong> : le matin, tout ce qui demande une action est remonté et trié par gravité. Chaque ligne a un bouton. « Résoudre » ouvre le comparateur de remplaçants de 1a. Vue d'ensemble des problèmes plutôt qu'un cas à la fois.</p>
+    </div>
+
+    <!-- ===== OPTION 1c : Timeline / itinéraires ===== -->
+    <div id="1c" style="width:440px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <span style="background:var(--yellow-acc);color:#000;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px">1c</span>
+        <div>
+          <div style="font-weight:700;font-size:15px">Timeline & itinéraires</div>
+          <div style="font-size:12px;color:var(--text3)">La journée dans l'ordre des heures, par agent</div>
+        </div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+          <span style="font-weight:800;font-size:15px">Pilotage — Lun 6 juil.</span>
+          <span style="margin-left:auto;font-size:11px;color:var(--text3)">8h → 18h</span>
+        </div>
+        <!-- échelle heures -->
+        <div style="display:flex;padding:8px 14px 4px 96px;gap:0;border-bottom:1px solid var(--border)">
+          <div style="flex:1;font-size:10px;color:var(--text3)">08h</div><div style="flex:1;font-size:10px;color:var(--text3)">10h</div><div style="flex:1;font-size:10px;color:var(--text3)">12h</div><div style="flex:1;font-size:10px;color:var(--text3)">14h</div><div style="flex:1;font-size:10px;color:var(--text3)">16h</div>
+        </div>
+        <div style="padding:6px 14px 14px">
+          <!-- lane Michael (logistique) -->
+          <div style="display:flex;align-items:center;gap:8px;margin:10px 0 4px">
+            <span style="width:24px;height:24px;border-radius:50%;background:var(--yellow-l);color:var(--yellow-acc);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px">M</span>
+            <span style="font-weight:700;font-size:12px">Michael</span>
+            <span style="font-size:10px;color:var(--text3)">Tournée logistique</span>
+          </div>
+          <div style="position:relative;height:26px;background:var(--surf2);border-radius:6px;overflow:hidden">
+            <div style="position:absolute;left:8%;width:9%;top:3px;bottom:3px;background:var(--green);border-radius:4px" title="Fiduciaire"></div>
+            <div style="position:absolute;left:24%;width:14%;top:3px;bottom:3px;background:var(--green);border-radius:4px" title="Aéroport"></div>
+            <div style="position:absolute;left:41%;width:6%;top:3px;bottom:3px;background:var(--green);border-radius:4px" title="Eau de Bx"></div>
+            <div style="position:absolute;left:49%;width:7%;top:3px;bottom:3px;background:var(--green);border-radius:4px" title="Hôtel Postes"></div>
+            <div style="position:absolute;left:57%;width:20%;top:3px;bottom:3px;background:repeating-linear-gradient(45deg,var(--border-strong),var(--border-strong)3px,transparent 3px,transparent 7px);border-radius:4px" title="Trajets / logistique"></div>
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin:3px 0 2px 0">5 arrêts · hachuré = trajets / logistique</div>
+
+          <!-- lane Karima -->
+          <div style="display:flex;align-items:center;gap:8px;margin:14px 0 4px">
+            <span style="width:24px;height:24px;border-radius:50%;background:var(--yellow-l);color:var(--yellow-acc);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px">K</span>
+            <span style="font-weight:700;font-size:12px">Karima</span>
+            <span style="font-size:10px;color:var(--text3)">Tournée Bordeaux Métropole</span>
+          </div>
+          <div style="position:relative;height:26px;background:var(--surf2);border-radius:6px;overflow:hidden">
+            <div style="position:absolute;left:22%;width:8%;top:3px;bottom:3px;background:var(--green);border-radius:4px"></div>
+            <div style="position:absolute;left:33%;width:13%;top:3px;bottom:3px;background:var(--green);border-radius:4px"></div>
+            <div style="position:absolute;left:60%;width:9%;top:3px;bottom:3px;background:var(--green);border-radius:4px"></div>
+          </div>
+
+          <!-- lane postes fixes condensés -->
+          <div style="display:flex;align-items:center;gap:8px;margin:14px 0 4px">
+            <span style="width:24px;height:24px;border-radius:50%;background:var(--surf2);color:var(--text2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px">15</span>
+            <span style="font-weight:700;font-size:12px">Postes fixes</span>
+            <span style="font-size:10px;color:var(--text3)">15 agents · repliés</span>
+          </div>
+          <div style="position:relative;height:20px;background:var(--surf2);border-radius:6px;overflow:hidden;opacity:.6">
+            <div style="position:absolute;left:6%;width:78%;top:3px;bottom:3px;background:linear-gradient(90deg,var(--green),var(--green));border-radius:4px"></div>
+          </div>
+
+          <!-- alerte inline -->
+          <div style="margin-top:14px;border:1px solid var(--red);background:var(--red-l);border-radius:9px;padding:9px 11px;display:flex;align-items:center;gap:8px">
+            <span style="color:var(--red);font-size:15px">⚠</span>
+            <div style="flex:1;font-size:12px"><strong>Campus F. d'Assise</strong> à découvert · 08:30–17:30</div>
+            <button style="background:var(--red);color:#0F100F;border:none;font-weight:700;font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer">Couvrir</button>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:12.5px;line-height:1.55;color:var(--text2);margin-top:14px">Pensée pour la <strong style="color:var(--text)">logistique</strong> : chaque tournée devient une frise horaire ordonnée (arrêts + trajets), les postes fixes sont repliés en une ligne. On voit d'un coup les creux et les chevauchements dans le temps. Les alertes s'intercalent.</p>
+    </div>
+
+  </div>
+
+  <div style="max-width:1400px;margin:44px auto 0;padding:20px 24px;background:var(--bg);border:1px solid var(--border);border-radius:12px">
+    <div style="font-size:13px;font-weight:700;color:var(--yellow-acc);margin-bottom:8px">Comment choisir</div>
+    <p style="font-size:13.5px;line-height:1.65;color:var(--text2);max-width:900px">Ce ne sont pas des choix exclusifs : <strong style="color:var(--text)">1b</strong> peut être l'écran d'accueil (triage), et son bouton « Résoudre » ouvre <strong style="color:var(--text)">1a</strong> (comparateur de remplaçants). <strong style="color:var(--text)">1c</strong> est un angle différent, surtout utile si le pilotage des tournées logistiques est ta priorité. Dis-moi laquelle te parle — ou quel mélange — et je construis la vraie vue à partir de tes données.</p>
+  </div>
+</section>
+
+</x-dc>
+</body>
+</html>
