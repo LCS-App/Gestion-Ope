@@ -718,6 +718,16 @@ body.nav-open .brand-title{ display:inline; }
 }
 .day-empty:hover { background: var(--green-light); color: var(--green); }
 
+.day-add {
+  height: 16px; border-radius: var(--radius-sm);
+  border: 1px dashed var(--border); background: transparent;
+  color: var(--text3); font-size: 12px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; opacity: 0; transition: opacity .12s;
+}
+.day-cell:hover .day-add, .day-add:focus-visible { opacity: 1; }
+.day-add:hover { background: var(--green-light); color: var(--green); border-color: var(--green); }
+
 /* Alert band */
 .alert-band {
   background: var(--red-light);
@@ -739,6 +749,27 @@ body.nav-open .brand-title{ display:inline; }
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 20px;
+}
+.alert-band.cov {
+  background: #FFF3D6;
+  border-bottom-color: rgba(184,134,11,.32);
+  color: #7A5A0B;
+}
+.alert-band.cov .alert-band-count { background: #B8860B; }
+.cov-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cov-row:last-child { border-bottom: 0; }
+.cov-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 5px;
 }
 
 /* ── PANNEAU DROIT ───────────────────────── */
@@ -1294,6 +1325,12 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
         <span class="alert-band-count" id="alert-band-count"></span>
         <button class="btn btn-sm" style="background:var(--red);color:#0F100F;margin-left:4px" onclick="goAbsencesToFill()">Absences à combler</button>
       </div>
+      <div class="alert-band cov" id="cov-band">
+        <span><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8.5v4M12 16h.01"/></svg></span>
+        <span id="cov-band-text"></span>
+        <span class="alert-band-count" id="cov-band-count"></span>
+        <button class="btn btn-sm" style="background:#B8860B;color:#fff;margin-left:4px" onclick="covOpenBand()">Voir les créneaux</button>
+      </div>
       <div class="planning-container" id="planning-container">
         <div class="planning-header-row" id="planning-header"></div>
         <div id="planning-rows"></div>
@@ -1307,6 +1344,12 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
         <span id="alert-band-mois-text"></span>
         <span class="alert-band-count" id="alert-band-mois-count"></span>
         <button class="btn btn-sm" style="background:var(--red);color:#0F100F;margin-left:4px" onclick="goAbsencesToFill()">Absences à combler</button>
+      </div>
+      <div class="alert-band cov" id="cov-band-mois">
+        <span><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8.5v4M12 16h.01"/></svg></span>
+        <span id="cov-band-mois-text"></span>
+        <span class="alert-band-count" id="cov-band-mois-count"></span>
+        <button class="btn btn-sm" style="background:#B8860B;color:#fff;margin-left:4px" onclick="covOpenBand()">Voir les créneaux</button>
       </div>
       <div class="view-page" style="max-width:1500px;display:flex;flex-direction:column;overflow:hidden">
         <div id="mois-grid" style="flex:1;min-height:0;overflow:auto"></div>
@@ -1925,6 +1968,8 @@ function buildPanel(id,data){
     'panel-agent-detail':'Fiche agent',
     'panel-creneau':'Détail du créneau',
     'panel-jour':'Ajuster ce jour',
+    'panel-couverture':"Créneaux d'ouverture non couverts",
+    'panel-couvrir':'Couvrir ce créneau',
   };
   document.getElementById('panel-title').textContent=titles[id]||'';
   const navBtn=document.getElementById('panel-next-absence');
@@ -1934,6 +1979,8 @@ function buildPanel(id,data){
   const footer=document.getElementById('panel-footer');
 
   const renders={
+    'panel-couverture': buildPanelCouverture,
+    'panel-couvrir': buildPanelCouvrir,
     'panel-absence': buildPanelAbsence,
     'panel-agent': buildPanelAgent,
     'panel-site': buildPanelSite,
@@ -2364,6 +2411,20 @@ function applyScopeFilter(agents){
   const siteSet=new Set(siteFilter);
   tourneeFilter.forEach(tid=>{ const t=gt().find(x=>x.id===tid); (t&&t.siteIds||[]).forEach(id=>siteSet.add(id)); });
   const fromSites=new Set(gaf().filter(a=>siteSet.has(a.siteId)).map(a=>a.agentId));
+  // + remplaçants qui couvrent un créneau sur l'un des sites filtrés
+  gab().forEach(ab=>{
+    if(ab.ignored) return;
+    _absenceShifts(ab).forEach(s=>{
+      if(!siteSet.has(s.siteId)) return;
+      const rid=_replFor(ab,_blockKey(s.afId,s.date));
+      if(rid) fromSites.add(rid);
+    });
+  });
+  // + créneaux ponctuels (exceptions ajout/modif) posés sur un site filtré
+  (typeof gex==='function'?gex():[]).forEach(e=>{
+    if(e.type==='del') return;
+    if(e.siteId && siteSet.has(e.siteId)) fromSites.add(e.agentId);
+  });
   const keep=new Set(agentFilter);
   return agents.filter(a=>keep.has(a.id)||fromSites.has(a.id));
 }
@@ -2379,6 +2440,26 @@ function updateAlertBand(){
       document.getElementById('alert-band'+suf+'-text').textContent=
         urgent.length===1?'1 agent absent sans remplaçant':`${urgent.length} agents absents sans remplaçant`;
       document.getElementById('alert-band'+suf+'-count').textContent=urgent.length;
+    } else {
+      band.classList.remove('visible');
+    }
+  });
+  // Créneaux d'ouverture non couverts — aléas du jour (prioritaires) + trous récurrents
+  const cov=covGapsWeek();
+  const rec=covGapsRecurrents();
+  const nTot=cov.length+rec.length;
+  const covTxt = cov.length && rec.length
+    ? `${cov.length} créneau${cov.length>1?'x':''} découvert${cov.length>1?'s':''} cette semaine · ${rec.length} trou${rec.length>1?'s':''} récurrent${rec.length>1?'s':''}`
+    : cov.length
+      ? (cov.length===1?"1 créneau d'ouverture non couvert cette semaine":`${cov.length} créneaux d'ouverture non couverts cette semaine`)
+      : (rec.length===1?"1 créneau d'ouverture jamais couvert par le planning":`${rec.length} créneaux d'ouverture jamais couverts par le planning`);
+  [['cov-band',''],['cov-band-mois','-mois']].forEach(([id,suf])=>{
+    const band=document.getElementById(id);
+    if(!band) return;
+    if(nTot>0){
+      band.classList.add('visible');
+      document.getElementById(id+'-text').textContent=covTxt;
+      document.getElementById(id+'-count').textContent=nTot;
     } else {
       band.classList.remove('visible');
     }
@@ -2554,7 +2635,8 @@ function renderPlanning(){
         </div>`;
       }).join('');
 
-      return `<div class="day-cell">${bars}</div>`;
+      const addBtn = dayAbs ? '' : `<div class="day-add" title="Ajouter un autre créneau ce jour" onclick="openPanel('panel-jour','${agent.id}|${dateStr}||')">+</div>`;
+      return `<div class="day-cell">${bars}${addBtn}</div>`;
     }).join('');
 
     return `<div class="agent-row" data-agent-name="${_escA(agent.nom)}">
@@ -3754,9 +3836,11 @@ function renderSites(){
   document.getElementById('sites-sub').textContent=`${sites.length} site${sites.length>1?'s':''}`;
   const grid=document.getElementById('sites-grid');
   if(!sites.length){ grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg></div><div class="empty-text">Aucun site</div></div>`; return; }
+  const recBySite={}; covGapsRecurrents().forEach(g=>{ (recBySite[g.siteId]=recBySite[g.siteId]||[]).push(g); });
   grid.innerHTML=sites.map(s=>{
     const afs=gaf().filter(af=>af.siteId===s.id);
     const agents=[...new Set(afs.map(af=>af.agentId))];
+    const recGaps=recBySite[s.id]||[];
     return `<div class="card">
       <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
         <div style="font-size:20px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg></div>
@@ -3765,6 +3849,7 @@ function renderSites(){
           <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">
             ${(()=>{const t=siteTournee(s.id);return t?`<span class="badge badge-blue" style="font-size:10px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="6" cy="6.5" r="2.4"/><circle cx="18" cy="17.5" r="2.4"/><path d="M8.4 6.5H15a3 3 0 010 6H9a3 3 0 000 6h6.6"/></svg> ${_escH(t.nom)}</span>`:'';})()}
             ${s.client?`<span class="badge badge-gray" style="font-size:10px">${_escH(s.client)}</span>`:''}
+            ${recGaps.length?`<span class="badge" style="font-size:10px;background:#FFF3D6;color:#7A5A0B;cursor:pointer" onclick="covOpenRec()" title="Créneaux d'ouverture non couverts par le planning récurrent">⚠ ${recGaps.length} créneau${recGaps.length>1?'x':''} non couvert${recGaps.length>1?'s':''}</span>`:''}
           </div>
         </div>
         <button class="btn-icon" onclick="openPanel('panel-site','${s.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></button>
@@ -3781,6 +3866,244 @@ function renderSites(){
       </details>`:`<div style="font-size:11px;color:var(--text3);margin-top:6px;font-style:italic">Aucun agent affecté</div>`}
     </div>`;
   }).join('');
+}
+
+/* ═════════════════════════════════════
+   COUVERTURE DES CRÉNEAUX D'OUVERTURE
+   Croise site.creneaux (horaires d'ouverture) avec la couverture réelle.
+   Deux natures de trou, deux traitements :
+   • RÉCURRENT — aucune affectation ne couvre le créneau, chaque semaine.
+     C'est un problème de données ou de contrat → pastille sur la fiche site + onglet "Récurrents".
+   • DU JOUR — le créneau était couvert, une absence non remplacée / une libération l'a vidé.
+     C'est actionnable maintenant → bande d'alerte.
+   Un trou peut être marqué « normal » par site+jour+créneau (site.covIgnore[]).
+══════════════════════════════════════ */
+
+function _slotHoles(slot, covered){
+  let holes=[slot.slice()];
+  covered.forEach(([x,y])=>{
+    const next=[];
+    holes.forEach(([a,b])=>{
+      if(y<=a||x>=b){ next.push([a,b]); return; }
+      if(x>a) next.push([a,Math.min(x,b)]);
+      if(y<b) next.push([Math.max(y,a),b]);
+    });
+    holes=next;
+  });
+  return holes.filter(([a,b])=>b>a);
+}
+function _hm(m){ return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
+function _holesLabel(holes){ return holes.map(([a,b])=>_hm(a)+'–'+_hm(b)).join(' + '); }
+function _covKey(jour,debut,fin){ return jour+'|'+debut+'-'+fin; }
+function covIgnored(site,jour,c){ return (site.covIgnore||[]).includes(_covKey(jour,c.debut,c.fin)); }
+function covToggleIgnore(siteId,jour,debut,fin){
+  const sites=gs(); const i=sites.findIndex(s=>s.id===siteId); if(i<0) return;
+  const key=_covKey(jour,debut,fin);
+  const list=(sites[i].covIgnore||[]).slice();
+  const at=list.indexOf(key);
+  if(at>=0) list.splice(at,1); else list.push(key);
+  sites[i]={...sites[i],covIgnore:list};
+  ss(sites);
+  toast(at>=0?'Alerte réactivée':'Trou marqué comme normal');
+  if(currentPanel==='panel-couverture') buildPanel('panel-couverture',currentPanelData);
+  refreshCurrentView();
+}
+
+/* Seuls les agents d'accueil tiennent un créneau d'ouverture de site.
+   Les multisites sont inclus : ce sont les remplaçants des postes d'accueil.
+   Logistique, factotum et chantier passent sur site sans assurer l'ouverture. */
+function estAgentAccueil(ag){ const t=ag?.type||'accueil'; return t==='accueil'||t==='multisite'; }
+function _accueilIds(){ return new Set(ga().filter(estAgentAccueil).map(a=>a.id)); }
+
+/* Intervalles réellement couverts sur un site à une date (absences, remplacements, exceptions inclus) */
+function _siteCoveredIntervals(siteId,date){
+  const dateStr=_ymd(date); const out=[];
+  ga().filter(a=>!a.inactif && estAgentAccueil(a)).forEach(ag=>{
+    const dayAffecs=gaf().filter(af=>af.agentId===ag.id && _affActiveOn(af,date));
+    const ab=gab().find(x=>x.agentId===ag.id && _absCoversDate(x,date));
+    effectiveShifts(ag.id,dateStr,dayAffecs).forEach(s=>{
+      if(s.siteId!==siteId) return;
+      if(ab && s.afId && !_replFor(ab, s.afId+'@'+dateStr)) return; // absent et non remplacé
+      out.push([_mins(s.debut),_mins(s.fin)]);
+    });
+  });
+  return out;
+}
+/* Couverture théorique : affectations récurrentes seules, sans aucun aléa */
+function _siteBaseIntervals(siteId,date){
+  const acc=_accueilIds();
+  return gaf().filter(af=>af.siteId===siteId && acc.has(af.agentId) && _affActiveOn(af,date)).map(af=>[_mins(af.debut),_mins(af.fin)]);
+}
+
+function covGapsOnDate(date){
+  const jour=JOURS[(date.getDay()+6)%7]; const out=[];
+  gs().forEach(s=>{
+    if(siteFermeLe(s.id,date)) return;
+    (s.creneaux||[]).forEach(c=>{
+      if(!c.debut||!c.fin) return;
+      if(!(c.jours||[]).includes(jour) || covIgnored(s,jour,c)) return;
+      const slot=[_mins(c.debut),_mins(c.fin)];
+      const holes=_slotHoles(slot,_siteCoveredIntervals(s.id,date));
+      if(!holes.length) return;
+      const base=_slotHoles(slot,_siteBaseIntervals(s.id,date));
+      out.push({ siteId:s.id, jour, dateStr:_ymd(date), debut:c.debut, fin:c.fin, holes,
+        manque:holes.reduce((a,[x,y])=>a+y-x,0), total:slot[1]-slot[0],
+        totalHole: holes.length===1 && holes[0][0]===slot[0] && holes[0][1]===slot[1],
+        degrade: JSON.stringify(base)!==JSON.stringify(holes) });
+    });
+  });
+  return out;
+}
+
+/* Trous de la semaine affichée causés par un aléa du jour (les récurrents sont exclus) */
+function covGapsWeek(){
+  const out=[];
+  if(typeof weekStart==='undefined'||!weekStart) return out;
+  for(let i=0;i<5;i++){
+    const d=new Date(weekStart); d.setDate(d.getDate()+i);
+    covGapsOnDate(d).filter(g=>g.degrade).forEach(g=>out.push(g));
+  }
+  return out.sort((a,b)=>a.dateStr.localeCompare(b.dateStr)||siteNom(a.siteId).localeCompare(siteNom(b.siteId)));
+}
+
+/* Trous récurrents : la structure du planning ne couvre pas le créneau d'ouverture */
+function covGapsRecurrents(){
+  const today=new Date();
+  const acc=_accueilIds();
+  const map=new Map();
+  gs().forEach(s=>{
+    (s.creneaux||[]).forEach(c=>{
+      if(!c.debut||!c.fin) return;
+      (c.jours||[]).forEach(jour=>{
+        if(covIgnored(s,jour,c)) return;
+        const slot=[_mins(c.debut),_mins(c.fin)];
+        ['A','B'].forEach(par=>{
+          const cov=gaf().filter(af=>af.siteId===s.id && acc.has(af.agentId) && (af.jours||[]).includes(jour)
+              && (af.semaine==='toutes'||af.semaine===par) && _affInRange(af,today))
+            .map(af=>[_mins(af.debut),_mins(af.fin)]);
+          const holes=_slotHoles(slot,cov);
+          if(!holes.length) return;
+          const k=s.id+'|'+jour+'|'+c.debut+'-'+c.fin+'|'+JSON.stringify(holes);
+          const prev=map.get(k);
+          if(prev){ prev.parite='toutes'; return; }
+          map.set(k,{ siteId:s.id, jour, debut:c.debut, fin:c.fin, holes, parite:par,
+            manque:holes.reduce((a,[x,y])=>a+y-x,0), total:slot[1]-slot[0],
+            totalHole: holes.length===1 && holes[0][0]===slot[0] && holes[0][1]===slot[1] });
+        });
+      });
+    });
+  });
+  return [...map.values()].sort((a,b)=>
+    siteNom(a.siteId).localeCompare(siteNom(b.siteId))||JOURS.indexOf(a.jour)-JOURS.indexOf(b.jour)||_mins(a.debut)-_mins(b.debut));
+}
+
+let covTab='jour';
+function covSetTab(t){ covTab=t; buildPanel('panel-couverture',currentPanelData); }
+
+function _covRowHtml(g,mode){
+  const rouge=g.totalHole;
+  const dot=rouge?'var(--red)':'#B8860B';
+  const grav=rouge?'Personne sur le créneau':`Manque ${_fmtDur(g.manque)} sur ${_fmtDur(g.total)}`;
+  const when = mode==='jour'
+    ? new Date(g.dateStr+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'})
+    : g.jour + (g.parite==='toutes'?'':(g.parite==='A'?' · semaines impaires':' · semaines paires'));
+  const act = mode==='jour'
+    ? `<button class="btn btn-sm btn-primary" onclick="openPanel('panel-couvrir','${g.siteId}|${g.dateStr}|${_hm(g.holes[0][0])}|${_hm(g.holes[0][1])}')">Attribuer</button>`
+    : `<button class="btn btn-sm btn-secondary" onclick="covGoAffect('${g.siteId}','${g.jour}','${_hm(g.holes[0][0])}','${_hm(g.holes[0][1])}')">Affecter</button>`;
+  return `<div class="cov-row">
+    <span class="cov-dot" style="background:${dot}"></span>
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:600;font-size:13px">${_escH(siteNom(g.siteId))}</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:2px">${_cap(when)} · ouverture ${g.debut}–${g.fin}</div>
+      <div style="font-size:12px;color:${rouge?'var(--red)':'#8A6410'};font-weight:600;margin-top:3px">${_holesLabel(g.holes)} — ${grav}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
+      ${act}
+      <button class="btn btn-sm btn-secondary" style="font-size:11px" onclick="covToggleIgnore('${g.siteId}','${g.jour}','${g.debut}','${g.fin}')" title="Ne plus alerter sur ce créneau">C'est normal</button>
+    </div>
+  </div>`;
+}
+
+function buildPanelCouverture(body,footer){
+  const week=covGapsWeek();
+  const rec=covGapsRecurrents();
+  const list = covTab==='jour' ? week : rec;
+  const ignored=gs().reduce((n,s)=>n+(s.covIgnore||[]).length,0);
+  body.innerHTML=`
+    <div class="seg" style="margin-bottom:14px">
+      <button type="button" class="seg-btn${covTab==='jour'?' active':''}" onclick="covSetTab('jour')">Cette semaine (${week.length})</button>
+      <button type="button" class="seg-btn${covTab==='rec'?' active':''}" onclick="covSetTab('rec')">Récurrents (${rec.length})</button>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:16px;font-size:12.5px;color:var(--text2);line-height:1.45">
+      ${covTab==='jour'
+        ? "Créneaux d'ouverture qu'un aléa a vidés cette semaine (absence non remplacée, créneau libéré). <strong>À traiter maintenant.</strong>"
+        : "Créneaux d'ouverture qu'aucune affectation récurrente ne couvre. <strong>Problème de planning ou de saisie</strong> — à corriger une fois pour toutes."}
+      <div style="margin-top:6px">Seuls les plannings des <strong>agents d'accueil</strong> (et des multisites qui les remplacent) sont comparés aux horaires d'ouverture. Les passages logistique, factotum et chantier ne comptent pas comme couverture.</div>
+    </div>
+    ${list.length
+      ? list.map(g=>_covRowHtml(g,covTab)).join('')
+      : `<div class="empty" style="padding:36px 12px"><div class="empty-text">${covTab==='jour'?'Tous les créneaux d\'ouverture sont couverts cette semaine':'Aucun trou récurrent'}</div></div>`}
+    ${ignored?`<div style="font-size:11px;color:var(--text3);margin-top:14px;padding-top:10px;border-top:1px solid var(--border)">${ignored} créneau${ignored>1?'x':''} marqué${ignored>1?'s':''} « normal » — modifiable depuis la fiche du site.</div>`:''}`;
+  footer.innerHTML=`<button class="btn btn-secondary" onclick="closePanel()">Fermer</button>`;
+}
+
+function covGoAffect(siteId,jour,debut,fin){ openPanel('panel-affect',{siteId,jour,debut,fin}); }
+function covOpenRec(){ covTab='rec'; openPanel('panel-couverture'); }
+/* Ouverture depuis la bande : on tombe sur l'onglet qui a quelque chose à montrer */
+function covOpenBand(){ covTab = covGapsWeek().length ? 'jour' : 'rec'; openPanel('panel-couverture'); }
+
+let covCandQ='';
+function covFilterCands(q){
+  covCandQ=q.toLowerCase();
+  document.querySelectorAll('#cov-cands [data-nom]').forEach(el=>{
+    el.style.display = el.getAttribute('data-nom').includes(covCandQ)?'':'none';
+  });
+}
+
+function buildPanelCouvrir(body,footer,raw){
+  const [siteId,dateStr,hd,hf]=String(raw).split('|');
+  const date=new Date(dateStr+'T00:00:00');
+  const dateLabel=date.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  const libres=[], occupes=[];
+  ga().filter(a=>!a.inactif && estAgentAccueil(a)).forEach(a=>{
+    const ab=gab().find(x=>x.agentId===a.id && _absCoversDate(x,date));
+    const busy = ab ? {type:'absence'} : _croiseBusy(a.id,date,hd,hf,null);
+    (busy?occupes:libres).push({a,busy});
+  });
+  const row=({a,busy})=>{
+    const why = !busy ? '' : busy.type==='absence' ? 'Absent ce jour'
+      : `Déjà pris · ${_escH(siteNom(busy.siteId))} ${busy.debut}–${busy.fin}`;
+    return `<div data-nom="${_escA(a.nom.toLowerCase())}" class="cov-row" style="cursor:pointer" onclick="covAssign('${a.id}','${siteId}','${dateStr}','${hd}','${hf}',${busy?'true':'false'})">
+      <span class="cov-dot" style="background:${busy?'var(--red)':'var(--green)'}"></span>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px">${_escH(a.nom)}</div>
+        ${why?`<div style="font-size:11.5px;color:var(--red);margin-top:2px">⚠ ${why}</div>`
+              :`<div style="font-size:11.5px;color:var(--text3);margin-top:2px">Libre sur ce créneau${a.remplacant?' · remplaçant':''}</div>`}
+      </div>
+    </div>`;
+  };
+  body.innerHTML=`
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:4px">${_cap(dateLabel)}</div>
+    <div style="font-weight:700;font-size:14px;margin-bottom:2px">${_escH(siteNom(siteId))}</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px">Créneau à couvrir : <strong>${hd}–${hf}</strong></div>
+    <input class="form-input" type="search" placeholder="Rechercher un agent…" oninput="covFilterCands(this.value)" style="margin-bottom:12px">
+    <div id="cov-cands">
+      ${libres.length?`<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin:6px 0 2px">Disponibles (${libres.length})</div>${libres.map(row).join('')}`:''}
+      ${occupes.length?`<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin:16px 0 2px">Déjà occupés (${occupes.length})</div>${occupes.map(row).join('')}`:''}
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:14px;line-height:1.45">Seuls les <strong>agents d'accueil</strong> et les <strong>multisites</strong> sont proposés : eux seuls tiennent un créneau d'ouverture. L'agent choisi reçoit un <strong>créneau ponctuel</strong> sur ce seul jour. Le planning récurrent reste intact.</div>`;
+  footer.innerHTML=`<button class="btn btn-secondary" onclick="openPanel('panel-couverture')">Retour</button>`;
+}
+
+function covAssign(agentId,siteId,dateStr,debut,fin,busy){
+  if(busy && !confirm(`${agentNom(agentId)} est déjà pris sur ce créneau.\n\nL'affecter quand même ?`)) return;
+  const arr=gex();
+  arr.push({ id:DB.id(), agentId, dateStr, type:'add', siteId, debut, fin,
+    notes:"Couverture créneau d'ouverture", createdBy:getCurrentUser(), createdAt:new Date().toISOString() });
+  sex(arr);
+  toast(agentNom(agentId)+' affecté sur ce créneau');
+  refreshCurrentView();
+  openPanel('panel-couverture');
 }
 
 function buildPanelSite(body,footer,id){
@@ -4079,6 +4402,9 @@ function buildPanelAffect(body,footer,data){
   const af=isEdit?gaf().find(x=>x.id===data):null;
   const preAgent=typeof data==='object'&&data?.agentId?data.agentId:'';
   const preJour=typeof data==='object'&&data?.jour?data.jour:'';
+  const preSite=typeof data==='object'&&data?.siteId?data.siteId:'';
+  const preDebut=typeof data==='object'&&data?.debut?data.debut:'';
+  const preFin=typeof data==='object'&&data?.fin?data.fin:'';
   const JOURS_LABELS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
 
   body.innerHTML=`
@@ -4101,11 +4427,11 @@ function buildPanelAffect(body,footer,data){
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Heure début *</label>
-        <input class="form-input" type="time" id="paf-debut" value="${af?.debut||''}">
+        <input class="form-input" type="time" id="paf-debut" value="${af?.debut||preDebut||''}">
       </div>
       <div class="form-group">
         <label class="form-label">Heure fin *</label>
-        <input class="form-input" type="time" id="paf-fin" value="${af?.fin||''}">
+        <input class="form-input" type="time" id="paf-fin" value="${af?.fin||preFin||''}">
       </div>
     </div>
     <div class="form-group">
@@ -4142,6 +4468,7 @@ function buildPanelAffect(body,footer,data){
   fillSel('paf-site',gs().map(s=>({v:s.id,l:s.nom})),'Choisir un site');
   if(af){ document.getElementById('paf-agent').value=af.agentId; document.getElementById('paf-site').value=af.siteId; }
   else if(preAgent) document.getElementById('paf-agent').value=preAgent;
+  if(!af && preSite) document.getElementById('paf-site').value=preSite;
 
   footer.innerHTML=`
     <button class="btn btn-secondary" onclick="cancelAffect()">Annuler</button>
