@@ -2411,7 +2411,7 @@ function applyScopeFilter(agents){
   const siteSet=new Set(siteFilter);
   tourneeFilter.forEach(tid=>{ const t=gt().find(x=>x.id===tid); (t&&t.siteIds||[]).forEach(id=>siteSet.add(id)); });
   const fromSites=new Set(gaf().filter(a=>siteSet.has(a.siteId)).map(a=>a.agentId));
-  // + remplaçants qui couvrent un créneau sur l'un des sites filtrés (sinon ils disparaissent du planning filtré)
+  // + remplaçants qui couvrent un créneau sur l'un des sites filtrés
   gab().forEach(ab=>{
     if(ab.ignored) return;
     _absenceShifts(ab).forEach(s=>{
@@ -2419,6 +2419,11 @@ function applyScopeFilter(agents){
       const rid=_replFor(ab,_blockKey(s.afId,s.date));
       if(rid) fromSites.add(rid);
     });
+  });
+  // + créneaux ponctuels (exceptions ajout/modif) posés sur un site filtré
+  (typeof gex==='function'?gex():[]).forEach(e=>{
+    if(e.type==='del') return;
+    if(e.siteId && siteSet.has(e.siteId)) fromSites.add(e.agentId);
   });
   const keep=new Set(agentFilter);
   return agents.filter(a=>keep.has(a.id)||fromSites.has(a.id));
