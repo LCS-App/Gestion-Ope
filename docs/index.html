@@ -3904,10 +3904,16 @@ function covToggleIgnore(siteId,jour,debut,fin){
   refreshCurrentView();
 }
 
+/* Seuls les agents d'accueil tiennent un créneau d'ouverture de site.
+   Les multisites sont inclus : ce sont les remplaçants des postes d'accueil.
+   Logistique, factotum et chantier passent sur site sans assurer l'ouverture. */
+function estAgentAccueil(ag){ const t=ag?.type||'accueil'; return t==='accueil'||t==='multisite'; }
+function _accueilIds(){ return new Set(ga().filter(estAgentAccueil).map(a=>a.id)); }
+
 /* Intervalles réellement couverts sur un site à une date (absences, remplacements, exceptions inclus) */
 function _siteCoveredIntervals(siteId,date){
   const dateStr=_ymd(date); const out=[];
-  ga().filter(a=>!a.inactif).forEach(ag=>{
+  ga().filter(a=>!a.inactif && estAgentAccueil(a)).forEach(ag=>{
     const dayAffecs=gaf().filter(af=>af.agentId===ag.id && _affActiveOn(af,date));
     const ab=gab().find(x=>x.agentId===ag.id && _absCoversDate(x,date));
     effectiveShifts(ag.id,dateStr,dayAffecs).forEach(s=>{
@@ -3920,7 +3926,8 @@ function _siteCoveredIntervals(siteId,date){
 }
 /* Couverture théorique : affectations récurrentes seules, sans aucun aléa */
 function _siteBaseIntervals(siteId,date){
-  return gaf().filter(af=>af.siteId===siteId && _affActiveOn(af,date)).map(af=>[_mins(af.debut),_mins(af.fin)]);
+  const acc=_accueilIds();
+  return gaf().filter(af=>af.siteId===siteId && acc.has(af.agentId) && _affActiveOn(af,date)).map(af=>[_mins(af.debut),_mins(af.fin)]);
 }
 
 function covGapsOnDate(date){
@@ -3957,6 +3964,7 @@ function covGapsWeek(){
 /* Trous récurrents : la structure du planning ne couvre pas le créneau d'ouverture */
 function covGapsRecurrents(){
   const today=new Date();
+  const acc=_accueilIds();
   const map=new Map();
   gs().forEach(s=>{
     (s.creneaux||[]).forEach(c=>{
@@ -3965,7 +3973,7 @@ function covGapsRecurrents(){
         if(covIgnored(s,jour,c)) return;
         const slot=[_mins(c.debut),_mins(c.fin)];
         ['A','B'].forEach(par=>{
-          const cov=gaf().filter(af=>af.siteId===s.id && (af.jours||[]).includes(jour)
+          const cov=gaf().filter(af=>af.siteId===s.id && acc.has(af.agentId) && (af.jours||[]).includes(jour)
               && (af.semaine==='toutes'||af.semaine===par) && _affInRange(af,today))
             .map(af=>[_mins(af.debut),_mins(af.fin)]);
           const holes=_slotHoles(slot,cov);
@@ -4025,6 +4033,7 @@ function buildPanelCouverture(body,footer){
       ${covTab==='jour'
         ? "Créneaux d'ouverture qu'un aléa a vidés cette semaine (absence non remplacée, créneau libéré). <strong>À traiter maintenant.</strong>"
         : "Créneaux d'ouverture qu'aucune affectation récurrente ne couvre. <strong>Problème de planning ou de saisie</strong> — à corriger une fois pour toutes."}
+      <div style="margin-top:6px">Seuls les plannings des <strong>agents d'accueil</strong> (et des multisites qui les remplacent) sont comparés aux horaires d'ouverture. Les passages logistique, factotum et chantier ne comptent pas comme couverture.</div>
     </div>
     ${list.length
       ? list.map(g=>_covRowHtml(g,covTab)).join('')
@@ -4051,7 +4060,7 @@ function buildPanelCouvrir(body,footer,raw){
   const date=new Date(dateStr+'T00:00:00');
   const dateLabel=date.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
   const libres=[], occupes=[];
-  ga().filter(a=>!a.inactif).forEach(a=>{
+  ga().filter(a=>!a.inactif && estAgentAccueil(a)).forEach(a=>{
     const ab=gab().find(x=>x.agentId===a.id && _absCoversDate(x,date));
     const busy = ab ? {type:'absence'} : _croiseBusy(a.id,date,hd,hf,null);
     (busy?occupes:libres).push({a,busy});
@@ -4077,7 +4086,7 @@ function buildPanelCouvrir(body,footer,raw){
       ${libres.length?`<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin:6px 0 2px">Disponibles (${libres.length})</div>${libres.map(row).join('')}`:''}
       ${occupes.length?`<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin:16px 0 2px">Déjà occupés (${occupes.length})</div>${occupes.map(row).join('')}`:''}
     </div>
-    <div style="font-size:11px;color:var(--text3);margin-top:14px;line-height:1.45">L'agent choisi reçoit un <strong>créneau ponctuel</strong> sur ce seul jour. Le planning récurrent reste intact.</div>`;
+    <div style="font-size:11px;color:var(--text3);margin-top:14px;line-height:1.45">Seuls les <strong>agents d'accueil</strong> et les <strong>multisites</strong> sont proposés : eux seuls tiennent un créneau d'ouverture. L'agent choisi reçoit un <strong>créneau ponctuel</strong> sur ce seul jour. Le planning récurrent reste intact.</div>`;
   footer.innerHTML=`<button class="btn btn-secondary" onclick="openPanel('panel-couverture')">Retour</button>`;
 }
 
