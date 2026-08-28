@@ -192,6 +192,35 @@ body {
 .scope-btn.open .chev { transform: rotate(180deg); }
 .scope-btn-label { overflow: hidden; text-overflow: ellipsis; }
 
+.scope-field {
+  min-height: 32px; width: 340px; max-width: 46vw;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 5px;
+  padding: 3px 8px; border-radius: 9px;
+  border: 1px solid var(--border); background: var(--white);
+  cursor: text; transition: border-color .12s, box-shadow .12s;
+}
+.scope-field:hover { border-color: var(--border-strong); }
+.scope-field.open { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(44,110,155,.12); }
+.scope-field .scope-funnel { color: var(--text3); flex-shrink: 0; }
+.scope-field.filtered .scope-funnel { color: var(--gold-ink); }
+.scope-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 22px; padding: 0 4px 0 8px; border-radius: var(--radius-full, 9999px);
+  background: var(--surf2); border: 1px solid var(--border);
+  font-size: 11.5px; font-weight: 700; color: var(--text1); max-width: 160px;
+}
+.scope-chip .txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scope-chip .x { display: inline-flex; border: none; background: transparent; color: var(--text3); cursor: pointer; padding: 0; line-height: 0; }
+.scope-chip .x:hover { color: var(--red); }
+.scope-chip.t-tournee { background: #EDF3F9; border-color: #C6DCEE; }
+.scope-chip.t-agent { background: var(--yellow-light, #FFF8DA); border-color: #E8DCA8; }
+.scope-inline-input {
+  flex: 1 1 90px; min-width: 90px; height: 24px;
+  border: none; outline: none; background: transparent;
+  font-family: inherit; font-size: 12.5px; font-weight: 500; color: var(--text1);
+}
+.scope-opt.kb { background: var(--surf2); }
+
 .scope-menu {
   position: absolute;
   top: calc(100% + 6px);
@@ -1192,36 +1221,22 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
 
   <div class="header-filters" id="header-filters">
     <div class="scope-filter" id="scope-filter">
-      <button class="scope-btn" id="scope-btn" onclick="toggleScopeMenu(event)">
+      <div class="scope-field" id="scope-btn" onclick="scopeFieldClick(event)">
         <svg class="scope-funnel" viewBox="0 0 24 24" style="width:15px;height:15px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M3 5h18l-7 8.2V20l-4 1.5v-8.3z"/></svg>
-        <span class="scope-btn-label" id="scope-label">Tout le planning</span>
-        <svg class="chev" viewBox="0 0 24 24" style="width:14px;height:14px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M6 9l6 6 6-6"/></svg>
-      </button>
+        <div id="scope-chips" style="display:contents"></div>
+        <input type="text" id="scope-search-input" class="scope-inline-input" placeholder="Tout le planning — filtrer tournée, site, agent…" autocomplete="off" oninput="onScopeInput(this.value)" onkeydown="onScopeKey(event)" onfocus="openScopeMenu()">
+      </div>
       <button class="scope-clear" id="scope-clear" title="Effacer le filtre" onclick="clearScopeFilter(event)" style="display:none">
         <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
       <div class="scope-menu" id="scope-menu">
-        <div class="scope-search">
-          <svg viewBox="0 0 24 24" style="width:15px;height:15px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg>
-          <input type="text" id="scope-search-input" placeholder="Rechercher une tournée, un site ou un agent…" oninput="renderScopeMenu(this.value)" autocomplete="off">
-        </div>
         <div class="scope-list" id="scope-list"></div>
         <button class="scope-done" onclick="closeScopeMenu()">Terminé</button>
       </div>
     </div>
     <div id="filters-planning" style="display:flex;align-items:center">
-    <div class="plan-quicksearch" style="display:flex;align-items:center;gap:7px;height:32px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--white);margin-left:8px">
-      <svg viewBox="0 0 24 24" style="width:14px;height:14px;flex-shrink:0;fill:none;stroke:var(--text3);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg>
-      <input type="text" id="plan-search" placeholder="Rechercher un agent…" oninput="filterPlanRows(this.value)" autocomplete="off" style="border:none;background:transparent;outline:none;font-family:inherit;font-size:12.5px;color:var(--text1);width:150px">
-      <button id="plan-search-clear" onclick="clearPlanSearch()" title="Effacer" style="display:none;border:none;background:transparent;cursor:pointer;color:var(--text3);padding:0;line-height:0"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-    </div>
     </div>
     <div id="filters-mois" style="display:none;align-items:center;gap:12px" data-comment-anchor="mois-filters">
-      <div style="display:flex;align-items:center;gap:7px;height:32px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--white);margin-left:8px">
-        <svg viewBox="0 0 24 24" style="width:14px;height:14px;flex-shrink:0;fill:none;stroke:var(--text3);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg>
-        <input type="text" id="mois-search" placeholder="Filtrer un agent…" oninput="filterMoisSearch(this.value)" autocomplete="off" style="border:none;background:transparent;outline:none;font-family:inherit;font-size:12.5px;color:var(--text1);width:150px">
-        <button id="mois-search-clear" onclick="clearMoisSearch()" title="Effacer" style="display:none;border:none;background:transparent;cursor:pointer;color:var(--text3);padding:0;line-height:0"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-      </div>
       <span id="mois-count-label" style="font-size:11px;color:var(--text3);white-space:nowrap"></span>
     </div>
   </div>
@@ -2405,24 +2420,41 @@ function sortAgentsForDisplay(agents){
 }
 
 let tourneeFilter=[];
+/* Période réellement affichée — le filtre de portée ne doit remonter que les remplacements
+   et créneaux ponctuels de cette période (sinon un remplaçant d'une autre semaine reste listé). */
+function _scopeDateRange(){
+  try{
+    if(currentView==='mois'){
+      const a=new Date(moisDate.getFullYear(),moisDate.getMonth(),1);
+      const b=new Date(moisDate.getFullYear(),moisDate.getMonth()+1,0);
+      return [_isoDate(a),_isoDate(b)];
+    }
+  }catch(e){}
+  const a=new Date(weekStart), b=new Date(weekStart); b.setDate(b.getDate()+6);
+  return [_isoDate(a),_isoDate(b)];
+}
 function applyScopeFilter(agents){
   const anyFilter = tourneeFilter.length||siteFilter.length||agentFilter.length;
   if(!anyFilter) return agents;
   const siteSet=new Set(siteFilter);
   tourneeFilter.forEach(tid=>{ const t=gt().find(x=>x.id===tid); (t&&t.siteIds||[]).forEach(id=>siteSet.add(id)); });
   const fromSites=new Set(gaf().filter(a=>siteSet.has(a.siteId)).map(a=>a.agentId));
-  // + remplaçants qui couvrent un créneau sur l'un des sites filtrés
+  const [rStart,rEnd]=_scopeDateRange();
+  const inRange=ds=>!!ds && ds>=rStart && ds<=rEnd;
+  // + remplaçants qui couvrent un créneau sur l'un des sites filtrés — uniquement sur la période affichée
   gab().forEach(ab=>{
     if(ab.ignored) return;
     _absenceShifts(ab).forEach(s=>{
       if(!siteSet.has(s.siteId)) return;
+      if(!inRange(_isoDate(s.date))) return;
       const rid=_replFor(ab,_blockKey(s.afId,s.date));
       if(rid) fromSites.add(rid);
     });
   });
-  // + créneaux ponctuels (exceptions ajout/modif) posés sur un site filtré
+  // + créneaux ponctuels (exceptions ajout/modif) posés sur un site filtré, sur la période affichée
   (typeof gex==='function'?gex():[]).forEach(e=>{
     if(e.type==='del') return;
+    if(!inRange(String(e.date||'').slice(0,10))) return;
     if(e.siteId && siteSet.has(e.siteId)) fromSites.add(e.agentId);
   });
   const keep=new Set(agentFilter);
@@ -2514,7 +2546,7 @@ function renderPlanning(){
 
   // Filtre unifié : union des tournées + sites + agents sélectionnés (chaque agent montre son planning complet)
   let affecs=gaf();
-  let agents=sortAgentsForDisplay(applyScopeFilter(ga()));
+  let agents=sortAgentsForDisplay(applyScopeFilter(ga().filter(a=>!a.inactif)));
   updateSortToggleUI();
 
   // Absences semaine
@@ -2688,19 +2720,23 @@ function buildTourneeFilters(){
   }
 }
 
+function _scopeSel(){
+  const out=[];
+  tourneeFilter.forEach(id=>{ const t=gt().find(x=>x.id===id); if(t) out.push({type:'tournee',id,nom:t.nom}); });
+  siteFilter.forEach(id=>{ const s=gs().find(x=>x.id===id); if(s) out.push({type:'site',id,nom:s.nom}); });
+  agentFilter.forEach(id=>out.push({type:'agent',id,nom:agentNom(id)}));
+  return out;
+}
 function updateScopeLabel(){
   const btn=document.getElementById('scope-btn');
-  const lbl=document.getElementById('scope-label');
-  if(!btn||!lbl) return;
-  let text='Tout le planning', filtered=false;
-  const parts=[];
-  tourneeFilter.forEach(tid=>{ const t=gt().find(x=>x.id===tid); if(t) parts.push(t.nom); });
-  siteFilter.forEach(sid=>{ const s=gs().find(x=>x.id===sid); if(s) parts.push(s.nom); });
-  agentFilter.forEach(aid=>parts.push(agentNom(aid)));
-  if(parts.length){ filtered=true; text = parts.length===1 ? parts[0] : parts.length+' plannings'; }
-  lbl.textContent=text;
-  btn.classList.toggle('filtered', filtered);
-  const clr=document.getElementById('scope-clear'); if(clr) clr.style.display=filtered?'inline-flex':'none';
+  const chips=document.getElementById('scope-chips');
+  const inp=document.getElementById('scope-search-input');
+  if(!btn||!chips) return;
+  const sel=_scopeSel();
+  chips.innerHTML=sel.map(s=>`<span class="scope-chip t-${s.type}" title="${_escA(s.nom)}"><span class="txt">${_escH(s.nom)}</span><button class="x" title="Retirer" onclick="event.stopPropagation();selectScope('${s.type}','${_escA(s.id)}')"><svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>`).join('');
+  if(inp) inp.placeholder = sel.length ? 'Ajouter…' : 'Tout le planning — filtrer tournée, site, agent…';
+  btn.classList.toggle('filtered', sel.length>0);
+  const clr=document.getElementById('scope-clear'); if(clr) clr.style.display=sel.length?'inline-flex':'none';
 }
 
 function _ic(path,extra){ return `<svg class="scope-ic" viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round${extra||''}">${path}</svg>`; }
@@ -2715,7 +2751,7 @@ function renderScopeMenu(q=''){
   const inTournee=new Set(); tournees.forEach(t=>(t.siteIds||[]).forEach(id=>inTournee.add(id)));
   const ungrouped=sites.filter(s=>!inTournee.has(s.id)).sort((a,b)=>a.nom.localeCompare(b.nom));
   const allActive=!tourneeFilter.length&&!siteFilter.length&&!agentFilter.length;
-  const nSites=gs().length, nAgents=ga().length;
+  const nSites=gs().length, nAgents=ga().filter(a=>!a.inactif).length;
   let html='';
 
   if(!q){
@@ -2743,7 +2779,7 @@ function renderScopeMenu(q=''){
   }
 
   const userIc=_ic('<circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0115 0"/>');
-  const agentsAll=ga().slice().sort((a,b)=>a.nom.localeCompare(b.nom));
+  const agentsAll=ga().filter(a=>!a.inactif).slice().sort((a,b)=>a.nom.localeCompare(b.nom));
   const agShown=agentsAll.filter(a=>!q||a.nom.toLowerCase().includes(q));
   if(showAgents && agShown.length){
     html+=`<div class="scope-grouplabel">Agents</div>`;
@@ -2797,19 +2833,52 @@ function selectScope(type,val){
     renderScopeMenu(document.getElementById('scope-search-input')?.value||'');
   }
   else { tourneeFilter=[]; siteFilter=[]; agentFilter=[]; closeScopeMenu(); }
+  updateScopeLabel();
   refreshCurrentView();
 }
 
-function toggleScopeMenu(e){
-  e.stopPropagation();
+function openScopeMenu(){
   const menu=document.getElementById('scope-menu'), btn=document.getElementById('scope-btn');
-  const willOpen=!menu.classList.contains('open');
-  menu.classList.toggle('open',willOpen);
-  btn.classList.toggle('open',willOpen);
-  if(willOpen){
-    const si=document.getElementById('scope-search-input');
-    si.value=''; renderScopeMenu('');
-    setTimeout(()=>si.focus(),30);
+  if(!menu||menu.classList.contains('open')){ return; }
+  menu.classList.add('open'); btn.classList.add('open');
+  renderScopeMenu(document.getElementById('scope-search-input')?.value||'');
+}
+function scopeFieldClick(e){
+  e.stopPropagation();
+  const inp=document.getElementById('scope-search-input');
+  if(inp) inp.focus();
+  openScopeMenu();
+}
+function toggleScopeMenu(e){
+  if(e) e.stopPropagation();
+  const menu=document.getElementById('scope-menu');
+  if(menu.classList.contains('open')) closeScopeMenu(); else openScopeMenu();
+}
+function onScopeInput(v){ openScopeMenu(); renderScopeMenu(v); }
+function _scopeOpts(){ return [...document.querySelectorAll('#scope-list .scope-opt[data-stype]')]; }
+function onScopeKey(e){
+  const inp=e.target;
+  if(e.key==='Escape'){ closeScopeMenu(); inp.blur(); return; }
+  if(e.key==='Backspace' && !inp.value){
+    const sel=_scopeSel();
+    if(sel.length){ const last=sel[sel.length-1]; selectScope(last.type,last.id); }
+    return;
+  }
+  const opts=_scopeOpts();
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+    e.preventDefault(); openScopeMenu();
+    if(!opts.length) return;
+    let i=opts.findIndex(o=>o.classList.contains('kb'));
+    i = e.key==='ArrowDown' ? (i+1)%opts.length : (i<=0?opts.length-1:i-1);
+    opts.forEach(o=>o.classList.remove('kb'));
+    opts[i].classList.add('kb');
+    opts[i].scrollIntoViewIfNeeded ? opts[i].scrollIntoViewIfNeeded() : null;
+    return;
+  }
+  if(e.key==='Enter'){
+    e.preventDefault();
+    const target=opts.find(o=>o.classList.contains('kb'))||opts[0];
+    if(target){ selectScope(target.dataset.stype, target.dataset.sval); inp.value=''; renderScopeMenu(''); }
   }
 }
 function closeScopeMenu(){
@@ -3913,7 +3982,7 @@ function covToggleIgnore(siteId,jour,debut,fin){
    Les multisites sont inclus : ce sont les remplaçants des postes d'accueil.
    Logistique, factotum et chantier passent sur site sans assurer l'ouverture. */
 function estAgentAccueil(ag){ const t=ag?.type||'accueil'; return t==='accueil'||t==='multisite'; }
-function _accueilIds(){ return new Set(ga().filter(estAgentAccueil).map(a=>a.id)); }
+function _accueilIds(){ return new Set(ga().filter(a=>!a.inactif&&estAgentAccueil(a)).map(a=>a.id)); }
 
 /* Intervalles réellement couverts sur un site à une date (absences, remplacements, exceptions inclus) */
 function _siteCoveredIntervals(siteId,date){
@@ -4360,7 +4429,7 @@ function delTournee(id){
 function renderAffect(){
   _affectReturnAgent=null;
   const q=(document.getElementById('search-affect')?.value||'').toLowerCase();
-  let agents=ga();
+  let agents=ga().filter(a=>!a.inactif);
   const afs=gaf();
   if(q){
     const matched=agents.filter(a=>{
@@ -5171,7 +5240,7 @@ function expScopeAgents(){
   if(EXP.agentId) return [EXP.agentId];
   const withAffec=new Set(gaf().map(a=>a.agentId));
   gab().forEach(ab=>{ if(ab.remplacantId) withAffec.add(ab.remplacantId); });
-  return ga().filter(a=>withAffec.has(a.id)).sort((a,b)=>a.nom.localeCompare(b.nom)).map(a=>a.id);
+  return ga().filter(a=>!a.inactif&&withAffec.has(a.id)).sort((a,b)=>a.nom.localeCompare(b.nom)).map(a=>a.id);
 }
 
 /* ─── ouverture / onglets ─── */
@@ -5190,7 +5259,7 @@ const _chipStyle="height:26px;padding:0 11px;border-radius:20px;border:1px solid
 function expControls(){
   let extra='';
   if(EXP.tab==='planning'){
-    const opts=`<option value="">Tous les agents</option>`+ga().slice().sort((a,b)=>a.nom.localeCompare(b.nom)).map(a=>`<option value="${a.id}" ${EXP.agentId===a.id?'selected':''}>${_escH(a.nom)}</option>`).join('');
+    const opts=`<option value="">Tous les agents</option>`+ga().filter(a=>!a.inactif).slice().sort((a,b)=>a.nom.localeCompare(b.nom)).map(a=>`<option value="${a.id}" ${EXP.agentId===a.id?'selected':''}>${_escH(a.nom)}</option>`).join('');
     extra=`<div class="form-group"><label class="form-label">Agent</label><select class="form-input" id="exp-agent" onchange="expUpdate()">${opts}</select></div>`;
   } else if(EXP.tab==='pointage'){
     extra=`<div class="form-group"><label class="form-label">Type d'événement</label><select class="form-input" id="exp-pttype" onchange="expUpdate()">
@@ -5509,7 +5578,7 @@ function _moisOrder(){ try{ return JSON.parse(localStorage.getItem('gope_mois_or
 function _setMoisOrder(ids){ localStorage.setItem('gope_mois_order', JSON.stringify(ids)); }
 function moisResetOrder(){ localStorage.removeItem('gope_mois_order'); renderMois(); toast('Ordre alphabétique rétabli'); }
 function _moisAgentsOrdered(){
-  const order=_moisOrder(), all=ga().slice();
+  const order=_moisOrder(), all=ga().filter(a=>!a.inactif).slice();
   if(!order.length) return all.sort((a,b)=>a.nom.localeCompare(b.nom));
   const pos=new Map(order.map((id,i)=>[id,i]));
   return all.sort((a,b)=>{ const pa=pos.has(a.id)?pos.get(a.id):Infinity, pb=pos.has(b.id)?pos.get(b.id):Infinity; return pa!==pb ? pa-pb : a.nom.localeCompare(b.nom); });
@@ -5621,7 +5690,7 @@ function renderMois(){
   const lbl=document.getElementById('mois-label-header'); if(lbl) lbl.textContent=_cap(first.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}));
   const gridEl=document.getElementById('mois-grid'); if(!gridEl) return;
   // Tous les agents apparaissent, même sans affectation · ordre manuel puis alphabétique
-  let agentsSel=agentSortMode==='site' ? applyScopeFilter(sortAgentsForDisplay(ga())) : applyScopeFilter(_moisAgentsOrdered());
+  let agentsSel=(agentSortMode==='site' ? applyScopeFilter(sortAgentsForDisplay(ga())) : applyScopeFilter(_moisAgentsOrdered())).filter(a=>!a.inactif);
   updateSortToggleUI();
   const total=agentsSel.length;
   const q=moisSearch.trim().toLowerCase();
