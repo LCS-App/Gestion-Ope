@@ -1304,6 +1304,10 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
       <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8.5V12.5l3 1.8M9.5 3h5"/></svg>
       <span class="tooltip">Pointage & retards</span>
     </button>
+    <button class="nav-btn" onclick="showView('croise')" id="nav-croise">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 7h9M4 17h9"/><path d="M15 4l5 3.5-5 3.5"/><path d="M9 13.5L4 17l5 3.5"/><path d="M20 7.5h-4.5a4 4 0 00-4 4v1a4 4 0 01-4 4H4"/></svg>
+      <span class="tooltip">Planning croisé</span>
+    </button>
     <button class="nav-btn" onclick="showView('historique')" id="nav-historique">
       <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M5.5 3v3.5H9"/><path d="M12 8v4.2l3 1.8"/></svg>
       <span class="tooltip">Historique</span>
@@ -1373,10 +1377,6 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
 
     <div class="view" id="view-croise">
       <div class="view-page" style="max-width:1400px">
-        <div class="suivi-seg">
-          <button class="suivi-seg-btn" data-seg="pointage" onclick="showView('pointage')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8.5V12.5l3 1.8M9.5 3h5"/></svg> Retards &amp; H. Sup.</button>
-          <button class="suivi-seg-btn on" data-seg="croise" onclick="showView('croise')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg> Planning croisé</button>
-        </div>
         <div class="croise-seg" style="display:flex;gap:8px;margin-bottom:18px">
           <button class="croise-seg-btn" data-cseg="postes" onclick="croiseGo('postes')">Postes à couvrir</button>
           <button class="croise-seg-btn" data-cseg="calendrier" onclick="croiseGo('calendrier')">Calendrier croisé</button>
@@ -1413,7 +1413,6 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
       <div class="view-page">
         <div class="suivi-seg">
           <button class="suivi-seg-btn" data-seg="pointage" onclick="showView('pointage')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8.5V12.5l3 1.8M9.5 3h5"/></svg> Retards &amp; H. Sup.</button>
-          <button class="suivi-seg-btn" data-seg="croise" onclick="showView('croise')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg> Planning croisé</button>
         </div>
         <div class="page-heading">
           <div>
@@ -1426,6 +1425,9 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
           <button class="tab on" onclick="tabAbsences('tous',this)">Toutes</button>
           <button class="tab" onclick="tabAbsences('urgent',this)">Sans remplaçant</button>
           <button class="tab" onclick="tabAbsences('covered',this)">Remplacées</button>
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+          <input class="form-input" type="search" id="abs-search" placeholder="Rechercher une absence — agent, motif, site…" autocomplete="off" oninput="filterAbsList(this.value)">
         </div>
         <div id="absences-list"></div>
       </div>
@@ -1454,7 +1456,6 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
       <div class="view-page">
         <div class="suivi-seg">
           <button class="suivi-seg-btn on" data-seg="pointage" onclick="showView('pointage')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8.5V12.5l3 1.8M9.5 3h5"/></svg> Retards &amp; H. Sup.</button>
-          <button class="suivi-seg-btn" data-seg="croise" onclick="showView('croise')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg> Planning croisé</button>
         </div>
         <div class="page-heading">
           <div><h1>Retards & Heures Sup.</h1></div>
@@ -1925,7 +1926,7 @@ function showView(v){
   document.getElementById('view-'+v)?.classList.add('active');
   document.getElementById('nav-'+v)?.classList.add('active');
   // Vue fusionnée Absences / Retards & H.Sup → même entrée de nav "Suivi"
-  if(v==='absences'||v==='pointage'||v==='croise'){
+  if(v==='absences'||v==='pointage'){
     document.getElementById('nav-suivi')?.classList.add('active');
     document.querySelectorAll('.suivi-seg-btn').forEach(el=>el.classList.toggle('on', el.dataset.seg===v));
   }
@@ -2158,7 +2159,7 @@ function croiseAssign(gapKey, candId){
     r.push({id:DB.id(),agentAbsentId:ab.agentId,remplacantId:candId,siteId:gap.siteId||'',afId:gap.afId,date:ab.dateDebut,statut:'confirme',createdAt:new Date().toISOString()});
   sr(r);
   toast('Remplaçant assigné : '+agentNom(candId).split(' ')[0]);
-  renderCroise(); updateAbsenceBadge();
+  refreshAfterAbsenceChange();
 }
 function croiseUnassign(gapKey){
   const gap=croiseGaps().find(g=>g.key===gapKey); if(!gap) return;
@@ -2166,7 +2167,122 @@ function croiseUnassign(gapKey){
   const prev=_replFor(ab,gap.blockKey); ab.remplacants=ab.remplacants||{}; ab.remplacants[gap.blockKey]=null; sab(abs);
   sr(gr().filter(x=>!(x.agentAbsentId===ab.agentId && x.remplacantId===prev && x.date===ab.dateDebut && (x.afId||null)===gap.afId)));
   toast('Remplacement retiré');
-  renderCroise(); updateAbsenceBadge();
+  refreshAfterAbsenceChange();
+}
+
+/* ═══════════════════════════════════════
+   SOCLE COMMUN — ACTIONS SUR UNE ABSENCE
+   Toutes les vues (planning, mois, liste, croisement, fiche agent, panneaux)
+   passent par ces fonctions : même jeu d'actions, mêmes garde-fous, même refresh.
+═══════════════════════════════════════ */
+const _ABSIC=(()=>{ const s='style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"'; return {
+  edit:`<svg viewBox="0 0 24 24" ${s}><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg>`,
+  del:`<svg viewBox="0 0 24 24" ${s}><path d="M4.5 7h15M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg>`,
+  ign:`<svg viewBox="0 0 24 24" ${s}><circle cx="12" cy="12" r="8.5"/><path d="M6.2 17.8L17.8 6.2"/></svg>`,
+  res:`<svg viewBox="0 0 24 24" ${s}><path d="M4 12a8 8 0 1 0 2.8-6.1M4 4.5V10h5.5"/></svg>`,
+  off:`<svg viewBox="0 0 24 24" ${s}><path d="M18 6L6 18M6 6l12 12"/></svg>`,
+  find:`<svg viewBox="0 0 24 24" ${s}><path d="M12 3.6l9 15.4H3z"/><path d="M12 9.6v4.6M12 17.2v.4"/></svg>`
+}; })();
+
+/* Unique point de rafraîchissement après toute modification d'absence. */
+function refreshAfterAbsenceChange(){
+  if(typeof closeMoisPopup==='function') closeMoisPopup();
+  const map={planning:'renderPlanning',mois:'renderMois',absences:'renderAbsences',croise:'renderCroise',historique:'renderHistorique',pointage:'renderPointage'};
+  const fn=window[map[currentView]]||window.renderPlanning;
+  if(typeof fn==='function') fn();
+  if(typeof updateAbsenceBadge==='function') updateAbsenceBadge();
+  if(typeof updateAlertBand==='function') updateAlertBand();
+}
+
+function _absShiftDay(iso,n){ const d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return _isoDate(d); }
+function _absDays(ab){ return _replDateRange(ab.dateDebut, ab.dateFin).map(_isoDate); }
+function _absDesc(ab){
+  const blocks=_absenceBlocks(ab);
+  return {
+    nom: agentNom(ab.agentId),
+    periode: fmtDate(ab.dateDebut)+((ab.dateFin&&ab.dateFin!==ab.dateDebut)?' → '+fmtDate(ab.dateFin):''),
+    blocks: blocks.length,
+    repl: blocks.filter(b=>_replFor(ab,b.key)).length
+  };
+}
+/* Purge TOUS les enregistrements de remplacement liés à une absence.
+   L'ancien filtre (date === dateDebut) laissait des orphelins sur les absences multi-jours. */
+function _absPurgeRempl(rows, ab){
+  const keys=new Set(_absenceBlocks(ab).map(b=>b.key));
+  return rows.filter(x=>!(x.agentAbsentId===ab.agentId && (x.date===ab.dateDebut || keys.has(x.afId))));
+}
+/* Reconstruit les lignes de remplacement à partir de la map remplacants (utilisé après scission). */
+function _absRemplRows(ab){
+  const out=[];
+  _absenceBlocks(ab).forEach(b=>{
+    const r=_replFor(ab,b.key); if(!r) return;
+    out.push({id:DB.id(),agentAbsentId:ab.agentId,remplacantId:r,siteId:b.siteId,afId:b.key,date:ab.dateDebut,
+      notes:ab.replNotes||'',statut:'confirme',createdAt:new Date().toISOString()});
+  });
+  return out;
+}
+
+/* Groupe d'actions homogène. opts : {day:iso, blockKey, compact:true, hideFind:true} */
+function absenceActionsHTML(absId, opts){
+  const o=opts||{};
+  const ab=gab().find(a=>a.id===absId); if(!ab) return '';
+  const dayArg=o.day?`,'${o.day}'`:'';
+  const repl=o.blockKey?_replFor(ab,o.blockKey):null;
+  const b=(extra,title,fn,ic)=>`<button class="btn-icon${extra?' '+extra:''}" title="${title}" onclick="event.stopPropagation();${fn}">${ic}</button>`;
+  return `<div class="abs-actions" style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+    ${o.blockKey&&repl?b('',`Retirer le remplaçant (${_escA(agentNom(repl).split(' ')[0])})`,`retirerRemplacementBloc('${absId}','${o.blockKey}')`,_ABSIC.off):''}
+    ${b('',"Modifier l'absence",`editAbsence('${absId}')`,_ABSIC.edit)}
+    ${ab.ignored
+      ? b('',"Réactiver l'absence (à nouveau à couvrir)",`toggleIgnorerAbsence('${absId}')`,_ABSIC.res)
+      : b('',"Ignorer l'absence (ne plus proposer à couvrir)",`toggleIgnorerAbsence('${absId}')`,_ABSIC.ign)}
+    ${b('red',"Supprimer l'absence",`delAbsence('${absId}'${dayArg})`,_ABSIC.del)}
+  </div>`;
+}
+
+/* Ignorer / réactiver — réversible partout. */
+function toggleIgnorerAbsence(absId){
+  const abs=gab(); const ab=abs.find(a=>a.id===absId); if(!ab) return;
+  if(!ab.ignored){
+    if(!confirm(`Ignorer l'absence de ${agentNom(ab.agentId)} — ${_absDesc(ab).periode} ?\n\nElle ne sera plus proposée à couvrir, mais reste visible dans la liste des absences.`)) return;
+    ab.ignored=true;
+  } else {
+    delete ab.ignored;
+  }
+  sab(abs);
+  if(document.getElementById('side-panel')?.classList.contains('open')) closePanel();
+  toast(ab.ignored?'Absence ignorée':'Absence réactivée — à nouveau à couvrir');
+  refreshAfterAbsenceChange();
+}
+
+function closeAbsAsk(){ const p=document.getElementById('abs-ask'); if(p) p.remove(); }
+
+/* Retire une seule journée d'une absence multi-jours : l'absence est scindée en deux.
+   Les clés de bloc étant datées (afId@date), les remplaçants déjà attribués sont conservés. */
+function absRetirerJour(absId, dayIso){
+  closeAbsAsk();
+  const abs=gab(); const i=abs.findIndex(a=>a.id===absId); if(i<0) return;
+  const ab=abs[i];
+  const start=ab.dateDebut, end=ab.dateFin||ab.dateDebut;
+  let rows=_absPurgeRempl(gr(), ab);
+  if(dayIso<=start && dayIso>=end){ abs.splice(i,1); sab(abs); sr(rows); toast('Absence supprimée'); refreshAfterAbsenceChange(); return; }
+  const parts=[];
+  if(dayIso>start){ const p=JSON.parse(JSON.stringify(ab)); p.dateFin=_absShiftDay(dayIso,-1); parts.push(p); }
+  if(dayIso<end){ const p=JSON.parse(JSON.stringify(ab)); p.id=DB.id(); p.dateDebut=_absShiftDay(dayIso,1); p.dateFin=end; parts.push(p); }
+  abs.splice(i,1,...parts);
+  sab(abs);
+  parts.forEach(p=>{ rows=rows.concat(_absRemplRows(p)); });
+  sr(rows);
+  toast(fmtDate(dayIso)+' retiré de l\'absence');
+  refreshAfterAbsenceChange();
+}
+
+function absSupprimerTout(absId){
+  closeAbsAsk();
+  const ab=gab().find(a=>a.id===absId); if(!ab) return;
+  sab(gab().filter(a=>a.id!==absId));
+  sr(_absPurgeRempl(gr(), ab));
+  toast('Absence supprimée');
+  refreshAfterAbsenceChange();
 }
 
 // Retire le remplaçant sans supprimer l'absence — le poste redevient à couvrir. Rafraîchit la vue courante.
@@ -2178,10 +2294,7 @@ function retirerRemplacement(absenceId){
   sr(gr().filter(x=>!(x.agentAbsentId===ab.agentId && x.remplacantId===prev && x.date===ab.dateDebut)));
   closePanel();
   toast('Remplacement retiré — poste à couvrir');
-  if(currentView==='croise') renderCroise();
-  else if(currentView==='absences') renderAbsences();
-  else renderPlanning();
-  updateAbsenceBadge();
+  refreshAfterAbsenceChange();
 }
 
 // Créneaux qu'un agent COUVRE comme remplaçant un jour donné (pour affichage dans son planning)
@@ -2206,7 +2319,16 @@ function _croiseCands(gap){
   return scored;
 }
 
-function _croiseCandPanelHTML(gap){
+function croiseFilterCands(q){
+  const s=(q||'').trim().toLowerCase();
+  document.querySelectorAll('#cx-cand-list .cx-cand').forEach(el=>{
+    el.style.display = (!s || (el.dataset.nm||'').includes(s)) ? '' : 'none';
+  });
+  const none=document.getElementById('cx-cand-none');
+  if(none) none.style.display = document.querySelectorAll('#cx-cand-list .cx-cand:not([style*="display: none"])').length ? 'none' : '';
+}
+
+function _croiseCandPanelHTML(gap, header){
   if(!gap) return `<div class="cx-card" style="width:320px;flex:none;padding:16px;color:var(--text3);font-size:13px">Aucun poste sélectionné.</div>`;
   const scored=_croiseCands(gap);
   const covName=gap.remplacantId;
@@ -2219,7 +2341,7 @@ function _croiseCandPanelHTML(gap){
     const roleTxt=c.a.remplacant?'Remplaçant':'Agent formé';
     const note=c.busy? ('Déjà pris '+c.busy.debut+'–'+c.busy.fin+(c.busy.type==='poste'?' · '+siteNom(c.busy.siteId):' · remplacement')) : (roleTxt+' · libre ce créneau');
     const compTag=c.comp?'<span style="font-size:9px;font-weight:800;background:var(--blue-light);color:var(--blue-mid);padding:1px 6px;border-radius:20px">formé</span>':'';
-    return `<div class="cx-cand${isBest&&!isCov?' reco':''}" draggable="true" ondragstart="croiseDrag='${c.a.id}'" style="${isCov?'border-color:var(--green);background:var(--green-light)':''}">
+    return `<div class="cx-cand${isBest&&!isCov?' reco':''}" data-nm="${_escA(c.a.nom.toLowerCase())}" draggable="true" ondragstart="croiseDrag='${c.a.id}'" style="${isCov?'border-color:var(--green);background:var(--green-light)':''}">
       <div style="width:30px;height:30px;border-radius:50%;background:${bg};color:${fg};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0">${_initials(c.a.nom)}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:6px">${_escH(c.a.nom)}${compTag}${isBest&&!isCov?'<span style="font-size:9px;font-weight:800;background:var(--green-light);color:var(--green);padding:1px 6px;border-radius:20px">RECO</span>':''}</div>
@@ -2236,12 +2358,26 @@ function _croiseCandPanelHTML(gap){
       <div style="flex:1;font-size:12.5px;font-weight:700;color:var(--green)">Couvert par ${_escH(agentNom(covName))}</div>
       <span style="font-size:11px;font-weight:700;color:var(--red);cursor:pointer" onclick="croiseUnassign('${gap.key}')">Retirer</span>
     </div>` : '';
-  return `<div class="cx-card" style="width:320px;flex:none;padding:15px 16px;align-self:flex-start">
-    <div style="font-size:13px;font-weight:800;margin-bottom:2px">Qui peut couvrir&nbsp;?</div>
-    <div style="font-size:11.5px;color:var(--text2);margin-bottom:2px">${_escH(compLabel)} · ${JOURS_FULL[(gap.date.getDay()+6)%7]} ${gap.date.getDate()} · ${gap.deb}–${gap.fin}</div>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:13px">${scored.length} agent(s) possible(s) · glisser-déposer ou assigner</div>
+  const subtitle = header ? '' : `<div style="font-size:11.5px;color:var(--text2);margin-bottom:2px">${_escH(compLabel)} · ${JOURS_FULL[(gap.date.getDay()+6)%7]} ${gap.date.getDate()} · ${gap.deb}–${gap.fin}</div>`;
+  return `<div class="cx-card" style="width:320px;flex:none;padding:0;overflow:hidden;align-self:flex-start">
+    ${header||''}
+    <div style="padding:14px 16px 15px">
+    <div style="display:flex;align-items:baseline;gap:7px">
+      <div style="font-size:13px;font-weight:800">Qui peut couvrir&nbsp;?</div>
+      <div style="font-size:11px;color:var(--text3)">${scored.length} possible${scored.length>1?'s':''}</div>
+    </div>
+    ${subtitle}
+    <div style="display:flex;align-items:center;gap:7px;height:32px;margin:10px 0 4px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" style="width:13px;height:13px;flex:none"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5" stroke-linecap="round"></path></svg>
+      <input type="text" placeholder="Rechercher un agent…" oninput="croiseFilterCands(this.value)" style="flex:1;min-width:0;border:none;outline:none;background:transparent;font-family:inherit;font-size:12px;color:var(--text1)">
+    </div>
+    <div style="font-size:10.5px;color:var(--text3);margin:0 0 11px">Glisser-déposer sur le calendrier ou assigner</div>
     ${covBanner}
-    ${rows||'<div style="font-size:12px;color:var(--text3)">Aucun remplaçant disponible pour ce poste.</div>'}
+    <div id="cx-cand-list">
+      ${rows||''}
+      <div id="cx-cand-none" style="font-size:12px;color:var(--text3);${rows?'display:none':''}">Aucun remplaçant disponible pour ce poste.</div>
+    </div>
+    </div>
   </div>`;
 }
 
@@ -2256,6 +2392,7 @@ function _croiseScreenPostes(gaps, sel){
         <div style="font-size:11.5px;color:var(--text2)">${JOURS_FULL[(g.date.getDay()+6)%7]} ${g.date.getDate()} · ${g.deb}–${g.fin} · titulaire ${_escH(agentNom(g.agentId).split(' ')[0])}</div>
       </div>
       <span class="cx-pill" style="background:${isCov?'var(--green-light)':'var(--red-light)'};color:${isCov?'var(--green)':'var(--red)'};min-width:92px;text-align:center">${isCov?'✓ '+_escH(agentNom(g.remplacantId).split(' ')[0]):'Non couvert'}</span>
+      ${isSel?absenceActionsHTML(g.absenceId,{day:_isoDate(g.date),blockKey:g.blockKey}):''}
     </div>`;
   }).join('') : `<div style="font-size:13px;color:var(--text3);padding:20px 4px">Aucun poste à couvrir cette semaine. 🎉</div>`;
   return `<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px">
@@ -2296,14 +2433,31 @@ function _croiseScreenCalendrier(gaps, sel){
   croiseCandIds=comp.map(a=>a.id);
   const candColor={}; comp.forEach((a,i)=>{ candColor[a.id]=CX_PALETTE[i%CX_PALETTE.length]; });
   const absGaps=gaps.filter(g=>g.absenceId===sel.absenceId).sort((a,b)=>a.date-b.date||_mins(a.deb)-_mins(b.deb));
-  const spanTxt=absGaps.length>1
-    ? `${JOURS_FULL[(absGaps[0].date.getDay()+6)%7]} ${absGaps[0].date.getDate()} → ${JOURS_FULL[(absGaps[absGaps.length-1].date.getDay()+6)%7]} ${absGaps[absGaps.length-1].date.getDate()} · ${absGaps.length} jours`
-    : `${JOURS_FULL[(sel.date.getDay()+6)%7]} ${sel.date.getDate()} · ${sel.deb}–${sel.fin}`;
+  const absDayCount=new Set(absGaps.map(g=>_isoDate(g.date))).size;
+  const selIdx=absGaps.findIndex(g=>g.key===sel.key)+1;
+  const selTxt=`${JOURS_FULL[(sel.date.getDay()+6)%7]} ${sel.date.getDate()} · ${sel.deb}–${sel.fin}`;
+  const absTxt=absGaps.length>1
+    ? `créneau ${selIdx}/${absGaps.length} de l'absence de ${_escH(agentNom(sel.agentId).split(' ')[0])} · ${absDayCount} jour${absDayCount>1?'s':''} (${JOURS[(absGaps[0].date.getDay()+6)%7]} ${absGaps[0].date.getDate()} → ${JOURS[(absGaps[absGaps.length-1].date.getDay()+6)%7]} ${absGaps[absGaps.length-1].date.getDate()})`
+    : `absence de ${_escH(agentNom(sel.agentId).split(' ')[0])} · créneau unique`;
+  const prevKey=absGaps.length>1?absGaps[(selIdx-2+absGaps.length)%absGaps.length].key:null;
+  const nextKey=absGaps.length>1?absGaps[selIdx%absGaps.length].key:null;
+  const navBtn=(key,label)=>`<span ${key?`onclick="croiseSelect('${key}')"`:''} style="flex:1;height:27px;border-radius:var(--radius-sm);background:#fff;border:1px solid var(--border);font-size:11px;font-weight:700;color:${key?'var(--text2)':'var(--text3)'};display:flex;align-items:center;justify-content:center;cursor:${key?'pointer':'default'};opacity:${key?1:.5}">${label}</span>`;
+  const selHeader=`<div style="background:var(--blue-light);border-bottom:1px solid var(--blue-mid);padding:12px 14px">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div style="width:28px;height:28px;border-radius:8px;background:var(--blue);color:#000;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">◎</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--blue-mid)">Créneau sélectionné${absGaps.length>1?` · ${selIdx}/${absGaps.length}`:''}</div>
+          <div style="font-size:12.5px;font-weight:800;margin-top:1px">${_escH(siteNom(sel.siteId))} · ${selTxt}</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:6px">${absTxt}</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:9px">${navBtn(prevKey,'‹ créneau')}${navBtn(nextKey,'créneau ›')}${absenceActionsHTML(sel.absenceId,{day:_isoDate(sel.date),blockKey:sel.blockKey})}</div>
+    </div>`;
   const legend=comp.map(a=>{ const [fg]=candColor[a.id]; const hidden=croiseHiddenCands.has(a.id); return `<span onclick="croiseToggleCand('${a.id}')" title="${_escA(a.nom)}" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:${hidden?'var(--text3)':'var(--text1)'};cursor:pointer;user-select:none;padding:2px 9px;border-radius:var(--radius-full);border:1px solid ${hidden?'var(--border)':fg};background:${hidden?'transparent':fg+'1f'}"><span style="width:9px;height:9px;border-radius:2px;background:${hidden?'#C9C9C9':fg}"></span>${_escH(a.nom.split(' ')[0])}</span>`; }).join('');
   const axis=(()=>{ let h=''; for(let m=CX_START;m<=CX_END;m+=60){ const top=(m-CX_START)*PX; h+=`<div style="position:absolute;top:${top}px;right:6px;transform:translateY(-50%);font-size:10px;color:var(--text3)">${Math.floor(m/60)}h</div>`; } return h; })();
   const cols=days.map(d=>{
-    const dayGap=absGaps.find(g=>_sameDay(g.date,d));
-    const isGapDay=!!dayGap;
+    const dayGaps=absGaps.filter(g=>_sameDay(g.date,d));
+    const isGapDay=dayGaps.length>0;
     // événements des candidats ce jour
     const evs=[];
     comp.forEach(a=>{
@@ -2321,7 +2475,7 @@ function _croiseScreenCalendrier(gaps, sel){
     const blocks=evs.map(ev=>{
       const [fg,bg]=candColor[ev.a.id]||_agColor(ev.a.id);
       const top=(_mins(ev.deb)-CX_START)*PX, h=Math.max((_mins(ev.fin)-_mins(ev.deb))*PX,20);
-      const conflict=dayGap && _timeOverlap(ev.deb,ev.fin,dayGap.deb,dayGap.fin);
+      const conflict=dayGaps.some(g=>_timeOverlap(ev.deb,ev.fin,g.deb,g.fin));
       const nm=siteNom(ev.site); const short=nm.length>13?nm.slice(0,13)+'…':nm;
       return `<div title="${_escA(ev.a.nom+' · '+nm+' · '+ev.deb+'–'+ev.fin)}" style="position:absolute;top:${top}px;height:${h}px;left:calc(${(ev.lane/lc)*100}% + 2px);width:calc(${100/lc}% - 3px);background:${bg};border:1px solid ${conflict?'var(--red)':fg};border-left:3px solid ${fg};border-radius:5px;padding:4px 16px 4px 6px;overflow:hidden;color:${fg};box-sizing:border-box${conflict?';box-shadow:0 0 0 1px var(--red)':''}">
         <span style="position:absolute;top:3px;right:3px;display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:${fg};color:#fff;font-size:7px;font-weight:800">${_initials(ev.a.nom)}</span>
@@ -2329,14 +2483,14 @@ function _croiseScreenCalendrier(gaps, sel){
         <div style="font-size:8.5px;opacity:.85;margin-top:1px">${ev.deb}–${ev.fin}</div>
       </div>`;
     }).join('');
-    let band='';
-    if(dayGap){
-      const top=(_mins(dayGap.deb)-CX_START)*PX, h=(_mins(dayGap.fin)-_mins(dayGap.deb))*PX;
-      const cov=dayGap.remplacantId;
-      band=`<div ondragover="event.preventDefault()" ondrop="if(croiseDrag){croiseAssign('${dayGap.key}',croiseDrag);croiseDrag=null;}" style="position:absolute;left:0;right:0;top:${top}px;height:${h}px;background:${cov?'var(--green-light)':'var(--blue-light)'};border-top:2px dashed ${cov?'var(--green)':'var(--blue-mid)'};border-bottom:2px dashed ${cov?'var(--green)':'var(--blue-mid)'}">
-        <span style="position:absolute;top:3px;left:0;right:0;text-align:center;font-size:9px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:${cov?'var(--green)':'var(--blue-mid)'}">${cov?'Couvert · '+_escH(agentNom(cov).split(' ')[0]):dayGap.deb+'–'+dayGap.fin}</span>
+    const band=dayGaps.map(g=>{
+      const top=(_mins(g.deb)-CX_START)*PX, h=Math.max((_mins(g.fin)-_mins(g.deb))*PX,16);
+      const cov=g.remplacantId, isSel=g.key===sel.key;
+      const bd=cov?'var(--green)':'var(--blue-mid)';
+      return `<div onclick="croiseSelect('${g.key}')" ondragover="event.preventDefault()" ondrop="if(croiseDrag){croiseAssign('${g.key}',croiseDrag);croiseDrag=null;}" title="${_escA(g.deb+'–'+g.fin+(cov?' · couvert par '+agentNom(cov):' · à couvrir'))}" style="position:absolute;left:0;right:0;top:${top}px;height:${h}px;cursor:pointer;background:${cov?'var(--green-light)':'var(--blue-light)'};opacity:${isSel?1:.55};border-top:2px ${isSel?'solid':'dashed'} ${bd};border-bottom:2px ${isSel?'solid':'dashed'} ${bd}">
+        <span style="position:absolute;top:2px;left:0;right:0;text-align:center;font-size:9px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:${bd}">${cov?'Couvert · '+_escH(agentNom(cov).split(' ')[0]):g.deb+'–'+g.fin}</span>
       </div>`;
-    }
+    }).join('');
     return `<div style="flex:1;display:flex;flex-direction:column;min-width:0">
       <div style="text-align:center;font-size:11.5px;font-weight:700;color:${isGapDay?'var(--blue-mid)':'var(--text2)'};padding-bottom:7px">${JOURS[days.indexOf(d)]} ${d.getDate()}</div>
       <div style="position:relative;height:${CX_H}px;border-left:1px solid var(--border);background-image:linear-gradient(to bottom,var(--border) 0,transparent 1px);background-size:100% ${60*PX}px">${band}${blocks}</div>
@@ -2344,13 +2498,16 @@ function _croiseScreenCalendrier(gaps, sel){
   }).join('');
   return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
       <div style="flex:1"><div style="font-size:18px;font-weight:800;letter-spacing:-.2px">Calendrier croisé</div>
-      <div style="font-size:12.5px;color:var(--text2)">Plannings des agents formés/remplaçants superposés · glissez une vignette d'agent sur la bande bleue pour l'assigner</div></div>
+      <div style="font-size:12.5px;color:var(--text2)">Un créneau à la fois : cliquez une bande du calendrier ou une pastille pour changer de créneau · glissez une vignette d'agent sur une bande pour l'assigner</div></div>
     </div>
-    <div style="display:flex;align-items:center;gap:12px;background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:11px;padding:11px 15px;margin-bottom:16px">
-      <div style="width:32px;height:32px;border-radius:9px;background:var(--blue);color:#000;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">◎</div>
-      <div style="flex:1"><div style="font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--blue-mid)">Poste à couvrir</div>
-        <div style="font-size:13.5px;font-weight:700;margin-top:1px">${_escH(siteNom(sel.siteId))} · ${spanTxt} <span style="color:var(--text2);font-weight:600">— dispo : ${comp.map(a=>_escH(a.nom.split(' ')[0])).join(', ')||'aucun'}</span></div></div>
-      <span style="font-size:12px;font-weight:700;color:var(--blue-mid);cursor:pointer" onclick="croiseGo('postes')">← Changer de poste</span>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px">
+      ${gaps.filter(g=>!g.remplacantId || g.key===sel.key).map(g=>{
+        const on=g.key===sel.key, cov=!!g.remplacantId;
+        return `<button onclick="croiseSelect('${g.key}')" style="flex:none;display:flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:var(--radius-full);border:1px solid ${on?'var(--blue-mid)':'var(--border)'};background:${on?'var(--blue-light)':'#fff'};font-family:inherit;font-size:11.5px;font-weight:700;color:${on?'var(--blue-mid)':'var(--text2)'};cursor:pointer;white-space:nowrap">
+          <span style="width:7px;height:7px;border-radius:50%;background:${cov?'var(--green)':'var(--red)'};flex-shrink:0"></span>
+          ${_escH(siteNom(g.siteId))} · ${JOURS[(g.date.getDay()+6)%7]} ${g.date.getDate()} · ${g.deb}
+        </button>`;
+      }).join('')}
     </div>
     <div style="display:flex;gap:16px;align-items:flex-start">
       <div class="cx-card" style="flex:1;min-width:0;padding:14px">
@@ -2368,7 +2525,7 @@ function _croiseScreenCalendrier(gaps, sel){
           ${cols}
         </div>
       </div>
-      ${_croiseCandPanelHTML(sel)}
+      ${_croiseCandPanelHTML(sel, selHeader)}
     </div>`;
 }
 
@@ -3281,20 +3438,11 @@ function buildPanelRemplacer(body,footer,raw){
     </div>`;
   body.querySelectorAll('.pr-block').forEach(sel=>{ sel.value=_replFor(absence, sel.dataset.af)||''; prCheckBlock(sel); });
   footer.innerHTML=`
-    <button class="btn btn-secondary" onclick="ignorerAbsence('${absId}')">Ignorer</button>
+    ${absenceActionsHTML(absId,{day:focusAf?String(focusAf).split('@')[1]:''})}
     <button class="btn btn-secondary" onclick="closePanel()">Annuler</button>
     <button class="btn btn-primary" onclick="confirmerRepl('${absId}')">Enregistrer</button>`;
 }
-function ignorerAbsence(absId){
-  const abs=gab(); const absence=abs.find(a=>a.id===absId); if(!absence) return;
-  if(!confirm(`Ignorer cette absence ?\n\nElle ne sera plus proposée à couvrir, mais reste visible dans l'historique des absences.`)) return;
-  absence.ignored=true;
-  sab(abs);
-  closePanel();
-  toast('Absence ignorée');
-  if(currentView==='croise') renderCroise(); else if(currentView==='absences') renderAbsences(); else renderPlanning();
-  updateAbsenceBadge(); updateAlertBand();
-}
+function ignorerAbsence(absId){ toggleIgnorerAbsence(absId); }
 function _filterSelectOptions(sel,q){
   q=q.trim().toLowerCase();
   const els=typeof sel==='string'?[document.getElementById(sel)].filter(Boolean):[...sel];
@@ -3333,8 +3481,7 @@ function confirmerRepl(absId){
   sab(abs); sr(r);
   closePanel();
   toast(vals.some(v=>v)?'Remplacement enregistré ✓':'Blocs remis à couvrir');
-  if(currentView==='croise') renderCroise(); else if(currentView==='absences') renderAbsences(); else renderPlanning();
-  updateAbsenceBadge();
+  refreshAfterAbsenceChange();
 }
 function retirerRemplacementBloc(absId, afId){
   const abs=gab(); const ab=abs.find(a=>a.id===absId); if(!ab) return;
@@ -3343,8 +3490,7 @@ function retirerRemplacementBloc(absId, afId){
   ab.remplacants=ab.remplacants||{}; ab.remplacants[afId]=null; sab(abs);
   sr(gr().filter(x=>!(x.agentAbsentId===ab.agentId && x.remplacantId===prev && x.date===ab.dateDebut && (x.afId||null)===afId)));
   closePanel(); toast('Remplacement retiré — bloc à couvrir');
-  if(currentView==='croise') renderCroise(); else if(currentView==='absences') renderAbsences(); else renderPlanning();
-  updateAbsenceBadge();
+  refreshAfterAbsenceChange();
 }
 
 /* ═══════════════════════════════════════
@@ -3443,7 +3589,8 @@ function renderAbsences(){
         </div>
       </div>`;
     }
-    return `<div class="abs-item ${cls}">
+    const q=[agentNom(a.agentId),a.motif,a.notes||'',fmtDate(a.dateDebut)].concat(impact.map(siteNom)).concat(_absenceReplNames(a)).join(' ').toLowerCase();
+    return `<div class="abs-item ${cls}" data-q="${_escA(q)}">
       <div style="flex:1">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
           <span style="font-weight:700;font-size:14px">${_escH(agentNom(a.agentId))}</span>
@@ -3457,21 +3604,46 @@ function renderAbsences(){
       </div>
       <div style="display:flex;gap:6px;align-items:center">
         ${urgent?`<button class="btn btn-primary btn-sm" onclick="openPanel('panel-remplacer','${a.id}')">Attribuer</button>`:''}
-        <button class="btn-icon red" onclick="delAbsence('${a.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4.5 7h15M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg></button>
+        ${absenceActionsHTML(a.id)}
       </div>
     </div>`;
   }).join('');
+  filterAbsList(document.getElementById('abs-search')?.value||'');
 }
 
-function delAbsence(id){
-  if(!confirm('Supprimer cette absence ?')) return;
-  const ab=gab().find(a=>a.id===id);
-  sab(gab().filter(a=>a.id!==id));
-  if(ab) sr(gr().filter(x=>!(x.agentAbsentId===ab.agentId && x.date===ab.dateDebut)));
-  if(typeof closeMoisPopup==='function') closeMoisPopup();
-  if(currentView==='mois') renderMois(); else if(currentView==='planning') renderPlanning(); else renderAbsences();
-  updateAbsenceBadge();
-  toast('Absence supprimée');
+/* Suppression — point d'entrée unique. `dayIso` = journée depuis laquelle l'action est lancée
+   (clic sur un créneau, popup du mois, poste du croisement) : on propose alors la portée. */
+function delAbsence(id, dayIso){
+  const ab=gab().find(a=>a.id===id); if(!ab) return;
+  const d=_absDesc(ab);
+  const days=_absDays(ab);
+  const perte=d.repl?`, dont <strong>${d.repl}</strong> déjà remplacé${d.repl>1?'s':''} — ${d.repl>1?'ces remplacements seront annulés':'ce remplacement sera annulé'}`:'';
+  if(!(dayIso && days.length>1 && days.includes(dayIso))){
+    if(!confirm(`Supprimer l'absence de ${d.nom} — ${d.periode} ?\n\n${d.blocks} créneau${d.blocks>1?'x':''} concerné${d.blocks>1?'s':''}${d.repl?`, dont ${d.repl} déjà remplacé${d.repl>1?'s':''} (le${d.repl>1?'s':''} remplacement${d.repl>1?'s':''} sera annulé).`:'.'}`)) return;
+    absSupprimerTout(id); return;
+  }
+  closeAbsAsk();
+  const jourLabel=_cap(new Date(dayIso+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}));
+  document.body.insertAdjacentHTML('beforeend',`<div id="abs-ask" style="position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeAbsAsk()">
+    <div style="position:absolute;inset:0;background:rgba(20,20,18,.42)"></div>
+    <div style="position:relative;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-lg);width:420px;max-width:100%;padding:20px">
+      <div style="font-size:16px;font-weight:800;margin-bottom:4px">Que faut-il supprimer ?</div>
+      <div style="font-size:12.5px;color:var(--text2);line-height:1.55;margin-bottom:16px">Absence de <strong>${_escH(d.nom)}</strong> — ${d.periode} (${days.length} jours, ${d.blocks} créneau${d.blocks>1?'x':''}${perte}).</div>
+      <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;text-align:left;height:auto;padding:11px 13px;margin-bottom:8px" onclick="absRetirerJour('${id}','${dayIso}')">
+        <span><span style="display:block;font-weight:700;font-size:13px">Ce jour seulement</span><span style="display:block;font-size:11.5px;color:var(--text2);margin-top:2px">${_escH(jourLabel)} — l'absence est scindée, le reste de la période est conservé.</span></span>
+      </button>
+      <button class="btn btn-danger" style="width:100%;justify-content:flex-start;text-align:left;height:auto;padding:11px 13px" onclick="absSupprimerTout('${id}')">
+        <span><span style="display:block;font-weight:700;font-size:13px">Toute l'absence</span><span style="display:block;font-size:11.5px;opacity:.85;margin-top:2px">${d.periode} — tous les créneaux et remplacements associés.</span></span>
+      </button>
+      <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:10px" onclick="closeAbsAsk()">Annuler</button>
+    </div></div>`);
+}
+
+function filterAbsList(q){
+  q=(q||'').trim().toLowerCase();
+  document.querySelectorAll('#absences-list .abs-item').forEach(el=>{
+    el.style.display = (!q || (el.dataset.q||'').includes(q)) ? '' : 'none';
+  });
 }
 function editAbsence(absId){
   const ab=gab().find(a=>a.id===absId); if(!ab) return;
@@ -3833,6 +4005,36 @@ function reactivateAgent(id){
   sa(agents); renderAgents(); toast('Agent réactivé');
 }
 
+/* Absences de l'agent — mêmes actions que partout ailleurs. */
+function _agentAbsencesHTML(agentId){
+  const list=gab().filter(x=>x.agentId===agentId).sort((a,b)=>String(b.dateDebut).localeCompare(String(a.dateDebut)));
+  if(!list.length) return `<div style="font-size:13px;color:var(--text3);margin-bottom:6px">Aucune absence enregistrée</div>`;
+  const rows=list.map(ab=>{
+    const d=_absDesc(ab);
+    const etat=ab.ignored?`<span class="badge badge-gray">Ignorée</span>`
+      :_absenceCovered(ab)?`<span class="badge badge-green">Remplacée</span>`
+      :_absenceAnyRepl(ab)?`<span class="badge" style="background:var(--orange-light);color:#B0722A">Partielle</span>`
+      :(ab.needsReplacement?`<span class="badge badge-red">Sans remplaçant</span>`:`<span class="badge badge-gray">Sans remplacement</span>`);
+    const q=[d.periode,ab.motif||'',ab.notes||''].join(' ').toLowerCase();
+    return `<div class="affect-row agent-abs-row" data-q="${_escA(q)}">
+      <div class="affect-dot" style="background:var(--red)"></div>
+      <div class="affect-info" style="min-width:0">
+        <div style="font-size:12.5px;font-weight:600">${d.periode}</div>
+        <div style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px">${_escH(ab.motif||'—')} ${etat}</div>
+      </div>
+      ${absenceActionsHTML(ab.id)}
+    </div>`;
+  }).join('');
+  const search=list.length>5?`<input class="form-input" type="search" placeholder="Rechercher une absence…" autocomplete="off" style="margin-bottom:8px" oninput="_filterAgentAbs(this)">`:'';
+  return `<div id="agent-abs-wrap" style="margin-bottom:6px">${search}${rows}</div>`;
+}
+function _filterAgentAbs(input){
+  const q=input.value.trim().toLowerCase();
+  input.parentElement.querySelectorAll('.agent-abs-row').forEach(el=>{
+    el.style.display=(!q||(el.dataset.q||'').includes(q))?'':'none';
+  });
+}
+
 function buildPanelAgentDetail(body,footer,id){
   const a=ga().find(x=>x.id===id);
   if(!a){ body.innerHTML='Agent introuvable'; return; }
@@ -3850,6 +4052,8 @@ function buildPanelAgentDetail(body,footer,id){
     ${a.tel?`<div style="font-size:13px;margin-bottom:8px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M5 4h3l1.5 4-2 1.5a11 11 0 005 5l1.5-2 4 1.5v3a2 2 0 01-2 2A15 15 0 014 6a2 2 0 011-2z"/></svg> ${a.tel}</div>`:''}
     ${a.email?`<div style="font-size:13px;margin-bottom:8px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M4 7.5l8 5.5 8-5.5"/></svg> ${a.email}</div>`:''}
     ${a.notes?`<div style="font-size:13px;color:var(--text2);margin-bottom:16px">${_escH(a.notes)}</div>`:''}
+    <div class="form-section">Absences</div>
+    ${_agentAbsencesHTML(id)}
     <div class="form-section">Affectations</div>
     ${afs.length?afs.map(af=>`<div class="affect-row">
       <div class="affect-dot"></div>
@@ -4856,9 +5060,9 @@ function buildPanelCreneau(body,footer,raw){
   // Footer selon statut
   if(absence && !_replFor(absence,blockKey)){
     footer.innerHTML=`
-      <button class="btn-icon red" title="Supprimer l'absence" onclick="closePanel();delAbsence('${absence.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 7h16M9 7V5a1.5 1.5 0 011.5-1.5h3A1.5 1.5 0 0115 5v2m2 0v12a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 017 19V7"/></svg></button>
+      ${absenceActionsHTML(absence.id,{day:dateStr})}
       <button class="btn btn-secondary" onclick="closePanel()">Fermer</button>
-      <button class="btn btn-danger" onclick="openPanel('panel-remplacer','${absence.id}|${blockKey}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3.6l9 15.4H3z"/><path d="M12 9.6v4.6M12 17.2v.4"/></svg> Trouver un remplaçant</button>`;
+      <button class="btn btn-danger" onclick="openPanel('panel-remplacer','${absence.id}|${blockKey}')">${_ABSIC.find} Trouver un remplaçant</button>`;
   } else if(!absence){
     // Chercher binôme : même affectation (site + créneau commun) et type "accueil" des deux côtés
     // (l'échange de créneau ne concerne que les postes fixes accueil, pas les multisites/logistique/etc.)
@@ -4902,8 +5106,8 @@ function buildPanelCreneau(body,footer,raw){
   } else {
     // Créneau déjà remplacé : permettre de retirer ou de changer de remplaçant sans supprimer l'absence
     footer.innerHTML=`
-      <button class="btn-icon red" title="Supprimer l'absence" onclick="closePanel();delAbsence('${absence.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 7h16M9 7V5a1.5 1.5 0 011.5-1.5h3A1.5 1.5 0 0115 5v2m2 0v12a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 017 19V7"/></svg></button>
-      <button class="btn btn-secondary" onclick="retirerRemplacementBloc('${absence.id}','${blockKey}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M18 6L6 18M6 6l12 12"/></svg> Retirer ce remplaçant</button>
+      ${absenceActionsHTML(absence.id,{day:dateStr})}
+      <button class="btn btn-secondary" onclick="retirerRemplacementBloc('${absence.id}','${blockKey}')">${_ABSIC.off} Retirer ce remplaçant</button>
       <button class="btn btn-primary" onclick="openPanel('panel-remplacer','${absence.id}|${blockKey}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M7 7h12l-3.2-3.2M17 17H5l3.2 3.2"/></svg> Changer de remplaçant</button>`;
   }
 }
@@ -5878,10 +6082,9 @@ function openMoisPopup(agentId, ds){
         <span style="font-size:16px;font-weight:800">${c.mins?_fmtDur(c.mins):'0h'}</span>
       </div>
       <div style="display:flex;gap:8px;margin-top:14px">
-        ${c.ab?`<button class="btn-icon red" style="flex-shrink:0" title="Supprimer l'absence" onclick="delAbsence('${c.ab.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4.5 7h15M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg></button>`:''}
+        ${c.ab?absenceActionsHTML(c.ab.id,{day:ds}):''}
         <button class="btn btn-secondary btn-sm" style="flex:1" onclick="closeMoisPopup();openPanel('panel-agent-detail','${ag.id}')">Fiche agent</button>
-        ${c.ab?`<button class="btn btn-primary btn-sm" style="flex:1" onclick="closeMoisPopup();openPanel('panel-remplacer','${c.ab.id}')">Trouver un remplaçant</button>
-        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="editAbsence('${c.ab.id}')">Modifier l'absence</button>`:''}
+        ${c.ab?`<button class="btn btn-primary btn-sm" style="flex:1" onclick="closeMoisPopup();openPanel('panel-remplacer','${c.ab.id}')">Trouver un remplaçant</button>`:''}
       </div>
     </div></div>`;
   document.body.insertAdjacentHTML('beforeend', html);
