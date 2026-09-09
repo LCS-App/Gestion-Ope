@@ -1546,7 +1546,7 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
   <aside class="side-panel" id="side-panel">
     <div class="panel-header">
       <div class="panel-title" id="panel-title">—</div>
-      <button class="btn-icon" id="panel-next-absence" onclick="goNextAbsence()" title="Absence suivante à couvrir" style="display:none;margin-left:auto;margin-right:6px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <button class="btn btn-sm" id="panel-next-absence" onclick="goNextAbsence()" title="Aller à l'absence suivante à couvrir" style="display:none;margin-left:auto;margin-right:8px;align-items:center;gap:5px">Absence suivante <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
       <button class="panel-close" onclick="closePanel()">×</button>
     </div>
     <div class="panel-body" id="panel-body"></div>
@@ -2173,15 +2173,21 @@ function _croiseBusy(candId, date, deb, fin, exceptAbsId){
   return null;
 }
 
-// Tous les postes à couvrir de la semaine affichée
-function croiseGaps(){
-  const mon=getMonday(weekStart);
-  const d0=new Date(mon), d4=new Date(mon); d4.setDate(d4.getDate()+4); d4.setHours(23,59,59,0);
+// Postes à couvrir : soit la semaine affichée, soit tous les créneaux manquants à venir
+let croiseScope='tous';
+function croiseSetScope(s){ croiseScope=s; renderCroise(); }
+function croiseGaps(scope){
+  scope=scope||croiseScope;
+  let d0=null,d4=null;
+  if(scope==='semaine'){
+    const mon=getMonday(weekStart);
+    d0=new Date(mon); d4=new Date(mon); d4.setDate(d4.getDate()+4); d4.setHours(23,59,59,0);
+  }
   const gaps=[];
   gab().forEach(ab=>{
     if(!ab.needsReplacement||ab.ignored) return;
     _absenceShifts(ab).forEach(s=>{
-      if(s.date<d0 || s.date>d4) return;
+      if((d0 && s.date<d0) || (d4 && s.date>d4)) return;
       if(siteFermeLe(s.siteId,s.date)) return;
       const blockKey=_blockKey(s.afId,s.date);
       gaps.push({key:[ab.id,s.afId,_isoDate(s.date),s.debut].join('~'), absenceId:ab.id, afId:s.afId, blockKey, agentId:ab.agentId,
@@ -2196,10 +2202,27 @@ function _croiseSelected(gaps){
   return gaps.find(g=>g.key===croiseGapKey) || gaps.find(g=>!g.remplacantId) || gaps[0] || null;
 }
 
-function croiseSelect(key){ croiseGapKey=key; renderCroise(); }
+function croiseSelect(key){
+  croiseGapKey=key;
+  const g=croiseGaps('tous').find(x=>x.key===key);
+  if(g){ const m=getMonday(g.date); if(+m!==+getMonday(weekStart)) weekStart=m; }
+  renderCroise();
+}
+function croiseFilterGaps(q){
+  const s=(q||'').trim().toLowerCase();
+  document.querySelectorAll('#croise-body .cx-gap-row').forEach(el=>{
+    el.style.display = (!s || (el.dataset.q||'').includes(s)) ? '' : 'none';
+  });
+}
+function _cxGapDate(g){
+  const inWeek = +getMonday(g.date)===+getMonday(weekStart);
+  const today=new Date(); today.setHours(0,0,0,0);
+  const past = g.date<today ? ' · <span style="font-weight:700;color:var(--text3)">passé</span>' : '';
+  return JOURS_FULL[(g.date.getDay()+6)%7]+' '+g.date.getDate()+(inWeek?'':' '+g.date.toLocaleDateString('fr-FR',{month:'short'}))+past;
+}
 
 function croiseAssign(gapKey, candId){
-  const gap=croiseGaps().find(g=>g.key===gapKey); if(!gap) return;
+  const gap=croiseGaps('tous').find(g=>g.key===gapKey); if(!gap) return;
   const abs=gab(); const ab=abs.find(a=>a.id===gap.absenceId); if(!ab) return;
   const busy=_croiseBusy(candId, gap.date, gap.deb, gap.fin, gap.absenceId);
   if(busy && !confirm(`⚠ ${agentNom(candId)} est déjà occupé ${busy.debut}–${busy.fin} (${busy.type==='poste'?'son poste à « '+siteNom(busy.siteId)+' »':'un autre remplacement'}).\n\nForcer l'assignation ? Le créneau doublé sera signalé en rouge dans le planning.`)) return;
@@ -2212,7 +2235,7 @@ function croiseAssign(gapKey, candId){
   refreshAfterAbsenceChange();
 }
 function croiseUnassign(gapKey){
-  const gap=croiseGaps().find(g=>g.key===gapKey); if(!gap) return;
+  const gap=croiseGaps('tous').find(g=>g.key===gapKey); if(!gap) return;
   const abs=gab(); const ab=abs.find(a=>a.id===gap.absenceId); if(!ab) return;
   const prev=_replFor(ab,gap.blockKey); ab.remplacants=ab.remplacants||{}; ab.remplacants[gap.blockKey]=null; sab(abs);
   sr(gr().filter(x=>!(x.agentAbsentId===ab.agentId && x.remplacantId===prev && x.date===ab.dateDebut && (x.afId||null)===gap.afId)));
@@ -2435,20 +2458,25 @@ function _croiseScreenPostes(gaps, sel){
   const covered=gaps.filter(g=>g.remplacantId).length, open=gaps.length-covered;
   const list = gaps.length ? gaps.map(g=>{
     const isCov=!!g.remplacantId, isSel=sel&&g.key===sel.key;
-    return `<div class="cx-gap-row${isSel?' sel':''}" onclick="croiseSelect('${g.key}')">
+    return `<div class="cx-gap-row${isSel?' sel':''}" data-q="${_escA((siteNom(g.siteId)+' '+agentNom(g.agentId)).toLowerCase())}" onclick="croiseSelect('${g.key}')">
       <div style="width:8px;height:8px;border-radius:50%;background:${isCov?'var(--green)':'var(--red)'};flex-shrink:0"></div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13.5px;font-weight:700">${_escH(siteNom(g.siteId))}</div>
-        <div style="font-size:11.5px;color:var(--text2)">${JOURS_FULL[(g.date.getDay()+6)%7]} ${g.date.getDate()} · ${g.deb}–${g.fin} · titulaire ${_escH(agentNom(g.agentId).split(' ')[0])}</div>
+        <div style="font-size:11.5px;color:var(--text2)">${_cxGapDate(g)} · ${g.deb}–${g.fin} · titulaire ${_escH(agentNom(g.agentId).split(' ')[0])}</div>
       </div>
       <span class="cx-pill" style="background:${isCov?'var(--green-light)':'var(--red-light)'};color:${isCov?'var(--green)':'var(--red)'};min-width:92px;text-align:center">${isCov?'✓ '+_escH(agentNom(g.remplacantId).split(' ')[0]):'Non couvert'}</span>
       ${isSel?absenceActionsHTML(g.absenceId,{day:_isoDate(g.date),blockKey:g.blockKey}):''}
     </div>`;
-  }).join('') : `<div style="font-size:13px;color:var(--text3);padding:20px 4px">Aucun poste à couvrir cette semaine. 🎉</div>`;
+  }).join('') : `<div style="font-size:13px;color:var(--text3);padding:20px 4px">${croiseScope==='semaine'?'Aucun poste à couvrir cette semaine. 🎉':'Aucun créneau manquant. 🎉'}</div>`;
+  const scopeBtn=(v,l)=>`<span onclick="croiseSetScope('${v}')" style="height:28px;padding:0 12px;border-radius:var(--radius-sm);border:1px solid ${croiseScope===v?'var(--blue)':'var(--border)'};background:${croiseScope===v?'var(--blue)':'#fff'};color:${croiseScope===v?'#000':'var(--text2)'};font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;cursor:pointer">${l}</span>`;
+  const search = gaps.length>4 ? `<div style="display:flex;align-items:center;gap:7px;height:32px;margin:0 2px 10px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" style="width:13px;height:13px;flex:none"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5" stroke-linecap="round"></path></svg>
+      <input type="text" placeholder="Rechercher un site ou un agent…" oninput="croiseFilterGaps(this.value)" style="flex:1;min-width:0;border:none;outline:none;background:transparent;font-family:inherit;font-size:12.5px;color:var(--text1)">
+    </div>` : '';
   return `<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px">
       <div style="flex:1">
         <div style="font-size:18px;font-weight:800;letter-spacing:-.2px">Postes à couvrir</div>
-        <div style="font-size:12.5px;color:var(--text2)">Sélectionne un poste : les remplaçants formés et disponibles apparaissent à droite</div>
+        <div style="font-size:12.5px;color:var(--text2)">${croiseScope==='semaine'?'Semaine affichée uniquement':'Tous les créneaux non couverts, toutes semaines confondues'} — sélectionne un poste : les remplaçants formés et disponibles apparaissent à droite</div>
       </div>
       <div style="display:flex;gap:8px">
         <div class="cx-card" style="text-align:center;padding:8px 16px"><div style="font-size:20px;font-weight:800;color:var(--red)">${open}</div><div style="font-size:10.5px;color:var(--text2)">à couvrir</div></div>
@@ -2457,7 +2485,11 @@ function _croiseScreenPostes(gaps, sel){
     </div>
     <div style="display:flex;gap:16px;align-items:flex-start">
       <div style="flex:1;min-width:0">
-        <div style="font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--text3);margin:2px 2px 9px">Postes de la semaine</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 2px 9px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--text3);flex:1;min-width:120px">${croiseScope==='semaine'?'Postes de la semaine':'Tous les créneaux manquants'}</div>
+          ${scopeBtn('tous','Tous')}${scopeBtn('semaine','Semaine affichée')}
+        </div>
+        ${search}
         ${list}
         <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5">Un poste apparaît dès qu'un titulaire est absent et le site ouvert. Fermer un site (fiche site) fait disparaître ses postes et libère ses agents.</div>
       </div>
@@ -2582,7 +2614,7 @@ function _croiseScreenCalendrier(gaps, sel){
 function renderCroise(){
   updateWeekHeader();
   document.querySelectorAll('.croise-seg-btn').forEach(b=>b.classList.toggle('on', b.dataset.cseg===croiseScreen));
-  const gaps=croiseGaps();
+  const gaps=croiseGaps(croiseScreen==='calendrier'?'semaine':null);
   const sel=_croiseSelected(gaps);
   if(sel) croiseGapKey=sel.key;
   document.getElementById('croise-body').innerHTML =
@@ -3433,8 +3465,8 @@ function goNextAbsence(){
   if(!urgent.length){ toast('Plus aucune absence à couvrir 🎉'); return; }
   const curId=String(currentPanelData||'').split('|')[0];
   const idx=urgent.findIndex(a=>a.id===curId);
-  const next=urgent[(idx+1)%urgent.length];
-  openPanel('panel-remplacer',next.id);
+  if(urgent.length===1 && idx===0){ toast('C\'est la seule absence à couvrir'); return; }
+  _focusAbsence(urgent[(idx+1)%urgent.length]);
 }
 function buildPanelRemplacer(body,footer,raw){
   const [absId,focusAf]=String(raw).split('|');
@@ -3569,14 +3601,20 @@ function goAbsencesToFill(){
     return s<=we && e>=weekStart;
   });
   if(!ab) ab=urgent[0];
+  _focusAbsence(ab);
+}
+// Amène la semaine + le planning sur l'absence, la fait clignoter, puis ouvre le panneau
+function _focusAbsence(ab){
+  if(!ab) return;
+  const we=new Date(weekStart); we.setDate(we.getDate()+6);
   const abStart=new Date(ab.dateDebut+'T00:00:00');
   if(abStart<weekStart || abStart>we){
     weekStart=getMonday(abStart);
-    if(currentView==='mois') showView('planning'); else renderPlanning();
+    if(currentView==='mois') showView('planning'); else refreshCurrentView();
   }
   const cell=document.querySelector(`[data-absence-id="${ab.id}"]`);
-  if(cell){
-    const container=document.getElementById('planning-container');
+  const container=document.getElementById('planning-container');
+  if(cell&&container){
     const cRect=container.getBoundingClientRect(), eRect=cell.getBoundingClientRect();
     container.scrollTop += (eRect.top-cRect.top) - container.clientHeight/2 + eRect.height/2;
     container.scrollLeft += (eRect.left-cRect.left) - container.clientWidth/2 + eRect.width/2;
