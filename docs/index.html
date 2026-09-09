@@ -1633,11 +1633,56 @@ var SHARED = null; // { driveId, itemId } une fois résolu
 var DEMO_MODE=false;
 var msalApp, _token = null, _cache = {}, _syncTimers = {};
 
+/* Jeton Graph : renouvellement silencieux avec 5 min de marge.
+   On ne redirige JAMAIS automatiquement (ça rechargeait la page en pleine saisie
+   et donnait l'impression d'une déconnexion après chaque modif) : si le silencieux
+   échoue vraiment, on affiche une bande « Session expirée » avec un bouton
+   Reconnecter qui passe par une popup — la page et les modifs en cours sont conservées. */
+const _TOKEN_MARGIN_MS = 5*60*1000;
 async function getToken(){
-  if(_token && _token.expiresOn > new Date()) return _token.accessToken;
-  const accounts = msalApp.getAllAccounts();
-  try { const r = await msalApp.acquireTokenSilent({ scopes: SCOPES, account: accounts[0] }); _token=r; return r.accessToken; }
-  catch { await msalApp.acquireTokenRedirect({ scopes: SCOPES }); throw new Error('Redirection d’authentification en cours…'); }
+  if(_token && _token.expiresOn && (_token.expiresOn.getTime() - Date.now()) > _TOKEN_MARGIN_MS) return _token.accessToken;
+  const account = msalApp.getAllAccounts()[0];
+  if(!account){ _requireReauth(); throw new Error('Session expirée'); }
+  try {
+    const r = await msalApp.acquireTokenSilent({ scopes: SCOPES, account });
+    _token = r; _clearReauth(); return r.accessToken;
+  } catch(e1){
+    try {
+      const r = await msalApp.acquireTokenSilent({ scopes: SCOPES, account, forceRefresh: true });
+      _token = r; _clearReauth(); return r.accessToken;
+    } catch(e2){
+      _requireReauth();
+      throw new Error('Session expirée — reconnexion nécessaire');
+    }
+  }
+}
+
+function _reauthBanner(){
+  let el = document.getElementById('reauth-banner');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'reauth-banner';
+    el.style.cssText = 'display:none;position:fixed;top:0;left:0;right:0;z-index:10001;background:var(--text);color:#fff;font-size:13px;font-weight:700;padding:9px 12px;box-shadow:var(--shadow-lg);align-items:center;justify-content:center;gap:14px';
+    el.innerHTML = '<span>Session Microsoft expirée — vos modifications sont conservées.</span>'
+      + '<button onclick="reauth()" style="height:28px;padding:0 14px;background:var(--blue);color:#000;border:none;border-radius:7px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer">Reconnecter</button>';
+    document.body.prepend(el);
+  }
+  return el;
+}
+function _requireReauth(){ _reauthBanner().style.display='flex'; }
+function _clearReauth(){ const el=document.getElementById('reauth-banner'); if(el) el.style.display='none'; }
+
+/* Reconnexion sans perdre la page : popup d'abord, redirection en dernier recours. */
+async function reauth(){
+  const account = msalApp.getAllAccounts()[0];
+  try {
+    const r = await msalApp.acquireTokenPopup(account ? { scopes: SCOPES, account } : { scopes: SCOPES });
+    _token = r; _clearReauth();
+    Object.entries(_cache).forEach(([k,v])=>{ if(FILES.includes(k)) _attemptSave(k, v, 0); });
+    toast('Reconnecté');
+  } catch(e){
+    msalApp.acquireTokenRedirect({ scopes: SCOPES });
+  }
 }
 async function graphGet(path){
   const token = await getToken();
@@ -1693,9 +1738,14 @@ async function readFile(name){
 }
 async function writeFile(name, data){
   const token = await getToken();
-  await fetch(fileUrl(name), {
+  const r = await fetch(fileUrl(name), {
     method:'PUT', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' }, body: JSON.stringify(data)
   });
+  if(!r.ok){
+    // 401/403 : jeton périmé côté serveur → on l'invalide, la tentative suivante le renouvelle.
+    if(r.status===401 || r.status===403) _token = null;
+    throw new Error('PUT '+name+' → '+r.status);
+  }
   _cache[name] = data;
 }
 async function loadAllData(){
