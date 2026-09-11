@@ -5822,28 +5822,42 @@ function expPrint(ids){
   const body=head+ids.map((id,ai)=>{
     const days=computeAgentDays(id,EXP.start,EXP.end);
     const ag=ga().find(a=>a.id===id);
-    let weekMin=0;
-    const daysHtml=days.map(d=>{
-      let dayMin=0;
-      const shifts=d.shifts.map(s=>{ const mn=_shiftMin(s); dayMin+=mn;
-        return `<div style="display:flex;align-items:center;gap:14px;padding:8px 10px;border-bottom:1px solid #eee">
-          <span style="font-weight:700;font-size:14px;width:116px;flex-shrink:0;font-variant-numeric:tabular-nums">${s.debut}–${s.fin}</span>
-          <span style="flex:1;font-size:14px">${_escH(s.site)}${_pauseOf(s)?`<span style="color:#8a7f55;font-size:11.5px"> · pause ${_pauseOf(s)} min</span>`:''}${_statBadge(s)}</span>
-          <span style="color:#aaa;font-size:12px;width:48px;text-align:right;font-variant-numeric:tabular-nums">${_fmtDur(mn)}</span>
-        </div>`; }).join('');
-      weekMin+=dayMin;
-      return `<div style="margin-bottom:13px;break-inside:avoid;border:1px solid #ececec;border-radius:7px;overflow:hidden">
+    const totMin=days.reduce((t,d)=>t+d.shifts.reduce((u,s)=>u+_shiftMin(s),0),0);
+    const weeks={};
+    days.forEach(d=>{ const mk=_ymd(getMonday(new Date(d.dateStr+'T00:00:00'))); (weeks[mk]=weeks[mk]||[]).push(d); });
+    const mondays=Object.keys(weeks).sort();
+    const weeksHtml=mondays.map((mk,wi)=>{
+      const wd=weeks[mk];
+      const nShifts=wd.reduce((t,d)=>t+d.shifts.length,0);
+      const wMin=wd.reduce((t,d)=>t+d.shifts.reduce((u,s)=>u+_shiftMin(s),0),0);
+      const rows=wd.map(d=>{
+        const dt=new Date(d.dateStr+'T00:00:00'); const idx=(dt.getDay()+6)%7;
+        const dayMin=d.shifts.reduce((t,s)=>t+_shiftMin(s),0);
+        return `<tr style="break-inside:avoid">
+          <td style="vertical-align:top;padding:7px 10px;border-top:1px solid #ececec;width:112px;font-weight:700;font-size:13px;white-space:nowrap">${JOURS[idx]} ${dt.getDate()}</td>
+          <td style="vertical-align:top;padding:7px 10px;border-top:1px solid #ececec">
+            ${d.shifts.map(s=>`<div style="font-size:13px;line-height:1.5">
+              <span style="display:inline-block;width:104px;font-variant-numeric:tabular-nums;color:#555">${s.debut}–${s.fin}</span>
+              <span style="font-weight:600">${_escH(s.site)}</span>${_pauseOf(s)?`<span style="color:#8a7f55;font-size:11.5px"> · pause ${_pauseOf(s)} min</span>`:''}${_statBadge(s)}
+            </div>`).join('')}
+          </td>
+          <td style="vertical-align:top;padding:7px 10px;border-top:1px solid #ececec;width:52px;text-align:right;font-size:12px;color:#888;font-variant-numeric:tabular-nums">${_fmtDur(dayMin)}</td>
+        </tr>`;
+      }).join('');
+      return `<div style="${wi>0?'margin-top:16px;':''}border:1px solid #ececec;border-radius:7px;overflow:hidden;break-inside:avoid">
         <div style="display:flex;justify-content:space-between;align-items:baseline;background:#FCF7DC;border-left:4px solid #FCD727;padding:8px 12px">
-          <span style="font-weight:700;font-size:14px">${_escH(_cap(_longDate(d.dateStr)))}</span>
-          <span style="font-size:11.5px;color:#8a7f55;font-weight:600">${d.shifts.length} créneau${d.shifts.length>1?'x':''} · ${_fmtDur(dayMin)}</span>
-        </div>${shifts}</div>`;
+          <span style="font-weight:700;font-size:14px">Semaine du ${fmtDate(mk)}</span>
+          <span style="font-size:11.5px;color:#8a7f55;font-weight:600">${wd.length} jour${wd.length>1?'s':''} · ${nShifts} créneau${nShifts>1?'x':''} · ${_fmtDur(wMin)}</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;margin:0">${rows}</table>
+      </div>`;
     }).join('') || `<p style="color:#999;font-size:13px">Aucun créneau prévu sur la période.</p>`;
     return `<section style="${ai>0?'page-break-before:always;padding-top:6px;':''}margin-top:20px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
         <div><div style="font-size:18px;font-weight:800">${_escH(agentNom(id))}</div>
         ${ag&&ag.notes?`<div style="font-size:12px;color:#999;margin-top:1px">${_escH(ag.notes)}</div>`:''}</div>
-        ${weekMin?`<div style="font-size:12px;color:#555">Total semaine&nbsp;<strong style="font-size:15px;color:#1a1a1a">${_fmtDur(weekMin)}</strong></div>`:''}
-      </div>${daysHtml}</section>`;
+        ${totMin?`<div style="font-size:12px;color:#555">Total période&nbsp;<strong style="font-size:15px;color:#1a1a1a">${_fmtDur(totMin)}</strong></div>`:''}
+      </div>${weeksHtml}</section>`;
   }).join('');
   _printDoc('Plannings', body);
 }
