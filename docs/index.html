@@ -1327,6 +1327,10 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
       <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="6" cy="6.5" r="2.4"/><circle cx="18" cy="17.5" r="2.4"/><path d="M8.4 6.5H15a3 3 0 010 6H9a3 3 0 000 6h6.6"/></svg>
       <span class="tooltip">Tournées</span>
     </button>
+    <button class="nav-btn" onclick="showView('partage')" id="nav-partage">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-4M8.6 13.4l6.8 4"/></svg>
+      <span class="tooltip">Partage aux agents</span>
+    </button>
     <button class="nav-btn" onclick="showView('affect')" id="nav-affect" style="display:none">
       <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="4" y="4" width="7" height="7" rx="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.6"/><rect x="13" y="13" width="7" height="7" rx="1.6"/></svg>
       <span class="tooltip">Affectations</span>
@@ -1536,6 +1540,37 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
           <input type="text" placeholder="Rechercher par agent ou site…" id="search-affect" oninput="renderAffect()">
         </div>
         <div id="affect-list"></div>
+      </div>
+    </div>
+
+    <!-- ── PARTAGE ───────────────────────── -->
+    <div class="view" id="view-partage">
+      <div class="view-page">
+        <div class="page-heading">
+          <div><h1>Partage aux agents</h1><div class="page-heading-sub" id="partage-sub">Un lien de consultation par agent, à envoyer par mail ou à imprimer.</div></div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:12px">
+          <div class="form-group" style="margin:0;min-width:190px">
+            <label class="form-label">Période partagée</label>
+            <select class="form-input" id="part-weeks" onchange="partSetWeeks(this.value)">
+              <option value="2">2 semaines</option>
+              <option value="4" selected>4 semaines</option>
+              <option value="8">8 semaines</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;flex:1;min-width:240px">
+            <label class="form-label">Message joint au lien (facultatif)</label>
+            <input type="text" class="form-input" id="part-msg" placeholder="ex : changement sur le site Darwin à partir de lundi" onchange="partSetMsg(this.value)">
+          </div>
+          <button class="btn btn-secondary" onclick="partCsv()">Exporter la liste (CSV)</button>
+        </div>
+
+        <div class="search-bar">
+          <span class="search-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg></span>
+          <input type="text" placeholder="Rechercher un agent…" id="search-partage" oninput="renderPartage()">
+        </div>
+        <div id="partage-list"></div>
       </div>
     </div>
 
@@ -1994,7 +2029,8 @@ function showView(v){
     planning:renderPlanning,absences:renderAbsences,
     historique:renderHistorique,pointage:renderPointage,
     agents:renderAgents,sites:renderSites,affect:renderAffect,
-    jour:renderJour,tournees:renderTournees,croise:renderCroise,mois:renderMois
+    jour:renderJour,tournees:renderTournees,croise:renderCroise,mois:renderMois,
+    partage:renderPartage
   };
   renders[v]?.();
 }
@@ -5386,6 +5422,103 @@ function saveName(){
 }
 
 /* ═══════════════════════════════════════
+   PARTAGE AUX AGENTS (lien de consultation)
+═══════════════════════════════════════ */
+const PART = { weeks:4, msg:'' };
+const _ST_IDX = { present:0, remplacement:1, absent:2, remplace:3 };
+
+function partBaseUrl(){
+  const base = location.href.split('#')[0].split('?')[0].replace(/[^/]*$/,'');
+  return base + 'partage.html';
+}
+function _b64url(str){
+  const bytes = new TextEncoder().encode(str);
+  let s=''; bytes.forEach(c=>s+=String.fromCharCode(c));
+  return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function partRange(){
+  const m = getMonday(new Date());
+  return { start:_ymd(m), end:_ymd(_addDays(m, PART.weeks*7-1)) };
+}
+function partLink(agentId){
+  const { start, end } = partRange();
+  const days = computeAgentDays(agentId, start, end);
+  const d0 = new Date(start+'T00:00:00');
+  const sites=[], idx={}, sh=[];
+  days.forEach(d=>{
+    const off = Math.round((new Date(d.dateStr+'T00:00:00') - d0)/86400000);
+    d.shifts.forEach(s=>{
+      if(idx[s.site]===undefined){
+        const site = gs().find(x=>x.nom===s.site);
+        idx[s.site]=sites.length;
+        sites.push([s.site, (site&&site.adresse)?site.adresse:'']);
+      }
+      const row=[off, idx[s.site], s.debut.replace(':',''), s.fin.replace(':',''), _ST_IDX[s.status]||0];
+      if(s.status==='present' && s.note) row.push(s.note);
+      sh.push(row);
+    });
+  });
+  const arr=[2, agentNom(agentId), _ymd(new Date()).replace(/-/g,''), start.replace(/-/g,''), end.replace(/-/g,''), sites, sh, PART.msg||''];
+  return { url: partBaseUrl()+'#p='+_b64url(JSON.stringify(arr)), shifts:sh.length, days:days.length, start, end };
+}
+function partSetWeeks(v){ PART.weeks=parseInt(v,10)||4; renderPartage(); }
+function partSetMsg(v){ PART.msg=(v||'').trim(); renderPartage(); }
+
+function partCopy(agentId){ copyToClipboard(partLink(agentId).url); }
+function partOpen(agentId){ window.open(partLink(agentId).url, '_blank'); }
+function partMail(agentId){
+  const ag = ga().find(a=>a.id===agentId); if(!ag) return;
+  const L = partLink(agentId);
+  const per = `${fmtDate(L.start)} au ${fmtDate(L.end)}`;
+  const body = `Bonjour,\n\nVoici votre planning du ${per} :\n${L.url}\n\nCe lien reste consultable à tout moment, depuis un téléphone ou un ordinateur, et peut être imprimé.`
+    + (PART.msg ? `\n\n${PART.msg}` : '')
+    + `\n\nLa Conciergerie Solidaire`;
+  const href = `mailto:${encodeURIComponent(ag.email||'')}?subject=${encodeURIComponent('Votre planning — '+per)}&body=${encodeURIComponent(body)}`;
+  if(href.length > 8000){ toast('Lien trop long pour un mail — réduisez la période', false); return; }
+  window.location.href = href;
+}
+function partCsv(){
+  const rows=[['Agent','Email','Créneaux','Lien']];
+  partAgents().forEach(a=>{ const L=partLink(a.id); rows.push([a.nom, a.email||'', L.shifts, L.url]); });
+  if(rows.length<2){ toast('Aucun agent à exporter', false); return; }
+  downloadCSV('liens-planning.csv', rows);
+}
+function partAgents(){
+  const withAffec=new Set(gaf().map(a=>a.agentId));
+  gab().forEach(ab=>{ if(ab.remplacantId) withAffec.add(ab.remplacantId); });
+  return ga().filter(a=>!a.inactif && withAffec.has(a.id)).sort((a,b)=>a.nom.localeCompare(b.nom));
+}
+
+function renderPartage(){
+  const host=document.getElementById('partage-list'); if(!host) return;
+  const q=(document.getElementById('search-partage')?.value||'').toLowerCase();
+  const { start, end } = partRange();
+  const all=partAgents();
+  const list=all.filter(a=>!q || a.nom.toLowerCase().includes(q));
+  const sub=document.getElementById('partage-sub');
+  if(sub) sub.textContent = `Période partagée : ${fmtDate(start)} → ${fmtDate(end)} · ${all.length} agent${all.length>1?'s':''}`;
+  if(!list.length){ host.innerHTML=`<div style="padding:30px;text-align:center;color:var(--text3);font-size:13px">Aucun agent ne correspond.</div>`; return; }
+  host.innerHTML = list.map(a=>{
+    const L=partLink(a.id);
+    const mailOk=!!(a.email||'').trim();
+    const meta = L.shifts
+      ? `${L.shifts} créneau${L.shifts>1?'x':''} · ${L.days} jour${L.days>1?'s':''}`
+      : 'Aucun créneau sur la période';
+    return `<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);margin-bottom:8px">
+      <div style="flex:1;min-width:180px">
+        <div style="font-size:14px;font-weight:700">${_escH(a.nom)}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">${meta}${mailOk?' · '+_escH(a.email):' · <span style="color:var(--red)">pas d\'email</span>'}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-secondary btn-sm" onclick="partCopy('${a.id}')">Copier le lien</button>
+        <button class="btn btn-secondary btn-sm" onclick="partOpen('${a.id}')">Aperçu</button>
+        <button class="btn btn-primary btn-sm" onclick="partMail('${a.id}')" ${mailOk?'':'disabled style="opacity:.45"'}>Envoyer par mail</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════
    EXTRACTION (plannings, absences, h.sup)
 ═══════════════════════════════════════ */
 const EXP = { tab:'planning', start:'', end:'', agentId:'', ptType:'tous' };
@@ -5478,7 +5611,27 @@ function _calStatusStyle(st){
     default:             return {bg:'#e8f6ef',bd:'#bfe6d1',fg:'#1e7a4d',solid:true};
   }
 }
-function expWeekCalendar(days){
+/* Détail d'une semaine en liste compacte : une ligne par jour */
+function _expDayRows(weekDays){
+  return weekDays.map(d=>{
+    const dt=new Date(d.dateStr+'T00:00:00'); const idx=(dt.getDay()+6)%7;
+    const mins=d.shifts.reduce((t,s)=>t+_shiftMin(s),0);
+    return `<div style="display:grid;grid-template-columns:76px 1fr 50px;gap:10px;align-items:start;padding:8px 12px;border-top:1px solid var(--border)">
+      <div style="font-size:11.5px;font-weight:700;color:var(--text2);padding-top:1px">${JOURS[idx]} ${dt.getDate()}</div>
+      <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+        ${d.shifts.map(s=>{ const st=_calStatusStyle(s.status);
+          return `<div style="display:flex;align-items:baseline;gap:9px;font-size:12px;flex-wrap:wrap">
+            <span style="font-variant-numeric:tabular-nums;color:var(--text2);width:84px;flex:none">${s.debut}–${s.fin}</span>
+            <span style="font-weight:600;min-width:0">${_escH(s.site)}</span>
+            ${_pauseOf(s)?`<span style="font-size:11px;color:var(--text3)">pause ${_pauseOf(s)} min</span>`:''}
+            ${s.status!=='present'?`<span style="font-size:10.5px;font-weight:700;color:${st.fg};background:${st.bg};border:1px solid ${st.bd};border-radius:20px;padding:1px 7px">${_escH(s.note||_statusLabel(s))}</span>`:''}
+          </div>`; }).join('')}
+      </div>
+      <div style="font-size:11.5px;color:var(--text3);text-align:right;font-variant-numeric:tabular-nums;padding-top:1px">${_fmtDur(mins)}</div>
+    </div>`;
+  }).join('');
+}
+function expWeekCalendar(days, withDetail){
   if(!days.length) return '';
   const H=430, PX=H/(_CAL_END-_CAL_START);
   const byDate={}; days.forEach(d=>byDate[d.dateStr]=d);
@@ -5512,12 +5665,19 @@ function expWeekCalendar(days){
         <div style="position:relative;height:${H}px;border-left:1px solid var(--border);${gridBg}">${blocks}</div>
       </div>`;
     }).join('');
-    return `<div style="margin-bottom:14px">
-      ${mondays.length>1?`<div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:4px">Semaine du ${fmtDate(mk)}</div>`:''}
-      <div style="display:flex;border:1px solid var(--border);border-radius:9px;padding:8px 6px 8px 0;background:var(--card)">
+    const wd=weeks[mk];
+    const nShifts=wd.reduce((t,d)=>t+d.shifts.length,0);
+    const wMin=wd.reduce((t,d)=>t+d.shifts.reduce((u,s)=>u+_shiftMin(s),0),0);
+    return `<div style="border:1px solid var(--border);border-radius:11px;background:var(--card);overflow:hidden;margin-bottom:16px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:9px 12px;background:var(--bg)">
+        <div style="font-size:12.5px;font-weight:700">Semaine du ${fmtDate(mk)}</div>
+        <div style="font-size:11.5px;color:var(--text3);font-variant-numeric:tabular-nums">${wd.length} jour${wd.length>1?'s':''} · ${nShifts} créneau${nShifts>1?'x':''} · ${_fmtDur(wMin)}</div>
+      </div>
+      <div style="display:flex;padding:10px 8px 12px 0">
         <div style="position:relative;width:38px;flex:none;margin-top:19px">${axisLabels.join('')}</div>
         ${colHtml}
       </div>
+      ${withDetail?_expDayRows(wd):''}
     </div>`;
   }).join('');
 }
@@ -5609,14 +5769,7 @@ function expRenderPlanning(prev,act){
     const ag=ga().find(a=>a.id===EXP.agentId);
     let html=`<div style="font-size:12px;color:var(--text3);margin-bottom:10px">${_escH(ag?ag.nom:'')} · ${periodLbl}</div>`;
     if(!days.length){ html+=_expEmpty('Aucun créneau prévu sur cette période.'); }
-    else html+=expWeekCalendar(days)+days.map(d=>`<div style="margin-bottom:12px">
-        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:5px">${_escH(_longDate(d.dateStr))}</div>
-        ${d.shifts.map(s=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:7px;margin-bottom:4px">
-          <span style="font-weight:600;flex:1">${_escH(s.site)}</span>
-          <span style="color:var(--text2);font-size:12px">${s.debut}–${s.fin}</span>
-          ${s.status!=='present'?`<span class="badge ${s.status==='absent'?'badge-red':s.status==='remplace'?'badge-green':s.status==='remplacement'?'badge-blue':'badge-purple'}">${_escH(s.note||_statusLabel(s))}</span>`:''}
-        </div>`).join('')}
-      </div>`).join('');
+    else html+=expWeekCalendar(days, true);
     prev.innerHTML=html;
     const hasEmail=ag&&ag.email;
     act.innerHTML=`
