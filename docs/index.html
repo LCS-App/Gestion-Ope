@@ -679,6 +679,10 @@ body.nav-open .brand-title{ display:inline; }
   color: #134B72;
   border-left: 3px solid #3B84C4;
 }
+.shift-nat-passage { background:#FFFFFF; color:#1E5738; border:1px dashed #3E9A69; border-left:3px dashed #3E9A69; min-height:28px; padding:3px 8px; }
+.shift-nat-perm { background:#D3EDEA; color:#0E4F48; border-left:3px solid #1F8A7E; }
+.shift-nat-ic { display:inline-flex; flex-shrink:0; }
+.nat-hint { font-size:11px; color:var(--text3); margin-top:6px; line-height:1.45; }
 .shift-bar-ferme {
   background: repeating-linear-gradient(135deg, #ECECEA, #ECECEA 6px, #E3E3E1 6px, #E3E3E1 12px);
   color: #6B6D68;
@@ -1867,6 +1871,24 @@ function siteFermeLe(siteId, date){
 function _isoDate(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 
 // Tournée : { id, nom, agentId (agent attitré), siteIds:[ordre de passage], notes }
+/* Nature d'une intervention (affectation ou créneau ponctuel) :
+   poste (défaut) · passage = collecte sur le site d'un autre agent, ne couvre pas l'accueil
+   · permanence = agent volant qui tient l'accueil un moment, compte dans la couverture. */
+const NATURES={poste:'Poste fixe',passage:'Passage',permanence:'Permanence volante'};
+function natureOf(x){ return x&&(x.nature==='passage'||x.nature==='permanence')?x.nature:'poste'; }
+function _natIcon(n){
+  const st='width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round';
+  if(n==='passage') return '<span class="shift-nat-ic" title="Passage"><svg viewBox="0 0 24 24" style="'+st+'"><path d="M12 21s-6.5-5.6-6.5-10.5a6.5 6.5 0 0113 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/></svg></span>';
+  if(n==='permanence') return '<span class="shift-nat-ic" title="Permanence volante"><svg viewBox="0 0 24 24" style="'+st+'"><path d="M3.5 18h17M5.5 18a6.5 6.5 0 0113 0M12 8.5v3M10 8.5h4"/></svg></span>';
+  return '';
+}
+function _natSegHtml(id,cur){
+  return '<div class="seg" id="'+id+'">'+Object.keys(NATURES).map(k=>'<button type="button" class="seg-btn'+(k===cur?' active':'')+'" data-nat="'+k+'" onclick="segPickPlain(this)">'+NATURES[k]+'</button>').join('')+'</div>'
+    +'<div class="nat-hint"><strong>Passage</strong> : collecte de prestations sur le site d\'un autre agent, ne compte pas comme accueil. <strong>Permanence volante</strong> : l\'agent tient l\'accueil, le créneau compte dans la couverture du site.</div>';
+}
+function _natSegVal(id){ return document.querySelector('#'+id+' .seg-btn.active')?.dataset.nat||'poste'; }
+function _natSegSet(id,v){ document.querySelectorAll('#'+id+' .seg-btn').forEach(b=>b.classList.toggle('active',b.dataset.nat===v)); }
+function _natDefaultFor(agentId){ const ag=ga().find(a=>a.id===agentId); return ag&&ag.type==='logistique'?'passage':'poste'; }
 function siteTournee(siteId){ return gt().find(t => (t.siteIds||[]).includes(siteId)); }
 
 /* Migration douce :
@@ -2806,6 +2828,8 @@ function renderPlanning(){
     <div class="legend-popover" id="legend-popover">
       <div class="legend-popover-title">Code couleur</div>
       <div class="legend-row"><span class="legend-swatch" style="background:#DDEFE4"></span>En poste</div>
+      <div class="legend-row"><span class="legend-swatch" style="background:#fff;border:1px dashed #3E9A69"></span>Passage (collecte)</div>
+      <div class="legend-row"><span class="legend-swatch" style="background:#D3EDEA"></span>Permanence volante (accueil)</div>
       <div class="legend-row"><span class="legend-swatch" style="background:#DCEBF7"></span>Remplacement</div>
       <div class="legend-row"><span class="legend-swatch" style="background:#FFF1AE"></span>Absent — remplacé par…</div>
       <div class="legend-row"><span class="legend-swatch" style="background:#F8DCD7"></span>Absence</div>
@@ -2934,6 +2958,7 @@ function renderPlanning(){
         }
 
         const conf=conflictIds.has(s.id);
+        const nat=natureOf(s), natCls=nat==='passage'?' shift-nat-passage':nat==='permanence'?' shift-nat-perm':'', natIc=_natIcon(nat), natLbl=nat!=='poste'?NATURES[nat]+' — ':'';
         const abBadge = (!isExc && s.semaine!=='toutes') ? `<span class="shift-ab ab-${s.semaine}" title="Semaine ${semParityLabel(s.semaine).toLowerCase()} · binôme d'échange"><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span>` : '';
         const excBadge = isExc ? `<span class="shift-ab" style="background:var(--orange);color:#fff" title="${s.isAdd?'Créneau ponctuel':'Ajusté ce jour'}">!</span>` : '';
         const click = s.isAdd
@@ -2941,9 +2966,9 @@ function renderPlanning(){
           : (isExc ? `openPanel('panel-jour','${agent.id}|${dateStr}|${s.afId}|')`
                    : `openPanel('panel-creneau','${s.afId}|${agent.id}|${dateStr}|')`);
         const confIc = conf?'<svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:var(--red);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3.6l9 15.4H3z"/></svg>':'';
-        return `<div class="shift-bar shift-bar-present${isExc?' shift-except':''}"${conf?' style="box-shadow:inset 0 0 0 1.5px var(--red)" title="Chevauchement horaire ce jour"':` title="${_escA(nom)}"`} onclick="${click}">
+        return `<div class="shift-bar shift-bar-present${natCls}${isExc?' shift-except':''}"${conf?' style="box-shadow:inset 0 0 0 1.5px var(--red)" title="Chevauchement horaire ce jour"':` title="${natLbl}${_escA(nom)}"`} onclick="${click}">
           <span class="shift-site">${_escH(short)}</span>
-          <span class="shift-time">${confIc}${s.debut}–${s.fin}${abBadge}${excBadge}</span>
+          <span class="shift-time">${confIc}${natIc}${s.debut}–${s.fin}${abBadge}${excBadge}</span>
         </div>`;
       }).join('');
 
@@ -4315,16 +4340,19 @@ function covToggleIgnore(siteId,jour,debut,fin){
    Les multisites sont inclus : ce sont les remplaçants des postes d'accueil.
    Logistique, factotum et chantier passent sur site sans assurer l'ouverture. */
 function estAgentAccueil(ag){ const t=ag?.type||'accueil'; return t==='accueil'||t==='multisite'; }
+function couvreAccueil(ag,x){ const n=natureOf(x); if(n==='permanence') return true; if(n==='passage') return false; return estAgentAccueil(ag); }
+function _afCouvreFn(){ const m=new Map(ga().filter(a=>!a.inactif).map(a=>[a.id,a])); return af=>m.has(af.agentId)&&couvreAccueil(m.get(af.agentId),af); }
 function _accueilIds(){ return new Set(ga().filter(a=>!a.inactif&&estAgentAccueil(a)).map(a=>a.id)); }
 
 /* Intervalles réellement couverts sur un site à une date (absences, remplacements, exceptions inclus) */
 function _siteCoveredIntervals(siteId,date){
   const dateStr=_ymd(date); const out=[];
-  ga().filter(a=>!a.inactif && estAgentAccueil(a)).forEach(ag=>{
+  ga().filter(a=>!a.inactif).forEach(ag=>{
     const dayAffecs=gaf().filter(af=>af.agentId===ag.id && _affActiveOn(af,date));
     const ab=gab().find(x=>x.agentId===ag.id && _absCoversDate(x,date));
     effectiveShifts(ag.id,dateStr,dayAffecs).forEach(s=>{
       if(s.siteId!==siteId) return;
+      if(!couvreAccueil(ag,s)) return;
       if(ab && s.afId && !_replFor(ab, s.afId+'@'+dateStr)) return; // absent et non remplacé
       out.push([_mins(s.debut),_mins(s.fin)]);
     });
@@ -4333,8 +4361,8 @@ function _siteCoveredIntervals(siteId,date){
 }
 /* Couverture théorique : affectations récurrentes seules, sans aucun aléa */
 function _siteBaseIntervals(siteId,date){
-  const acc=_accueilIds();
-  return gaf().filter(af=>af.siteId===siteId && acc.has(af.agentId) && _affActiveOn(af,date)).map(af=>[_mins(af.debut),_mins(af.fin)]);
+  const couvre=_afCouvreFn();
+  return gaf().filter(af=>af.siteId===siteId && couvre(af) && _affActiveOn(af,date)).map(af=>[_mins(af.debut),_mins(af.fin)]);
 }
 
 function covGapsOnDate(date){
@@ -4371,7 +4399,7 @@ function covGapsWeek(){
 /* Trous récurrents : la structure du planning ne couvre pas le créneau d'ouverture */
 function covGapsRecurrents(){
   const today=new Date();
-  const acc=_accueilIds();
+  const couvre=_afCouvreFn();
   const map=new Map();
   gs().forEach(s=>{
     (s.creneaux||[]).forEach(c=>{
@@ -4380,7 +4408,7 @@ function covGapsRecurrents(){
         if(covIgnored(s,jour,c)) return;
         const slot=[_mins(c.debut),_mins(c.fin)];
         ['A','B'].forEach(par=>{
-          const cov=gaf().filter(af=>af.siteId===s.id && acc.has(af.agentId) && (af.jours||[]).includes(jour)
+          const cov=gaf().filter(af=>af.siteId===s.id && couvre(af) && (af.jours||[]).includes(jour)
               && (af.semaine==='toutes'||af.semaine===par) && _affInRange(af,today))
             .map(af=>[_mins(af.debut),_mins(af.fin)]);
           const holes=_slotHoles(slot,cov);
@@ -4821,6 +4849,10 @@ function buildPanelAffect(body,footer,data){
       </div>
     </div>
     <div class="form-group">
+      <label class="form-label">Type d'intervention</label>
+      ${_natSegHtml('paf-nat', af?natureOf(af):'poste')}
+    </div>
+    <div class="form-group">
       <label class="form-label">Jours *</label>
       <div class="jours-row" id="paf-jours">
         ${JOURS_LABELS.map(j=>`<button class="jour-pill${(af?.jours.includes(j) || (!af && j===preJour))?' on':''}" data-j="${j}" onclick="this.classList.toggle('on')">${j}</button>`).join('')}
@@ -4871,6 +4903,7 @@ function buildPanelAffect(body,footer,data){
   if(af){ document.getElementById('paf-agent').value=af.agentId; document.getElementById('paf-site').value=af.siteId; }
   else if(preAgent) document.getElementById('paf-agent').value=preAgent;
   if(!af && preSite) document.getElementById('paf-site').value=preSite;
+  if(!af){ const selA=document.getElementById('paf-agent'); const sync=()=>_natSegSet('paf-nat', _natDefaultFor(selA.value)); sync(); selA.addEventListener('change', sync); }
 
   footer.innerHTML=`
     <button class="btn btn-secondary" onclick="cancelAffect()">Annuler</button>
@@ -4905,7 +4938,7 @@ function saveAffect(){
   if(dateFin && dateFin<dateDebut){ toast('La date de fin doit être après le début',false); return; }
   const id=document.getElementById('paf-id').value;
   const afs=gaf();
-  const data={agentId,siteId,jours,debut,fin,pause:Math.max(0,Number(document.getElementById('paf-pause').value)||0),semaine:document.getElementById('paf-sem').value,notes:document.getElementById('paf-notes').value,dateDebut,dateFin:dateFin||''};
+  const data={agentId,siteId,jours,debut,fin,pause:Math.max(0,Number(document.getElementById('paf-pause').value)||0),semaine:document.getElementById('paf-sem').value,nature:_natSegVal('paf-nat'),notes:document.getElementById('paf-notes').value,dateDebut,dateFin:dateFin||''};
   const conflict=gaf().find(o=> o.agentId===agentId && o.id!==id && o.jours.some(j=>jours.includes(j)) && (o.semaine==='toutes'||data.semaine==='toutes'||o.semaine===data.semaine) && _mins(debut)<_mins(o.fin) && _mins(o.debut)<_mins(fin));
   if(conflict){ if(!confirm(`⚠ Conflit horaire\n\n${agentNom(agentId)} est déjà affecté à « ${siteNom(conflict.siteId)} » (${conflict.jours.join(', ')} · ${conflict.debut}–${conflict.fin}), un créneau qui se chevauche.\n\nEnregistrer quand même ?`)) return; }
   if(id){ const i=afs.findIndex(a=>a.id===id); afs[i]={...afs[i],...data}; }
@@ -4942,13 +4975,13 @@ function effectiveShifts(agentId, dateStr, dayAffecs){
     const ex = exs.find(e=>e.affecId===af.id && (e.type==='mod'||e.type==='del'));
     if(ex && ex.type==='del') return; // créneau libéré ce jour
     if(ex && ex.type==='mod'){
-      out.push({ id:af.id, afId:af.id, siteId:ex.siteId||af.siteId, debut:ex.debut, fin:ex.fin, pause:(ex.pause!=null&&ex.pause!=='')?Number(ex.pause):(af.pause||0), semaine:af.semaine, jours:af.jours, notes:ex.notes||af.notes, ex });
+      out.push({ id:af.id, afId:af.id, siteId:ex.siteId||af.siteId, debut:ex.debut, fin:ex.fin, pause:(ex.pause!=null&&ex.pause!=='')?Number(ex.pause):(af.pause||0), semaine:af.semaine, jours:af.jours, notes:ex.notes||af.notes, nature:ex.nature||af.nature, ex });
     } else {
-      out.push({ id:af.id, afId:af.id, siteId:af.siteId, debut:af.debut, fin:af.fin, pause:af.pause||0, semaine:af.semaine, jours:af.jours, notes:af.notes });
+      out.push({ id:af.id, afId:af.id, siteId:af.siteId, debut:af.debut, fin:af.fin, pause:af.pause||0, semaine:af.semaine, jours:af.jours, notes:af.notes, nature:af.nature });
     }
   });
   exs.filter(e=>e.type==='add').forEach(ex=>{
-    out.push({ id:'ex-'+ex.id, afId:null, siteId:ex.siteId, debut:ex.debut, fin:ex.fin, pause:ex.pause||0, semaine:'toutes', jours:[], notes:ex.notes, ex, isAdd:true });
+    out.push({ id:'ex-'+ex.id, afId:null, siteId:ex.siteId, debut:ex.debut, fin:ex.fin, pause:ex.pause||0, semaine:'toutes', jours:[], notes:ex.notes, nature:ex.nature, ex, isAdd:true });
   });
   return out.sort((a,b)=>_mins(a.debut)-_mins(b.debut));
 }
@@ -5007,6 +5040,10 @@ function buildPanelJour(body, footer, raw){
       <label class="form-label">Site *</label>
       <select class="form-input" id="pj-site"></select>
     </div>
+    <div class="form-group">
+      <label class="form-label">Type d'intervention</label>
+      ${_natSegHtml('pj-nat', (existingMod&&existingMod.nature)? natureOf(existingMod) : af? natureOf(af) : addEx? natureOf(addEx) : _natDefaultFor(agentId))}
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="form-group"><label class="form-label">Début *</label><input class="form-input" type="time" id="pj-debut" value="${curDebut}"></div>
       <div class="form-group"><label class="form-label">Fin *</label><input class="form-input" type="time" id="pj-fin" value="${curFin}"></div>
@@ -5042,7 +5079,8 @@ function _pjReadForm(){
     debut: document.getElementById('pj-debut').value,
     fin: document.getElementById('pj-fin').value,
     notes: (document.getElementById('pj-notes').value||'').trim(),
-    week: !!document.getElementById('pj-week')?.checked
+    week: !!document.getElementById('pj-week')?.checked,
+    nature: _natSegVal('pj-nat')
   };
 }
 
@@ -5054,7 +5092,7 @@ function saveDayException(agentId, dateStr, afId){
   let arr=gex();
   dates.forEach(ds=>{
     arr = arr.filter(e=>!(e.agentId===agentId && e.dateStr===ds && e.affecId===afId));
-    arr.push({ id:DB.id(), agentId, dateStr:ds, type:'mod', affecId:afId, siteId:f.siteId, debut:f.debut, fin:f.fin, notes:f.notes, createdBy:getCurrentUser(), createdAt:new Date().toISOString() });
+    arr.push({ id:DB.id(), agentId, dateStr:ds, type:'mod', affecId:afId, siteId:f.siteId, debut:f.debut, fin:f.fin, notes:f.notes, nature:f.nature, createdBy:getCurrentUser(), createdAt:new Date().toISOString() });
   });
   sex(arr); closePanel();
   toast(f.week?'Exception appliquée à la semaine':'Exception enregistrée pour ce jour'); renderPlanning();
@@ -5084,8 +5122,8 @@ function saveAddException(exId, agentId, dateStr){
   const f=_pjReadForm();
   if(!f.siteId||!f.debut||!f.fin){ toast('Site et horaires requis',false); return; }
   let arr=gex();
-  if(exId){ const i=arr.findIndex(e=>e.id===exId); if(i>=0) arr[i]={...arr[i], siteId:f.siteId, debut:f.debut, fin:f.fin, notes:f.notes}; }
-  else { arr.push({ id:DB.id(), agentId, dateStr, type:'add', siteId:f.siteId, debut:f.debut, fin:f.fin, notes:f.notes, createdBy:getCurrentUser(), createdAt:new Date().toISOString() }); }
+  if(exId){ const i=arr.findIndex(e=>e.id===exId); if(i>=0) arr[i]={...arr[i], siteId:f.siteId, debut:f.debut, fin:f.fin, notes:f.notes, nature:f.nature}; }
+  else { arr.push({ id:DB.id(), agentId, dateStr, type:'add', siteId:f.siteId, debut:f.debut, fin:f.fin, notes:f.notes, nature:f.nature, createdBy:getCurrentUser(), createdAt:new Date().toISOString() }); }
   sex(arr); closePanel(); toast('Créneau ponctuel enregistré'); renderPlanning();
 }
 
