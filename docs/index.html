@@ -2982,7 +2982,7 @@ function renderPlanning(){
       <div class="agent-label" onclick="openPanel('panel-agent-detail','${agent.id}')">
         <div class="agent-name">${_escH(agent.nom)}</div>
         ${agent.remplacant?'<div class="agent-sub"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M7 7h12l-3.2-3.2M17 17H5l3.2 3.2"/></svg> Remplaçant</div>':''}
-        ${wkMin?`<div class="agent-sub" style="color:var(--text3)">${_fmtDur(wkMin)} / sem.</div>`:''}
+        ${_wkLabel(agent,wkMin)}
       </div>
       ${cells}
     </div>`;
@@ -2992,6 +2992,15 @@ function renderPlanning(){
   updateAbsenceBadge();
 }
 
+/* Total semaine + alerte dépassement du volume contractuel (absences maladie comptées) */
+function _wkLabel(agent,wkMin){
+  const cMin=agent.contratHebdo?Math.round(agent.contratHebdo*60):0;
+  if(!wkMin&&!cMin) return '';
+  if(!cMin) return `<div class="agent-sub" style="color:var(--text3)">${_fmtDur(wkMin)} / sem.</div>`;
+  const over=wkMin>cMin;
+  if(!over) return `<div class="agent-sub" style="color:var(--text3)" title="Volume contrat : ${_fmtDur(cMin)} / sem.">${_fmtDur(wkMin)} / ${_fmtDur(cMin)}</div>`;
+  return `<div class="agent-sub" style="color:var(--red);font-weight:700" title="Dépasse le contrat de ${_fmtDur(wkMin-cMin)}"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3.6l9 15.4H3z"/><path d="M12 9.6v4.6M12 17.2v.4"/></svg> ${_fmtDur(wkMin)} / ${_fmtDur(cMin)} (+${_fmtDur(wkMin-cMin)})</div>`;
+}
 let planSearch='';
 function filterPlanRows(v, keepFocus){
   planSearch = v||'';
@@ -3432,14 +3441,16 @@ function _affInRange(af,date){
 }
 function _dFr(ymd){ if(!ymd) return ''; const[y,m,d]=ymd.split('-'); return `${d}/${m}/${y}`; }
 function _contratLabel(a,fs){
-  if(!a||(!a.contratDebut&&!a.contratFin)) return '';
+  if(!a||(!a.contratDebut&&!a.contratFin&&!a.contratHebdo)) return '';
   const today=_ymd(new Date());
-  let txt = a.contratDebut&&a.contratFin ? 'Contrat du '+_dFr(a.contratDebut)+' au '+_dFr(a.contratFin)
+  const vol=a.contratHebdo?_fmtDur(Math.round(a.contratHebdo*60))+' / sem.':'';
+  let txt = !a.contratDebut&&!a.contratFin ? 'Contrat '+vol : a.contratDebut&&a.contratFin ? 'Contrat du '+_dFr(a.contratDebut)+' au '+_dFr(a.contratFin)
     : a.contratDebut ? 'Contrat depuis le '+_dFr(a.contratDebut) : "Contrat jusqu'au "+_dFr(a.contratFin);
   let col='var(--text2)', tag='';
   if(a.contratDebut && today<a.contratDebut){ tag='à venir'; col='var(--blue)'; }
   else if(a.contratFin && today>a.contratFin){ tag='terminé'; col='var(--red)'; }
   else if(a.contratFin){ const j=Math.round((new Date(a.contratFin+'T00:00:00')-new Date(today+'T00:00:00'))/864e5); if(j<=30){ tag='fin dans '+j+' j'; col='var(--orange,#C77700)'; } }
+  if(vol && (a.contratDebut||a.contratFin)) txt+=' · '+vol;
   return `<div style="font-size:${fs||12}px;color:${col};margin-bottom:${fs>12?8:3}px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="4" y="5" width="16" height="16" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg> ${txt}${tag?' · <strong>'+tag+'</strong>':''}</div>`;
 }
 function _affPeriodLabel(af){
@@ -4109,7 +4120,11 @@ function buildPanelAgent(body,footer,id){
         <input class="form-input" type="date" id="pa2-cfin" value="${a?.contratFin||''}">
       </div>
     </div>
-    <div style="font-size:11px;color:var(--text3);margin:-6px 0 12px">Fin vide = CDI / sans date de fin.</div>
+    <div class="form-group">
+      <label class="form-label">Volume horaire hebdomadaire (h)</label>
+      <input class="form-input" type="number" min="0" max="60" step="0.25" id="pa2-chebdo" value="${a?.contratHebdo??''}" placeholder="ex. 35">
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin:-6px 0 12px">Fin vide = CDI / sans date de fin. Le planning alerte si la semaine dépasse le volume du contrat.</div>
     <div class="form-group">
       <label class="form-label">Notes</label>
       <textarea class="form-input" id="pa2-notes">${a?.notes||''}</textarea>
@@ -4169,7 +4184,9 @@ function saveAgent(){
   const type=document.getElementById('pa2-type').value;
   const contratDebut=document.getElementById('pa2-cdebut').value||null, contratFin=document.getElementById('pa2-cfin').value||null;
   if(contratDebut&&contratFin&&contratFin<contratDebut){ toast('La fin de contrat précède le début',false); return; }
-  const data={contratDebut,contratFin,nom,nomFamille:nomf,prenom,tel:document.getElementById('pa2-tel').value,email:document.getElementById('pa2-email').value,notes:document.getElementById('pa2-notes').value,type,remplacant:type==='multisite',competences};
+  const _ch=parseFloat(String(document.getElementById('pa2-chebdo').value).replace(',','.'));
+  const contratHebdo=isFinite(_ch)&&_ch>0?_ch:null;
+  const data={contratDebut,contratFin,contratHebdo,nom,nomFamille:nomf,prenom,tel:document.getElementById('pa2-tel').value,email:document.getElementById('pa2-email').value,notes:document.getElementById('pa2-notes').value,type,remplacant:type==='multisite',competences};
   if(id){ const i=agents.findIndex(a=>a.id===id); agents[i]={...agents[i],...data}; }
   else agents.push({id:DB.id(),...data});
   sa(agents); closePanel(); toast(id?'Agent modifié':'Agent ajouté'); renderAgents();
@@ -5701,6 +5718,7 @@ function computeAgentDays(agentId, start, end){
     const dayAff=affs.filter(a=>{
       if(!a.jours.includes(label)) return false;
       if(!_affInRange(a,cur)) return false;
+      if(!_contratInRange(agentId,cur)) return false;
       if(a.semaine==='A'&&!isA) return false;
       if(a.semaine==='B'&&isA) return false;
       return true;
@@ -5713,7 +5731,7 @@ function computeAgentDays(agentId, start, end){
         let status='present', note='';
         if(abs){ status=abs.remplacantId?'remplace':'absent'; note=abs.remplacantId?('Remplacé par '+agentNom(abs.remplacantId)):('Absent — '+(abs.motif||'')); }
         if(a.ex && status==='present'){ note = a.isAdd ? 'Créneau ponctuel' : 'Ajusté ce jour'; }
-        return { site:siteNom(a.siteId), debut:a.debut, fin:a.fin, pause:a.pause||0, status, note };
+        return { site:siteNom(a.siteId), debut:a.debut, fin:a.fin, pause:a.pause||0, status, note, motif:abs?(abs.motif||''):'' };
       });
     }
     // Créneaux couverts EN TANT QUE remplaçant (absences d'autres agents attribuées à cet agent)
@@ -5975,6 +5993,19 @@ function expEmailPlanning(id){
 function _mins(t){ const p=String(t).split(':'); return (+p[0])*60+(+p[1]||0); }
 function _fmtDur(m){ return `${Math.floor(m/60)}h${String(m%60).padStart(2,'0')}`; }
 /* Pause déjeuner : optionnelle, en minutes, déduite du total d'heures (les horaires du créneau restent inchangés) */
+function _isMaladie(s){ return (s.status==='absent'||s.status==='remplace') && /maladie/i.test(s.motif||''); }
+/* Ventilation des heures : travaillé / maladie / congés / autres absences */
+function _hBreak(shifts){
+  const o={trav:0,mal:0,cong:0,autre:0};
+  shifts.forEach(s=>{ const m=_shiftMin(s);
+    if(s.status!=='absent'&&s.status!=='remplace'){ o.trav+=m; return; }
+    const mo=String(s.motif||'').toLowerCase();
+    if(mo.includes('maladie')) o.mal+=m; else if(mo.includes('cong')) o.cong+=m; else o.autre+=m; });
+  return o;
+}
+function _hBreakTxt(b){
+  return [['travaillé',b.trav],['maladie',b.mal],['congés',b.cong],['autres absences',b.autre]].filter(x=>x[1]).map(x=>x[0]+' '+_fmtDur(x[1])).join(' · ');
+}
 function _pauseOf(s){ return Math.max(0, Number(s&&s.pause)||0); }
 function _shiftMin(s){ return Math.max(0, _mins(s.fin)-_mins(s.debut)-_pauseOf(s)); }
 function _pauseTxt(s){ const p=_pauseOf(s); return p?` (pause ${p} min)`:''; }
@@ -5992,6 +6023,7 @@ function expPrint(ids){
     const days=computeAgentDays(id,EXP.start,EXP.end);
     const ag=ga().find(a=>a.id===id);
     const totMin=days.reduce((t,d)=>t+d.shifts.reduce((u,s)=>u+_shiftMin(s),0),0);
+    const totB=_hBreak(days.flatMap(d=>d.shifts)); const totAbs=totB.mal+totB.cong+totB.autre;
     const weeks={};
     days.forEach(d=>{ const mk=_ymd(getMonday(new Date(d.dateStr+'T00:00:00'))); (weeks[mk]=weeks[mk]||[]).push(d); });
     const mondays=Object.keys(weeks).sort();
@@ -5999,6 +6031,8 @@ function expPrint(ids){
       const wd=weeks[mk];
       const nShifts=wd.reduce((t,d)=>t+d.shifts.length,0);
       const wMin=wd.reduce((t,d)=>t+d.shifts.reduce((u,s)=>u+_shiftMin(s),0),0);
+      const wB=_hBreak(wd.flatMap(d=>d.shifts)); const wAbs=wB.mal+wB.cong+wB.autre;
+      const cMin=ag&&ag.contratHebdo?Math.round(ag.contratHebdo*60):0;
       const rows=wd.map(d=>{
         const dt=new Date(d.dateStr+'T00:00:00'); const idx=(dt.getDay()+6)%7;
         const dayMin=d.shifts.reduce((t,s)=>t+_shiftMin(s),0);
@@ -6016,8 +6050,9 @@ function expPrint(ids){
       return `<div style="${wi>0?'margin-top:16px;':''}border:1px solid #ececec;border-radius:7px;overflow:hidden;break-inside:avoid">
         <div style="display:flex;justify-content:space-between;align-items:baseline;background:#FCF7DC;border-left:4px solid #FCD727;padding:8px 12px">
           <span style="font-weight:700;font-size:14px">Semaine du ${fmtDate(mk)}</span>
-          <span style="font-size:11.5px;color:#8a7f55;font-weight:600">${wd.length} jour${wd.length>1?'s':''} · ${nShifts} créneau${nShifts>1?'x':''} · ${_fmtDur(wMin)}</span>
+          <span style="font-size:11.5px;color:#8a7f55;font-weight:600">${wd.length} jour${wd.length>1?'s':''} · ${nShifts} créneau${nShifts>1?'x':''} · ${_fmtDur(wMin)}${cMin?' / '+_fmtDur(cMin)+' contrat':''}${cMin&&wMin>cMin?' · <span style="color:#c0392b">dépassement +'+_fmtDur(wMin-cMin)+'</span>':''}</span>
         </div>
+        ${wAbs?`<div style="font-size:11.5px;color:#555;padding:6px 12px;border-bottom:1px solid #ececec;background:#fafaf7">${_hBreakTxt(wB)}</div>`:''}
         ${_expPrintGrid(wd)}
         <table style="width:100%;border-collapse:collapse;margin:0">${rows}</table>
       </div>`;
@@ -6026,7 +6061,7 @@ function expPrint(ids){
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
         <div><div style="font-size:18px;font-weight:800">${_escH(agentNom(id))}</div>
         ${ag&&ag.notes?`<div style="font-size:12px;color:#999;margin-top:1px">${_escH(ag.notes)}</div>`:''}</div>
-        ${totMin?`<div style="font-size:12px;color:#555">Total période&nbsp;<strong style="font-size:15px;color:#1a1a1a">${_fmtDur(totMin)}</strong></div>`:''}
+        ${totMin?`<div style="font-size:12px;color:#555;text-align:right">Total période&nbsp;<strong style="font-size:15px;color:#1a1a1a">${_fmtDur(totMin)}</strong>${totAbs?`<div style="font-size:11.5px;color:#555;margin-top:2px">${_hBreakTxt(totB)}</div>`:''}</div>`:''}
       </div>${weeksHtml}</section>`;
   }).join('');
   _printDoc('Plannings', body);
