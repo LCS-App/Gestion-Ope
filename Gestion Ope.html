@@ -679,6 +679,10 @@ body.nav-open .brand-title{ display:inline; }
   color: #134B72;
   border-left: 3px solid #3B84C4;
 }
+.shift-nat-passage { background:#FFFFFF; color:#1E5738; border:1px dashed #3E9A69; border-left:3px dashed #3E9A69; min-height:28px; padding:3px 8px; }
+.shift-nat-perm { background:#D3EDEA; color:#0E4F48; border-left:3px solid #1F8A7E; }
+.shift-nat-ic { display:inline-flex; flex-shrink:0; }
+.nat-hint { font-size:11px; color:var(--text3); margin-top:6px; line-height:1.45; }
 .shift-bar-ferme {
   background: repeating-linear-gradient(135deg, #ECECEA, #ECECEA 6px, #E3E3E1 6px, #E3E3E1 12px);
   color: #6B6D68;
@@ -1839,6 +1843,7 @@ const DB = {
   get(k){ return _cache[k] || []; },
   set(k,v){
     _cache[k] = v;
+    if(k==='agents') _contratMap=null;
     clearTimeout(_syncTimers[k]);
     _syncTimers[k] = setTimeout(async () => {
       _syncTimers[k] = null;
@@ -1867,6 +1872,24 @@ function siteFermeLe(siteId, date){
 function _isoDate(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 
 // Tournée : { id, nom, agentId (agent attitré), siteIds:[ordre de passage], notes }
+/* Nature d'une intervention (affectation ou créneau ponctuel) :
+   poste (défaut) · passage = collecte sur le site d'un autre agent, ne couvre pas l'accueil
+   · permanence = agent volant qui tient l'accueil un moment, compte dans la couverture. */
+const NATURES={poste:'Poste fixe',passage:'Passage',permanence:'Permanence volante'};
+function natureOf(x){ return x&&(x.nature==='passage'||x.nature==='permanence')?x.nature:'poste'; }
+function _natIcon(n){
+  const st='width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round';
+  if(n==='passage') return '<span class="shift-nat-ic" title="Passage"><svg viewBox="0 0 24 24" style="'+st+'"><path d="M12 21s-6.5-5.6-6.5-10.5a6.5 6.5 0 0113 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/></svg></span>';
+  if(n==='permanence') return '<span class="shift-nat-ic" title="Permanence volante"><svg viewBox="0 0 24 24" style="'+st+'"><path d="M3.5 18h17M5.5 18a6.5 6.5 0 0113 0M12 8.5v3M10 8.5h4"/></svg></span>';
+  return '';
+}
+function _natSegHtml(id,cur){
+  return '<div class="seg" id="'+id+'">'+Object.keys(NATURES).map(k=>'<button type="button" class="seg-btn'+(k===cur?' active':'')+'" data-nat="'+k+'" onclick="segPickPlain(this)">'+NATURES[k]+'</button>').join('')+'</div>'
+    +'<div class="nat-hint"><strong>Passage</strong> : collecte de prestations sur le site d\'un autre agent, ne compte pas comme accueil. <strong>Permanence volante</strong> : l\'agent tient l\'accueil, le créneau compte dans la couverture du site.</div>';
+}
+function _natSegVal(id){ return document.querySelector('#'+id+' .seg-btn.active')?.dataset.nat||'poste'; }
+function _natSegSet(id,v){ document.querySelectorAll('#'+id+' .seg-btn').forEach(b=>b.classList.toggle('active',b.dataset.nat===v)); }
+function _natDefaultFor(agentId){ const ag=ga().find(a=>a.id===agentId); return ag&&ag.type==='logistique'?'passage':'poste'; }
 function siteTournee(siteId){ return gt().find(t => (t.siteIds||[]).includes(siteId)); }
 
 /* Migration douce :
@@ -2064,7 +2087,7 @@ function buildPanel(id,data){
     'panel-agent': data?'Modifier l\'agent':'Nouvel agent',
     'panel-site': data?'Modifier le site':'Nouveau site',
     'panel-tournee': data?'Modifier la tournée':'Nouvelle tournée',
-    'panel-affect': data?'Modifier l\'affectation':'Nouvelle affectation',
+    'panel-affect': data&&data.versionOf?'Modifier à partir du…':data?'Modifier l\'affectation':'Nouvelle affectation',
     'panel-pointage':'Ajouter un événement',
     'panel-remplacer':'Attribuer un remplaçant',
     'panel-agent-detail':'Fiche agent',
@@ -2760,11 +2783,12 @@ function updateAlertBand(){
   const cov=covGapsWeek();
   const rec=covGapsRecurrents();
   const nTot=cov.length+rec.length;
-  const covTxt = cov.length && rec.length
+  const nCtr=cov.filter(g=>g.contrat).length;
+  const covTxt = (nCtr?`${nCtr} créneau${nCtr>1?'x':''} sans successeur (fin de contrat < 1 mois)${cov.length>nCtr||rec.length?' · ':''}`:'') + (cov.length===nCtr && !rec.length ? '' : cov.length && rec.length
     ? `${cov.length} créneau${cov.length>1?'x':''} découvert${cov.length>1?'s':''} cette semaine · ${rec.length} trou${rec.length>1?'s':''} récurrent${rec.length>1?'s':''}`
     : cov.length
       ? (cov.length===1?"1 créneau d'ouverture non couvert cette semaine":`${cov.length} créneaux d'ouverture non couverts cette semaine`)
-      : (rec.length===1?"1 créneau d'ouverture jamais couvert par le planning":`${rec.length} créneaux d'ouverture jamais couverts par le planning`);
+      : (rec.length===1?"1 créneau d'ouverture jamais couvert par le planning":`${rec.length} créneaux d'ouverture jamais couverts par le planning`));
   [['cov-band',''],['cov-band-mois','-mois']].forEach(([id,suf])=>{
     const band=document.getElementById(id);
     if(!band) return;
@@ -2806,6 +2830,8 @@ function renderPlanning(){
     <div class="legend-popover" id="legend-popover">
       <div class="legend-popover-title">Code couleur</div>
       <div class="legend-row"><span class="legend-swatch" style="background:#DDEFE4"></span>En poste</div>
+      <div class="legend-row"><span class="legend-swatch" style="background:#fff;border:1px dashed #3E9A69"></span>Passage (collecte)</div>
+      <div class="legend-row"><span class="legend-swatch" style="background:#D3EDEA"></span>Permanence volante (accueil)</div>
       <div class="legend-row"><span class="legend-swatch" style="background:#DCEBF7"></span>Remplacement</div>
       <div class="legend-row"><span class="legend-swatch" style="background:#FFF1AE"></span>Absent — remplacé par…</div>
       <div class="legend-row"><span class="legend-swatch" style="background:#F8DCD7"></span>Absence</div>
@@ -2934,6 +2960,7 @@ function renderPlanning(){
         }
 
         const conf=conflictIds.has(s.id);
+        const nat=natureOf(s), natCls=nat==='passage'?' shift-nat-passage':nat==='permanence'?' shift-nat-perm':'', natIc=_natIcon(nat), natLbl=nat!=='poste'?NATURES[nat]+' — ':'';
         const abBadge = (!isExc && s.semaine!=='toutes') ? `<span class="shift-ab ab-${s.semaine}" title="Semaine ${semParityLabel(s.semaine).toLowerCase()} · binôme d'échange"><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span>` : '';
         const excBadge = isExc ? `<span class="shift-ab" style="background:var(--orange);color:#fff" title="${s.isAdd?'Créneau ponctuel':'Ajusté ce jour'}">!</span>` : '';
         const click = s.isAdd
@@ -2941,9 +2968,9 @@ function renderPlanning(){
           : (isExc ? `openPanel('panel-jour','${agent.id}|${dateStr}|${s.afId}|')`
                    : `openPanel('panel-creneau','${s.afId}|${agent.id}|${dateStr}|')`);
         const confIc = conf?'<svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:var(--red);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3.6l9 15.4H3z"/></svg>':'';
-        return `<div class="shift-bar shift-bar-present${isExc?' shift-except':''}"${conf?' style="box-shadow:inset 0 0 0 1.5px var(--red)" title="Chevauchement horaire ce jour"':` title="${_escA(nom)}"`} onclick="${click}">
+        return `<div class="shift-bar shift-bar-present${natCls}${isExc?' shift-except':''}"${conf?' style="box-shadow:inset 0 0 0 1.5px var(--red)" title="Chevauchement horaire ce jour"':` title="${natLbl}${_escA(nom)}"`} onclick="${click}">
           <span class="shift-site">${_escH(short)}</span>
-          <span class="shift-time">${confIc}${s.debut}–${s.fin}${abBadge}${excBadge}</span>
+          <span class="shift-time">${confIc}${natIc}${s.debut}–${s.fin}${abBadge}${excBadge}</span>
         </div>`;
       }).join('');
 
@@ -3365,10 +3392,32 @@ function _replDateRange(startStr,endStr){
   for(let d=new Date(s); d<=e && guard<400; d.setDate(d.getDate()+1), guard++) out.push(new Date(d));
   return out;
 }
-function _affActiveOn(af,date){
+/* Dates de contrat de l'agent : bornent toutes ses affectations (planning + couverture). */
+let _contratMap=null, _contratRef=null;
+const _CONTRAT_ALERTE_J=30; // alerte fin de contrat : 1 mois glissant
+function _contratOf(agentId){
+  const ags=ga();
+  if(!_contratMap||_contratRef!==ags){ _contratRef=ags; _contratMap=new Map(ags.filter(a=>a.contratDebut||a.contratFin).map(a=>[a.id,a])); }
+  return _contratMap.get(agentId)||null;
+}
+function _contratInRange(agentId,date){
+  const c=_contratOf(agentId); if(!c) return true;
+  const ymd=_ymd(date);
+  if(c.contratDebut && ymd<c.contratDebut) return false;
+  if(c.contratFin && ymd>c.contratFin) return false;
+  return true;
+}
+function _affActiveOn(af,date,ignoreFutureEnd){
   const label=JOURS[(date.getDay()+6)%7];
   if(!af.jours||!af.jours.includes(label)) return false;
   if(!_affInRange(af,date)) return false;
+  if(!_contratInRange(af.agentId,date)){
+    // Fin de contrat pas encore atteinte : la couverture théorique la garde, pour que le trou ressorte en alerte sur les semaines concernées.
+    const c=_contratOf(af.agentId);
+    const lim=new Date(); lim.setDate(lim.getDate()+_CONTRAT_ALERTE_J);
+    const futureEnd=c&&c.contratFin&&c.contratFin>=_ymd(new Date())&&_ymd(date)<=_ymd(lim)&&!(c.contratDebut&&_ymd(date)<c.contratDebut);
+    if(!(ignoreFutureEnd&&futureEnd)) return false;
+  }
   const isA=isWeekA(date);
   if(af.semaine==='A'&&!isA) return false;
   if(af.semaine==='B'&&isA) return false;
@@ -3382,6 +3431,17 @@ function _affInRange(af,date){
   return true;
 }
 function _dFr(ymd){ if(!ymd) return ''; const[y,m,d]=ymd.split('-'); return `${d}/${m}/${y}`; }
+function _contratLabel(a,fs){
+  if(!a||(!a.contratDebut&&!a.contratFin)) return '';
+  const today=_ymd(new Date());
+  let txt = a.contratDebut&&a.contratFin ? 'Contrat du '+_dFr(a.contratDebut)+' au '+_dFr(a.contratFin)
+    : a.contratDebut ? 'Contrat depuis le '+_dFr(a.contratDebut) : "Contrat jusqu'au "+_dFr(a.contratFin);
+  let col='var(--text2)', tag='';
+  if(a.contratDebut && today<a.contratDebut){ tag='à venir'; col='var(--blue)'; }
+  else if(a.contratFin && today>a.contratFin){ tag='terminé'; col='var(--red)'; }
+  else if(a.contratFin){ const j=Math.round((new Date(a.contratFin+'T00:00:00')-new Date(today+'T00:00:00'))/864e5); if(j<=30){ tag='fin dans '+j+' j'; col='var(--orange,#C77700)'; } }
+  return `<div style="font-size:${fs||12}px;color:${col};margin-bottom:${fs>12?8:3}px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="4" y="5" width="16" height="16" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg> ${txt}${tag?' · <strong>'+tag+'</strong>':''}</div>`;
+}
 function _affPeriodLabel(af){
   if(!af.dateDebut && !af.dateFin) return '';
   if(af.dateDebut && !af.dateFin) return `<span class="semaine-tag semaine-all">Depuis ${_dFr(af.dateDebut)}</span>`;
@@ -3974,6 +4034,7 @@ function renderAgents(){
       </div>
       ${a.tel?`<div style="font-size:12px;color:var(--text3);margin-bottom:3px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M5 4h3l1.5 4-2 1.5a11 11 0 005 5l1.5-2 4 1.5v3a2 2 0 01-2 2A15 15 0 014 6a2 2 0 011-2z"/></svg> ${a.tel}</div>`:''}
       ${a.email?`<div style="font-size:12px;color:var(--text3);margin-bottom:3px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M4 7.5l8 5.5 8-5.5"/></svg> ${a.email}</div>`:''}
+      ${_contratLabel(a,12)}
       ${a.notes?`<div style="font-size:12px;color:var(--text2);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">${_escH(a.notes)}</div>`:''}
       ${(a.competences||[]).length?`<details class="disc">
         <summary>Sites maîtrisés <span style="color:var(--text2)">(${a.competences.length})</span><span class="chev"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2"><path d="M9 6l6 6-6 6"/></svg></span></summary>
@@ -4037,6 +4098,18 @@ function buildPanelAgent(body,footer,id){
         <input class="form-input" type="email" id="pa2-email" value="${a?.email||''}">
       </div>
     </div>
+    <div class="form-section">Contrat</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Début de contrat</label>
+        <input class="form-input" type="date" id="pa2-cdebut" value="${a?.contratDebut||''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fin de contrat</label>
+        <input class="form-input" type="date" id="pa2-cfin" value="${a?.contratFin||''}">
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin:-6px 0 12px">Fin vide = CDI / sans date de fin.</div>
     <div class="form-group">
       <label class="form-label">Notes</label>
       <textarea class="form-input" id="pa2-notes">${a?.notes||''}</textarea>
@@ -4094,7 +4167,9 @@ function saveAgent(){
   const agents=ga();
   const competences=[...document.querySelectorAll('#pa2-comps .comp-pill.on')].map(b=>b.dataset.cid);
   const type=document.getElementById('pa2-type').value;
-  const data={nom,nomFamille:nomf,prenom,tel:document.getElementById('pa2-tel').value,email:document.getElementById('pa2-email').value,notes:document.getElementById('pa2-notes').value,type,remplacant:type==='multisite',competences};
+  const contratDebut=document.getElementById('pa2-cdebut').value||null, contratFin=document.getElementById('pa2-cfin').value||null;
+  if(contratDebut&&contratFin&&contratFin<contratDebut){ toast('La fin de contrat précède le début',false); return; }
+  const data={contratDebut,contratFin,nom,nomFamille:nomf,prenom,tel:document.getElementById('pa2-tel').value,email:document.getElementById('pa2-email').value,notes:document.getElementById('pa2-notes').value,type,remplacant:type==='multisite',competences};
   if(id){ const i=agents.findIndex(a=>a.id===id); agents[i]={...agents[i],...data}; }
   else agents.push({id:DB.id(),...data});
   sa(agents); closePanel(); toast(id?'Agent modifié':'Agent ajouté'); renderAgents();
@@ -4175,21 +4250,25 @@ function buildPanelAgentDetail(body,footer,id){
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">${a.competences.map(cid=>`<span class="badge badge-green" style="font-size:11px">${_escH(siteNom(cid))}</span>`).join('')}</div>`:''}
     ${a.tel?`<div style="font-size:13px;margin-bottom:8px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M5 4h3l1.5 4-2 1.5a11 11 0 005 5l1.5-2 4 1.5v3a2 2 0 01-2 2A15 15 0 014 6a2 2 0 011-2z"/></svg> ${a.tel}</div>`:''}
     ${a.email?`<div style="font-size:13px;margin-bottom:8px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M4 7.5l8 5.5 8-5.5"/></svg> ${a.email}</div>`:''}
+    ${_contratLabel(a,13)}
     ${a.notes?`<div style="font-size:13px;color:var(--text2);margin-bottom:16px">${_escH(a.notes)}</div>`:''}
     <div class="form-section">Absences</div>
     ${_agentAbsencesHTML(id)}
     <div class="form-section">Affectations</div>
-    ${afs.length?afs.map(af=>`<div class="affect-row">
+    ${afs.filter(af=>!_affIsPast(af)).length?afs.filter(af=>!_affIsPast(af)).map(af=>`<div class="affect-row">
       <div class="affect-dot"></div>
       <div class="affect-info">
         <div class="affect-site">${siteNom(af.siteId)}</div>
         <div class="affect-detail">${af.jours.join(', ')} · ${af.debut}–${af.fin}
           <span class="semaine-tag ${af.semaine==='A'?'semaine-a':af.semaine==='B'?'semaine-b':'semaine-all'}">${af.semaine==='toutes'?'Toutes sem.':'Sem. '+semParityLabel(af.semaine).toLowerCase()}</span>
+          ${_affPeriodLabel(af)}
         </div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="versionAffect('${af.id}','${id}')">Modifier à partir du…</button>
       </div>
       <button class="btn-icon" title="Modifier l'affectation" onclick="editAffectFromAgent('${af.id}','${id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></button>
       <button class="btn-icon red" title="Supprimer l'affectation" onclick="delAffectFromAgent('${af.id}','${id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4.5 7h15M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg></button>
-    </div>`).join(''):`<div style="font-size:13px;color:var(--text3)">Aucune affectation</div>`}
+    </div>`).join(''):`<div style="font-size:13px;color:var(--text3)">Aucune affectation en cours</div>`}
+    ${_affHistHTML(afs.filter(_affIsPast), af=>`editAffectFromAgent('${af.id}','${id}')`, af=>`delAffectFromAgent('${af.id}','${id}')`)}
     <button class="btn btn-secondary btn-sm" style="margin-top:10px;width:100%" onclick="addAffectFromAgent('${id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 5v14M5 12h14"/></svg> Ajouter une affectation</button>`;
   footer.innerHTML=`<button class="btn btn-secondary" onclick="absenceDepuisSelection('${id}',_ymd(new Date()))"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M14.5 14l-4 4M10.5 14l4 4"/></svg> Déclarer absent</button><button class="btn btn-secondary" onclick="openPanel('panel-agent','${id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg> Modifier</button>`;
 }
@@ -4315,16 +4394,19 @@ function covToggleIgnore(siteId,jour,debut,fin){
    Les multisites sont inclus : ce sont les remplaçants des postes d'accueil.
    Logistique, factotum et chantier passent sur site sans assurer l'ouverture. */
 function estAgentAccueil(ag){ const t=ag?.type||'accueil'; return t==='accueil'||t==='multisite'; }
+function couvreAccueil(ag,x){ const n=natureOf(x); if(n==='permanence') return true; if(n==='passage') return false; return estAgentAccueil(ag); }
+function _afCouvreFn(){ const m=new Map(ga().filter(a=>!a.inactif).map(a=>[a.id,a])); return af=>m.has(af.agentId)&&couvreAccueil(m.get(af.agentId),af); }
 function _accueilIds(){ return new Set(ga().filter(a=>!a.inactif&&estAgentAccueil(a)).map(a=>a.id)); }
 
 /* Intervalles réellement couverts sur un site à une date (absences, remplacements, exceptions inclus) */
 function _siteCoveredIntervals(siteId,date){
   const dateStr=_ymd(date); const out=[];
-  ga().filter(a=>!a.inactif && estAgentAccueil(a)).forEach(ag=>{
+  ga().filter(a=>!a.inactif).forEach(ag=>{
     const dayAffecs=gaf().filter(af=>af.agentId===ag.id && _affActiveOn(af,date));
     const ab=gab().find(x=>x.agentId===ag.id && _absCoversDate(x,date));
     effectiveShifts(ag.id,dateStr,dayAffecs).forEach(s=>{
       if(s.siteId!==siteId) return;
+      if(!couvreAccueil(ag,s)) return;
       if(ab && s.afId && !_replFor(ab, s.afId+'@'+dateStr)) return; // absent et non remplacé
       out.push([_mins(s.debut),_mins(s.fin)]);
     });
@@ -4332,9 +4414,9 @@ function _siteCoveredIntervals(siteId,date){
   return out;
 }
 /* Couverture théorique : affectations récurrentes seules, sans aucun aléa */
-function _siteBaseIntervals(siteId,date){
-  const acc=_accueilIds();
-  return gaf().filter(af=>af.siteId===siteId && acc.has(af.agentId) && _affActiveOn(af,date)).map(af=>[_mins(af.debut),_mins(af.fin)]);
+function _siteBaseIntervals(siteId,date,strict){
+  const couvre=_afCouvreFn();
+  return gaf().filter(af=>af.siteId===siteId && couvre(af) && _affActiveOn(af,date,!strict)).map(af=>[_mins(af.debut),_mins(af.fin)]);
 }
 
 function covGapsOnDate(date){
@@ -4348,10 +4430,11 @@ function covGapsOnDate(date){
       const holes=_slotHoles(slot,_siteCoveredIntervals(s.id,date));
       if(!holes.length) return;
       const base=_slotHoles(slot,_siteBaseIntervals(s.id,date));
+      const contrat=JSON.stringify(base)!==JSON.stringify(_slotHoles(slot,_siteBaseIntervals(s.id,date,true)));
       out.push({ siteId:s.id, jour, dateStr:_ymd(date), debut:c.debut, fin:c.fin, holes,
         manque:holes.reduce((a,[x,y])=>a+y-x,0), total:slot[1]-slot[0],
         totalHole: holes.length===1 && holes[0][0]===slot[0] && holes[0][1]===slot[1],
-        degrade: JSON.stringify(base)!==JSON.stringify(holes) });
+        degrade: JSON.stringify(base)!==JSON.stringify(holes), contrat });
     });
   });
   return out;
@@ -4365,13 +4448,29 @@ function covGapsWeek(){
     const d=new Date(weekStart); d.setDate(d.getDate()+i);
     covGapsOnDate(d).filter(g=>g.degrade).forEach(g=>out.push(g));
   }
+  const seen=new Set(out.map(g=>g.dateStr+'|'+g.siteId+'|'+g.debut));
+  covGapsContrats().forEach(g=>{ const k=g.dateStr+'|'+g.siteId+'|'+g.debut; if(!seen.has(k)){ seen.add(k); out.push(g); } });
   return out.sort((a,b)=>a.dateStr.localeCompare(b.dateStr)||siteNom(a.siteId).localeCompare(siteNom(b.siteId)));
+}
+
+/* Trous créés par une fin de contrat sans successeur, sur le mois glissant à venir */
+function covGapsContrats(){
+  const t0=new Date(); t0.setHours(0,0,0,0);
+  const lim=new Date(t0); lim.setDate(lim.getDate()+_CONTRAT_ALERTE_J);
+  const t0s=_ymd(t0), lims=_ymd(lim);
+  if(!ga().some(a=>!a.inactif&&a.contratFin&&a.contratFin>=t0s&&a.contratFin<lims)) return [];
+  const out=[];
+  for(let d=new Date(t0); d<=lim; d.setDate(d.getDate()+1)){
+    const wd=d.getDay(); if(wd===0||wd===6) continue;
+    covGapsOnDate(new Date(d)).filter(g=>g.degrade&&g.contrat).forEach(g=>out.push(g));
+  }
+  return out;
 }
 
 /* Trous récurrents : la structure du planning ne couvre pas le créneau d'ouverture */
 function covGapsRecurrents(){
   const today=new Date();
-  const acc=_accueilIds();
+  const couvre=_afCouvreFn();
   const map=new Map();
   gs().forEach(s=>{
     (s.creneaux||[]).forEach(c=>{
@@ -4380,8 +4479,8 @@ function covGapsRecurrents(){
         if(covIgnored(s,jour,c)) return;
         const slot=[_mins(c.debut),_mins(c.fin)];
         ['A','B'].forEach(par=>{
-          const cov=gaf().filter(af=>af.siteId===s.id && acc.has(af.agentId) && (af.jours||[]).includes(jour)
-              && (af.semaine==='toutes'||af.semaine===par) && _affInRange(af,today))
+          const cov=gaf().filter(af=>af.siteId===s.id && couvre(af) && (af.jours||[]).includes(jour)
+              && (af.semaine==='toutes'||af.semaine===par) && _affInRange(af,today) && _contratInRange(af.agentId,today))
             .map(af=>[_mins(af.debut),_mins(af.fin)]);
           const holes=_slotHoles(slot,cov);
           if(!holes.length) return;
@@ -4405,7 +4504,7 @@ function covSetTab(t){ covTab=t; buildPanel('panel-couverture',currentPanelData)
 function _covRowHtml(g,mode){
   const rouge=g.totalHole;
   const dot=rouge?'var(--red)':'#B8860B';
-  const grav=rouge?'Personne sur le créneau':`Manque ${_fmtDur(g.manque)} sur ${_fmtDur(g.total)}`;
+  const grav=(rouge?'Personne sur le créneau':`Manque ${_fmtDur(g.manque)} sur ${_fmtDur(g.total)}`)+(g.contrat?' · fin de contrat':'');
   const when = mode==='jour'
     ? new Date(g.dateStr+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'})
     : g.jour + (g.parite==='toutes'?'':(g.parite==='A'?' · semaines impaires':' · semaines paires'));
@@ -4774,9 +4873,10 @@ function renderAffect(){
   const el=document.getElementById('affect-list');
   if(!agents.length){ el.innerHTML=`<div class="empty"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="4" y="4" width="7" height="7" rx="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.6"/><rect x="13" y="13" width="7" height="7" rx="1.6"/></svg></div><div class="empty-text">Aucun résultat</div></div>`; return; }
   el.innerHTML=agents.map(a=>{
-    const agAfs=afs.filter(af=>af.agentId===a.id);
+    const agAll=afs.filter(af=>af.agentId===a.id);
+    const agAfs=agAll.filter(af=>!_affIsPast(af)), agPast=agAll.filter(_affIsPast);
     return `<div class="card" style="margin-bottom:12px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:${agAfs.length?'12px':'0'}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:${agAll.length?'12px':'0'}">
         <div style="width:32px;height:32px;border-radius:50%;background:var(--blue);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">${a.nom.charAt(0)}</div>
         <div style="flex:1;font-weight:700">${_escH(a.nom)}</div>
         <button class="btn btn-secondary btn-sm" onclick="openPanel('panel-affect',{agentId:'${a.id}'})">+ Créneau</button>
@@ -4790,18 +4890,39 @@ function renderAffect(){
             ${_affPeriodLabel(af)}
             ${af.notes?'· '+af.notes:''}
           </div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="versionAffect('${af.id}',null)">Modifier à partir du…</button>
         </div>
         <button class="btn-icon" onclick="openPanel('panel-affect','${af.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></button>
         <button class="btn-icon red" onclick="delAffect('${af.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4.5 7h15M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg></button>
       </div>`).join('')}
+      ${_affHistHTML(agPast, af=>`openPanel('panel-affect','${af.id}')`, af=>`delAffect('${af.id}')`)}
     </div>`;
   }).join('');
 }
 
+// Historique : une affectation est passée quand sa date de fin (dernier jour travaillé) est avant aujourd'hui
+function _affIsPast(af){ return !!af.dateFin && af.dateFin<_ymd(new Date()); }
+function _affHistHTML(past, editJs, delJs){
+  if(!past.length) return '';
+  const rows=[...past].sort((a,b)=>(b.dateFin||'').localeCompare(a.dateFin||'')).map(af=>`<div class="affect-row" style="opacity:.7">
+    <div class="affect-dot" style="background:var(--text3)"></div>
+    <div class="affect-info">
+      <div class="affect-site">${_escH(siteNom(af.siteId))}</div>
+      <div class="affect-detail">${af.jours.join(', ')} · ${af.debut}–${af.fin} ${_affPeriodLabel(af)}</div>
+    </div>
+    <button class="btn-icon" title="Modifier" onclick="${editJs(af)}"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></button>
+    <button class="btn-icon red" title="Supprimer" onclick="${delJs(af)}"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4.5 7h15M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg></button>
+  </div>`).join('');
+  return `<details style="margin-top:10px"><summary style="cursor:pointer;font-size:12px;font-weight:700;color:var(--text2);padding:4px 0">Plannings passés (${past.length})</summary>${rows}</details>`;
+}
+function versionAffect(afId, agentId){ _affectReturnAgent=agentId; openPanel('panel-affect', {versionOf:afId}); }
+function _ymdPrev(ymd){ const d=new Date(ymd+'T12:00:00'); d.setDate(d.getDate()-1); return _ymd(d); }
+
 function buildPanelAffect(body,footer,data){
   // data peut être un id d'affectation (string) ou {agentId} (objet)
   const isEdit=typeof data==='string';
-  const af=isEdit?gaf().find(x=>x.id===data):null;
+  const verOf=(!isEdit&&data&&data.versionOf)?gaf().find(x=>x.id===data.versionOf):null;
+  const af=isEdit?gaf().find(x=>x.id===data):verOf;
   const preAgent=typeof data==='object'&&data?.agentId?data.agentId:'';
   const preJour=typeof data==='object'&&data?.jour?data.jour:'';
   const preSite=typeof data==='object'&&data?.siteId?data.siteId:'';
@@ -4810,6 +4931,8 @@ function buildPanelAffect(body,footer,data){
   const JOURS_LABELS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
 
   body.innerHTML=`
+    ${verOf?`<div style="background:var(--blue-light);border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.45;margin-bottom:14px">Le planning actuel (${verOf.jours.join(', ')} · ${verOf.debut}–${verOf.fin}) sera terminé <strong>la veille</strong> de la date choisie et restera visible dans « Plannings passés ». Ajustez ci-dessous les jours et horaires du nouveau planning.</div>`:''}
+    <input type="hidden" id="paf-verof" value="${verOf?verOf.id:''}">
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Agent *</label>
@@ -4819,6 +4942,10 @@ function buildPanelAffect(body,footer,data){
         <label class="form-label">Site *</label>
         <select class="form-input" id="paf-site"></select>
       </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Type d'intervention</label>
+      ${_natSegHtml('paf-nat', af?natureOf(af):'poste')}
     </div>
     <div class="form-group">
       <label class="form-label">Jours *</label>
@@ -4843,12 +4970,12 @@ function buildPanelAffect(body,footer,data){
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Date de début *</label>
-        <input class="form-input" type="date" id="paf-datedebut" value="${af?.dateDebut||''}">
+        <label class="form-label">${verOf?'À partir du * (1er jour travaillé)':'Date de début *'}</label>
+        <input class="form-input" type="date" id="paf-datedebut" value="${verOf?'':af?.dateDebut||''}">
       </div>
       <div class="form-group">
         <label class="form-label">Date de fin</label>
-        <input class="form-input" type="date" id="paf-datefin" value="${af?.dateFin||''}">
+        <input class="form-input" type="date" id="paf-datefin" value="${verOf?'':af?.dateFin||''}">
       </div>
     </div>
     <div style="font-size:11px;color:var(--text3);margin:-6px 0 14px;line-height:1.4">Laissez la date de fin vide pour une affectation permanente. Vous pourrez y ajouter une fin plus tard.</div>
@@ -4871,6 +4998,7 @@ function buildPanelAffect(body,footer,data){
   if(af){ document.getElementById('paf-agent').value=af.agentId; document.getElementById('paf-site').value=af.siteId; }
   else if(preAgent) document.getElementById('paf-agent').value=preAgent;
   if(!af && preSite) document.getElementById('paf-site').value=preSite;
+  if(!af){ const selA=document.getElementById('paf-agent'); const sync=()=>_natSegSet('paf-nat', _natDefaultFor(selA.value)); sync(); selA.addEventListener('change', sync); }
 
   footer.innerHTML=`
     <button class="btn btn-secondary" onclick="cancelAffect()">Annuler</button>
@@ -4904,15 +5032,20 @@ function saveAffect(){
   if(!dateDebut){ toast('La date de début est obligatoire',false); return; }
   if(dateFin && dateFin<dateDebut){ toast('La date de fin doit être après le début',false); return; }
   const id=document.getElementById('paf-id').value;
+  const verOfId=document.getElementById('paf-verof')?.value||'';
   const afs=gaf();
-  const data={agentId,siteId,jours,debut,fin,pause:Math.max(0,Number(document.getElementById('paf-pause').value)||0),semaine:document.getElementById('paf-sem').value,notes:document.getElementById('paf-notes').value,dateDebut,dateFin:dateFin||''};
-  const conflict=gaf().find(o=> o.agentId===agentId && o.id!==id && o.jours.some(j=>jours.includes(j)) && (o.semaine==='toutes'||data.semaine==='toutes'||o.semaine===data.semaine) && _mins(debut)<_mins(o.fin) && _mins(o.debut)<_mins(fin));
+  const old=verOfId?afs.find(a=>a.id===verOfId):null;
+  if(old && old.dateDebut && dateDebut<=old.dateDebut){ toast('La date doit être après le début du planning actuel ('+_dFr(old.dateDebut)+')',false); return; }
+  const data={agentId,siteId,jours,debut,fin,pause:Math.max(0,Number(document.getElementById('paf-pause').value)||0),semaine:document.getElementById('paf-sem').value,nature:_natSegVal('paf-nat'),notes:document.getElementById('paf-notes').value,dateDebut,dateFin:dateFin||''};
+  const _perOverlap=o=> (!o.dateFin || o.dateFin>=dateDebut) && (!data.dateFin || !o.dateDebut || o.dateDebut<=data.dateFin);
+  const conflict=gaf().find(o=> o.agentId===agentId && o.id!==id && o.id!==verOfId && _perOverlap(o) && o.jours.some(j=>jours.includes(j)) && (o.semaine==='toutes'||data.semaine==='toutes'||o.semaine===data.semaine) && _mins(debut)<_mins(o.fin) && _mins(o.debut)<_mins(fin));
   if(conflict){ if(!confirm(`⚠ Conflit horaire\n\n${agentNom(agentId)} est déjà affecté à « ${siteNom(conflict.siteId)} » (${conflict.jours.join(', ')} · ${conflict.debut}–${conflict.fin}), un créneau qui se chevauche.\n\nEnregistrer quand même ?`)) return; }
   if(id){ const i=afs.findIndex(a=>a.id===id); afs[i]={...afs[i],...data}; }
   else afs.push({id:DB.id(),...data});
+  if(old){ const prev=_ymdPrev(dateDebut); if(!old.dateFin || old.dateFin>prev) old.dateFin=prev; }
   saf(afs);
   const ret=_affectReturnAgent;
-  toast(id?'Affectation modifiée':'Affectation créée');
+  toast(old?'Nouveau planning à partir du '+_dFr(dateDebut):id?'Affectation modifiée':'Affectation créée');
   if(ret){ _affectReturnAgent=null; openPanel('panel-agent-detail', ret); renderPlanning(); }
   else if(_affectFromGrid){ _affectFromGrid=false; closePanel(); renderPlanning(); }
   else { closePanel(); renderAffect(); }
@@ -4942,13 +5075,13 @@ function effectiveShifts(agentId, dateStr, dayAffecs){
     const ex = exs.find(e=>e.affecId===af.id && (e.type==='mod'||e.type==='del'));
     if(ex && ex.type==='del') return; // créneau libéré ce jour
     if(ex && ex.type==='mod'){
-      out.push({ id:af.id, afId:af.id, siteId:ex.siteId||af.siteId, debut:ex.debut, fin:ex.fin, pause:(ex.pause!=null&&ex.pause!=='')?Number(ex.pause):(af.pause||0), semaine:af.semaine, jours:af.jours, notes:ex.notes||af.notes, ex });
+      out.push({ id:af.id, afId:af.id, siteId:ex.siteId||af.siteId, debut:ex.debut, fin:ex.fin, pause:(ex.pause!=null&&ex.pause!=='')?Number(ex.pause):(af.pause||0), semaine:af.semaine, jours:af.jours, notes:ex.notes||af.notes, nature:ex.nature||af.nature, ex });
     } else {
-      out.push({ id:af.id, afId:af.id, siteId:af.siteId, debut:af.debut, fin:af.fin, pause:af.pause||0, semaine:af.semaine, jours:af.jours, notes:af.notes });
+      out.push({ id:af.id, afId:af.id, siteId:af.siteId, debut:af.debut, fin:af.fin, pause:af.pause||0, semaine:af.semaine, jours:af.jours, notes:af.notes, nature:af.nature });
     }
   });
   exs.filter(e=>e.type==='add').forEach(ex=>{
-    out.push({ id:'ex-'+ex.id, afId:null, siteId:ex.siteId, debut:ex.debut, fin:ex.fin, pause:ex.pause||0, semaine:'toutes', jours:[], notes:ex.notes, ex, isAdd:true });
+    out.push({ id:'ex-'+ex.id, afId:null, siteId:ex.siteId, debut:ex.debut, fin:ex.fin, pause:ex.pause||0, semaine:'toutes', jours:[], notes:ex.notes, nature:ex.nature, ex, isAdd:true });
   });
   return out.sort((a,b)=>_mins(a.debut)-_mins(b.debut));
 }
@@ -5007,6 +5140,10 @@ function buildPanelJour(body, footer, raw){
       <label class="form-label">Site *</label>
       <select class="form-input" id="pj-site"></select>
     </div>
+    <div class="form-group">
+      <label class="form-label">Type d'intervention</label>
+      ${_natSegHtml('pj-nat', (existingMod&&existingMod.nature)? natureOf(existingMod) : af? natureOf(af) : addEx? natureOf(addEx) : _natDefaultFor(agentId))}
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="form-group"><label class="form-label">Début *</label><input class="form-input" type="time" id="pj-debut" value="${curDebut}"></div>
       <div class="form-group"><label class="form-label">Fin *</label><input class="form-input" type="time" id="pj-fin" value="${curFin}"></div>
@@ -5042,7 +5179,8 @@ function _pjReadForm(){
     debut: document.getElementById('pj-debut').value,
     fin: document.getElementById('pj-fin').value,
     notes: (document.getElementById('pj-notes').value||'').trim(),
-    week: !!document.getElementById('pj-week')?.checked
+    week: !!document.getElementById('pj-week')?.checked,
+    nature: _natSegVal('pj-nat')
   };
 }
 
@@ -5054,7 +5192,7 @@ function saveDayException(agentId, dateStr, afId){
   let arr=gex();
   dates.forEach(ds=>{
     arr = arr.filter(e=>!(e.agentId===agentId && e.dateStr===ds && e.affecId===afId));
-    arr.push({ id:DB.id(), agentId, dateStr:ds, type:'mod', affecId:afId, siteId:f.siteId, debut:f.debut, fin:f.fin, notes:f.notes, createdBy:getCurrentUser(), createdAt:new Date().toISOString() });
+    arr.push({ id:DB.id(), agentId, dateStr:ds, type:'mod', affecId:afId, siteId:f.siteId, debut:f.debut, fin:f.fin, notes:f.notes, nature:f.nature, createdBy:getCurrentUser(), createdAt:new Date().toISOString() });
   });
   sex(arr); closePanel();
   toast(f.week?'Exception appliquée à la semaine':'Exception enregistrée pour ce jour'); renderPlanning();
@@ -5084,8 +5222,8 @@ function saveAddException(exId, agentId, dateStr){
   const f=_pjReadForm();
   if(!f.siteId||!f.debut||!f.fin){ toast('Site et horaires requis',false); return; }
   let arr=gex();
-  if(exId){ const i=arr.findIndex(e=>e.id===exId); if(i>=0) arr[i]={...arr[i], siteId:f.siteId, debut:f.debut, fin:f.fin, notes:f.notes}; }
-  else { arr.push({ id:DB.id(), agentId, dateStr, type:'add', siteId:f.siteId, debut:f.debut, fin:f.fin, notes:f.notes, createdBy:getCurrentUser(), createdAt:new Date().toISOString() }); }
+  if(exId){ const i=arr.findIndex(e=>e.id===exId); if(i>=0) arr[i]={...arr[i], siteId:f.siteId, debut:f.debut, fin:f.fin, notes:f.notes, nature:f.nature}; }
+  else { arr.push({ id:DB.id(), agentId, dateStr, type:'add', siteId:f.siteId, debut:f.debut, fin:f.fin, notes:f.notes, nature:f.nature, createdBy:getCurrentUser(), createdAt:new Date().toISOString() }); }
   sex(arr); closePanel(); toast('Créneau ponctuel enregistré'); renderPlanning();
 }
 
