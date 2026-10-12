@@ -1859,11 +1859,12 @@ function dvToApp(R){
   const agents = R.agent.filter(a => F(a,'lcs_type')!=='Siège' || _DV_TOUJOURS.test(V(a,'lcs_nom'))).map(a => ({ id:id(a.lcs_agentid), nom:[V(a,'lcs_nom'),V(a,'lcs_prenom')].filter(Boolean).join(' '), nomFamille:V(a,'lcs_nom'), prenom:V(a,'lcs_prenom'),
     type:TYPE[F(a,'lcs_type')]||'accueil', email:V(a,'lcs_mailpro')||V(a,'lcs_mailperso'), tel:V(a,'lcs_telpro')||V(a,'lcs_telperso'), remplacant:!!a.lcs_remplacant,
     inactif:a.statecode===1, notes:V(a,'lcs_notes'), competences:(comp[a.lcs_agentid]||[]).map(c=>id(LK(c,'lcs_site'))).filter(Boolean),
-    contratDebut:(V(a,'lcs_datearrivee')+'').slice(0,10), contratFin:(V(a,'lcs_datedepart')+'').slice(0,10), _dvid:a.lcs_agentid }));
+    contratDebut:(V(a,'lcs_debutcontrat')+'').slice(0,10), contratFin:(V(a,'lcs_fincontrat')+'').slice(0,10), contratHebdo:a.lcs_volumehebdo==null?null:Number(a.lcs_volumehebdo), _dvid:a.lcs_agentid }));
+  const NAT = { 'Poste fixe':'poste','Passage':'passage','Permanence volante':'permanence' };
   const SEM = { 'Toutes':'toutes','A':'A','B':'B' };
   const affec = R.affectation.map(f => ({ id:id(f.lcs_affectationid), agentId:id(LK(f,'lcs_agent')), siteId:id(LK(f,'lcs_site')), jours:jours(F(f,'lcs_jours')),
     debut:V(f,'lcs_debut'), fin:V(f,'lcs_fin'), semaine:SEM[F(f,'lcs_semaine')]||'toutes', dateDebut:(V(f,'lcs_datedebut')+'').slice(0,10), dateFin:(V(f,'lcs_datefin')+'').slice(0,10),
-    pause:f.lcs_pause==null?0:f.lcs_pause, notes:V(f,'lcs_notes'), _dvid:f.lcs_affectationid }));
+    pause:f.lcs_pause==null?0:f.lcs_pause, notes:V(f,'lcs_notes'), nature:NAT[F(f,'lcs_nature')]||'', _dvid:f.lcs_affectationid }));
   const MOT = { 'Congés payés':'conges','Maladie':'maladie','Formation':'formation','Autre':'autre' };
   const remplAbs = {}, rempl = [];
   R.remplacement.forEach(r => { const src=r.lcs_idsource||'', abs=LK(r,'lcs_absence');
@@ -1880,7 +1881,7 @@ function dvToApp(R){
     return o; });
   const EXT = { 'Ajout':'add','Modification':'mod','Libération':'del' };
   const except = R.exception.map(e => ({ id:goId(e.lcs_idsource)||e.lcs_exceptionid, agentId:id(LK(e,'lcs_agent')), dateStr:(V(e,'lcs_date')+'').slice(0,10), type:EXT[F(e,'lcs_type')]||'mod',
-    affecId:id(LK(e,'lcs_affectation')), siteId:id(LK(e,'lcs_site')), debut:V(e,'lcs_debut'), fin:V(e,'lcs_fin'), notes:V(e,'lcs_notes'), _dvid:e.lcs_exceptionid }));
+    affecId:id(LK(e,'lcs_affectation')), siteId:id(LK(e,'lcs_site')), debut:V(e,'lcs_debut'), fin:V(e,'lcs_fin'), notes:V(e,'lcs_notes'), nature:NAT[F(e,'lcs_nature')]||'', _dvid:e.lcs_exceptionid }));
   const fermetures = R.fermeture.map(f => ({ id:goId(f.lcs_idsource)||f.lcs_fermetureid, siteId:id(LK(f,'lcs_site')), dateDebut:(V(f,'lcs_datedebut')+'').slice(0,10), dateFin:(V(f,'lcs_datefin')+'').slice(0,10), motif:V(f,'lcs_motif'), notes:V(f,'lcs_notes'), _dvid:f.lcs_fermetureid }));
   const tournees = R.tournee.map(t => ({ id:id(t.lcs_tourneeid), nom:V(t,'lcs_nom'), agentId:id(LK(t,'lcs_agent')), notes:V(t,'lcs_notes'),
     siteIds:(etap[t.lcs_tourneeid]||[]).sort((a,b)=>(a.lcs_ordre||0)-(b.lcs_ordre||0)).map(e=>id(LK(e,'lcs_site'))).filter(Boolean), _dvid:t.lcs_tourneeid }));
