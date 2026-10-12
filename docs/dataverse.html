@@ -1623,8 +1623,20 @@ function afterAuth(account){
   const el=document.getElementById('user-info');
   if(el && account) el.textContent = account.name || account.username || '';
   _dvBadge();
-  loadAllData().then(()=>{ seed(); migrateTournees(); migrateAgentTypes(); migrateNomPrenom(); updateAbsenceBadge(); showView('planning'); })
+  _dvEnsureConsent(account).then(()=>loadAllData()).then(()=>{ seed(); migrateTournees(); migrateAgentTypes(); migrateNomPrenom(); updateAbsenceBadge(); showView('planning'); })
     .catch(e=>{ console.error(e); if(e && e.accessDenied) showAccessDenied(account); else { showSyncStatus(''); alert('Lecture Dataverse impossible :\n\n'+e.message); } });
+}
+/* Première ouverture : le compte vient de la session de l'app principale (Graph) — le jeton Dataverse
+   exige un consentement, impossible en silencieux → une redirection Microsoft, une seule fois. */
+async function _dvEnsureConsent(account){
+  try { _token = await msalApp.acquireTokenSilent({ scopes: SCOPES, account }); sessionStorage.removeItem('dv-consent'); }
+  catch(e){
+    if(sessionStorage.getItem('dv-consent')){ sessionStorage.removeItem('dv-consent'); throw new Error('Accès Dataverse refusé ('+(e.errorCode||e.message)+')'); }
+    sessionStorage.setItem('dv-consent','1');
+    showSyncStatus('Autorisation Dataverse…');
+    await msalApp.acquireTokenRedirect({ scopes: SCOPES, account });
+    await new Promise(()=>{});
+  }
 }
 function showAccessDenied(account){
   showLoginScreen(false);
