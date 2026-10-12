@@ -1835,6 +1835,8 @@ async function loadAllData(){
   _cache.permut = [];
   showSyncStatus('');
 }
+/* Agents toujours affichés même sans planning (nom de famille) — les autres sans planning sont masqués, la base Dataverse reste intacte. */
+const _DV_TOUJOURS = /^(AUGRAUD|BULTEZ|PERRAUDIN|DELINEAU|GARCIA|BIWOLÉ BIWOLÉ|DUVERGER)$/i;
 function dvToApp(R){
   const F = (r,c) => r[c+'@OData.Community.Display.V1.FormattedValue'] || '';
   const V = (r,c) => r[c]==null ? '' : r[c];
@@ -1854,7 +1856,7 @@ function dvToApp(R){
     if(ct){ o.contact=[ct.lcs_nom,ct.lcs_prenom].filter(Boolean).join(' '); o.email=V(ct,'lcs_mail'); o.tel=V(ct,'lcs_telportable')||V(ct,'lcs_telfixe'); }
     return o; });
   const TYPE = { 'Accueil':'accueil','Chantier':'chantier','Multisite':'multisite','Logistique':'logistique','Factotum':'factotum','Siège':'siege' };
-  const agents = R.agent.map(a => ({ id:id(a.lcs_agentid), nom:[V(a,'lcs_nom'),V(a,'lcs_prenom')].filter(Boolean).join(' '), nomFamille:V(a,'lcs_nom'), prenom:V(a,'lcs_prenom'),
+  const agents = R.agent.filter(a => F(a,'lcs_type')!=='Siège' || _DV_TOUJOURS.test(V(a,'lcs_nom'))).map(a => ({ id:id(a.lcs_agentid), nom:[V(a,'lcs_nom'),V(a,'lcs_prenom')].filter(Boolean).join(' '), nomFamille:V(a,'lcs_nom'), prenom:V(a,'lcs_prenom'),
     type:TYPE[F(a,'lcs_type')]||'accueil', email:V(a,'lcs_mailpro')||V(a,'lcs_mailperso'), tel:V(a,'lcs_telpro')||V(a,'lcs_telperso'), remplacant:!!a.lcs_remplacant,
     inactif:a.statecode===1, notes:V(a,'lcs_notes'), competences:(comp[a.lcs_agentid]||[]).map(c=>id(LK(c,'lcs_site'))).filter(Boolean),
     contratDebut:(V(a,'lcs_datearrivee')+'').slice(0,10), contratFin:(V(a,'lcs_datedepart')+'').slice(0,10), _dvid:a.lcs_agentid }));
@@ -1885,7 +1887,13 @@ function dvToApp(R){
   const pointage = R.pointage.map(p => ({ id:goId(p.lcs_idsource)||p.lcs_pointageid, type:F(p,'lcs_type')==='Retard'?'retard':'hsup', agentId:id(LK(p,'lcs_agent')), siteId:id(LK(p,'lcs_site')),
     date:(V(p,'lcs_date')+'').slice(0,10), duree:p.lcs_duree==null?0:p.lcs_duree, notes:V(p,'lcs_notes'), _dvid:p.lcs_pointageid }));
   console.log('Dataverse chargé :', { sites:sites.length, agents:agents.length, affec:affec.length, absences:absences.length, rempl:rempl.length, except:except.length, fermetures:fermetures.length, tournees:tournees.length, pointage:pointage.length });
-  return { sites, agents, affec, absences, rempl, except, fermetures, tournees, pointage };
+  const avecPlanning = new Set();
+  affec.forEach(x=>avecPlanning.add(x.agentId)); absences.forEach(x=>{ avecPlanning.add(x.agentId); avecPlanning.add(x.remplacantId); Object.values(x.remplacants||{}).forEach(v=>avecPlanning.add(v)); });
+  rempl.forEach(x=>{ avecPlanning.add(x.agentAbsentId); avecPlanning.add(x.remplacantId); }); except.forEach(x=>avecPlanning.add(x.agentId));
+  tournees.forEach(x=>avecPlanning.add(x.agentId)); pointage.forEach(x=>avecPlanning.add(x.agentId));
+  const agentsVisibles = agents.filter(a => avecPlanning.has(a.id) || _DV_TOUJOURS.test(a.nomFamille));
+  console.log('Agents masqués (sans planning) :', agents.length - agentsVisibles.length);
+  return { sites, agents:agentsVisibles, affec, absences, rempl, except, fermetures, tournees, pointage };
 }
 function showSyncStatus(msg){
   const el = document.getElementById('sync-status');
