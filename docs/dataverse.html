@@ -1623,7 +1623,7 @@ function afterAuth(account){
   const el=document.getElementById('user-info');
   if(el && account) el.textContent = account.name || account.username || '';
   _dvBadge();
-  _dvEnsureConsent(account).then(()=>loadAllData()).then(()=>{ seed(); migrateTournees(); migrateAgentTypes(); migrateNomPrenom(); _dvSnapshot(); updateAbsenceBadge(); showView('planning'); })
+  _dvEnsureConsent(account).then(()=>loadAllData()).then(()=>{ seed(); migrateTournees(); migrateAgentTypes(); migrateNomPrenom(); _dvSnapshot(); _dvBackfillFiliale().catch(e=>console.warn('Filiale',e)); _warnNomsIncomplets(); _fixRemplSansAbsence(); updateAbsenceBadge(); showView('planning'); })
     .catch(e=>{ console.error(e); if(e && e.accessDenied) showAccessDenied(account); else { showSyncStatus(''); alert('Lecture Dataverse impossible :\n\n'+e.message); } });
 }
 /* Première ouverture : le compte vient de la session de l'app principale (Graph) — le jeton Dataverse
@@ -1831,13 +1831,18 @@ async function loadAllData(){
   const R = {};
   const res = await Promise.all(T.map(t => dvGetAll('lcs_'+t+'s')));
   T.forEach((t,i)=>R[t]=res[i]);
+  _dvFilInit(R);
+  await _dvLinkReferents(R).catch(e=>console.warn('Référents de site', e));
   const data = dvToApp(R);
   Object.assign(_cache, data);
   _cache.permut = [];
   const gid = r => { const m=(r.lcs_idsource||'').split('|').map(s=>s.trim()).find(s=>/^go:[^:]+$/.test(s)); return m ? m.slice(3) : ''; };
   R.agent.forEach(r => _dvG['agents:'+(gid(r)||r.lcs_agentid)] = r.lcs_agentid);
   R.site.forEach(r => _dvG['sites:'+(gid(r)||r.lcs_siteid)] = r.lcs_siteid);
-  R.client.forEach(c => { if(c.lcs_nom) _dvClients[c.lcs_nom.trim().toLowerCase()] = c.lcs_clientid; });
+  R.contactclient.filter(c => c.statecode!==1 && c._lcs_client_value).forEach(c => { (_dvClientContacts[c._lcs_client_value]=_dvClientContacts[c._lcs_client_value]||[]).push({
+    id:c.lcs_contactclientid, nom:[c.lcs_nom,c.lcs_prenom].filter(Boolean).join(' '), fonction:c.lcs_fonction||'', email:c.lcs_mail||'', tel:c.lcs_telportable||c.lcs_telfixe||'', siteLibre:!c._lcs_site_value }); });
+  Object.values(_dvClientContacts).forEach(l => l.sort((a,b)=>a.nom.localeCompare(b.nom,'fr')));
+  R.client.forEach(c => { if(c.lcs_nom){ _dvClients[c.lcs_nom.trim().toLowerCase()] = c.lcs_clientid; _dvClientNoms[c.lcs_clientid] = c.lcs_nom.trim(); } });
   Object.keys(_DV_ENT).forEach(k => (data[k]||[]).forEach(x => { if(x && x._dvid) _dvG[k+':'+x.id] = x._dvid; }));
   showSyncStatus('');
 }
@@ -1856,16 +1861,16 @@ function dvToApp(R){
   const by = (t,col) => { const m={}; R[t].forEach(r=>{ const k=LK(r,col); if(k)(m[k]=m[k]||[]).push(r); }); return m; };
   const clients={}; R.client.forEach(c=>clients[c.lcs_clientid]=c.lcs_nom);
   const cren=by('creneausite','lcs_site'), cov=by('couvertureignoree','lcs_site'), cont=by('contactclient','lcs_site'), comp=by('competence','lcs_agent'), etap=by('etapetournee','lcs_tournee');
-  const sites = R.site.filter(s => s.statecode!==1).map(s => { const ct=(cont[s.lcs_siteid]||[])[0]; const o={ id:id(s.lcs_siteid), nom:V(s,'lcs_nom'), adresse:V(s,'lcs_adresse'), client:clients[LK(s,'lcs_client')]||'', notes:V(s,'lcs_notes'),
+  const sites = R.site.filter(s => s.statecode!==1).map(s => { const ct=(cont[s.lcs_siteid]||[]).filter(c=>c.statecode!==1).sort((a,b)=>(_isReferent(b)?1:0)-(_isReferent(a)?1:0))[0] || (cont[s.lcs_siteid]||[])[0]; const o={ id:id(s.lcs_siteid), nom:V(s,'lcs_nom'), adresse:V(s,'lcs_adresse'), client:clients[LK(s,'lcs_client')]||'', notes:V(s,'lcs_notes'),
       creneaux:(cren[s.lcs_siteid]||[]).sort((a,b)=>(a.lcs_idsource||'').localeCompare(b.lcs_idsource||'')).map(c=>({ jours:jours(F(c,'lcs_jours')), debut:V(c,'lcs_debut'), fin:V(c,'lcs_fin') })),
-      covIgnore:(cov[s.lcs_siteid]||[]).map(c=>F(c,'lcs_jour')+'|'+V(c,'lcs_debut')+'-'+V(c,'lcs_fin')), _dvid:s.lcs_siteid };
+      covIgnore:(cov[s.lcs_siteid]||[]).map(c=>F(c,'lcs_jour')+'|'+V(c,'lcs_debut')+'-'+V(c,'lcs_fin')), typologie:F(s,'lcs_typologie'), nbSalaries:s.lcs_nbsalaries==null?null:s.lcs_nbsalaries, nbSemPerm:s.lcs_nbsemainespermanence==null?null:s.lcs_nbsemainespermanence, _dvid:s.lcs_siteid };
     if(ct){ o.contact=[ct.lcs_nom,ct.lcs_prenom].filter(Boolean).join(' '); o.email=V(ct,'lcs_mail'); o.tel=V(ct,'lcs_telportable')||V(ct,'lcs_telfixe'); }
     return o; });
   const TYPE = { 'Accueil':'accueil','Chantier':'chantier','Multisite':'multisite','Logistique':'logistique','Factotum':'factotum','Siège':'siege' };
   const agents = R.agent.filter(a => F(a,'lcs_type')!=='Siège' || _DV_TOUJOURS.test(V(a,'lcs_nom'))).map(a => ({ id:id(a.lcs_agentid), nom:[V(a,'lcs_nom'),V(a,'lcs_prenom')].filter(Boolean).join(' '), nomFamille:V(a,'lcs_nom'), prenom:V(a,'lcs_prenom'),
-    type:TYPE[F(a,'lcs_type')]||'accueil', email:V(a,'lcs_mailpro')||V(a,'lcs_mailperso'), tel:V(a,'lcs_telpro')||V(a,'lcs_telperso'), remplacant:!!a.lcs_remplacant,
+    type:TYPE[F(a,'lcs_type')]||'accueil', email:V(a,'lcs_mailpro')||V(a,'lcs_mailperso'), tel:V(a,'lcs_telperso')||V(a,'lcs_telpro'), telPro:V(a,'lcs_telpro'), telPerso:V(a,'lcs_telperso'), remplacant:!!a.lcs_remplacant,
     inactif:a.statecode===1, notes:V(a,'lcs_notes'), competences:(comp[a.lcs_agentid]||[]).map(c=>id(LK(c,'lcs_site'))).filter(Boolean),
-    contratDebut:(V(a,'lcs_debutcontrat')+'').slice(0,10), contratFin:(V(a,'lcs_fincontrat')+'').slice(0,10), contratHebdo:a.lcs_volumehebdo==null?null:Number(a.lcs_volumehebdo), _dvid:a.lcs_agentid }));
+    filiale:LK(a,'lcs_filiale'), contratDebut:(V(a,'lcs_debutcontrat')+'').slice(0,10), contratFin:(V(a,'lcs_fincontrat')+'').slice(0,10), contratHebdo:a.lcs_volumehebdo==null?null:Number(a.lcs_volumehebdo), _dvid:a.lcs_agentid }));
   const NAT = { 'Poste fixe':'poste','Passage':'passage','Permanence volante':'permanence' };
   const SEM = { 'Toutes':'toutes','A':'A','B':'B' };
   const affec = R.affectation.map(f => ({ id:id(f.lcs_affectationid), agentId:id(LK(f,'lcs_agent')), siteId:id(LK(f,'lcs_site')), jours:jours(F(f,'lcs_jours')),
@@ -1887,7 +1892,7 @@ function dvToApp(R){
     return o; });
   const EXT = { 'Ajout':'add','Modification':'mod','Libération':'del' };
   const except = R.exception.map(e => ({ id:goId(e.lcs_idsource)||e.lcs_exceptionid, agentId:id(LK(e,'lcs_agent')), dateStr:(V(e,'lcs_date')+'').slice(0,10), type:EXT[F(e,'lcs_type')]||'mod',
-    affecId:id(LK(e,'lcs_affectation')), siteId:id(LK(e,'lcs_site')), debut:V(e,'lcs_debut'), fin:V(e,'lcs_fin'), notes:V(e,'lcs_notes'), nature:NAT[F(e,'lcs_nature')]||'', _dvid:e.lcs_exceptionid }));
+    affecId:id(LK(e,'lcs_affectation')), siteId:id(LK(e,'lcs_site')), debut:V(e,'lcs_debut'), fin:V(e,'lcs_fin'), notes:V(e,'lcs_notes'), nature:NAT[F(e,'lcs_nature')]||'', createdBy:V(e,'lcs_saisipar')||F(e,'_createdby_value'), _dvid:e.lcs_exceptionid }));
   const fermetures = R.fermeture.map(f => ({ id:goId(f.lcs_idsource)||f.lcs_fermetureid, siteId:id(LK(f,'lcs_site')), dateDebut:(V(f,'lcs_datedebut')+'').slice(0,10), dateFin:(V(f,'lcs_datefin')+'').slice(0,10), motif:V(f,'lcs_motif'), notes:V(f,'lcs_notes'), _dvid:f.lcs_fermetureid }));
   const tournees = R.tournee.map(t => ({ id:id(t.lcs_tourneeid), nom:V(t,'lcs_nom'), agentId:id(LK(t,'lcs_agent')), notes:V(t,'lcs_notes'),
     siteIds:(etap[t.lcs_tourneeid]||[]).sort((a,b)=>(a.lcs_ordre||0)-(b.lcs_ordre||0)).map(e=>id(LK(e,'lcs_site'))).filter(Boolean), _dvid:t.lcs_tourneeid }));
@@ -1901,6 +1906,51 @@ function dvToApp(R){
   const agentsVisibles = agents.filter(a => avecPlanning.has(a.id) || _DV_TOUJOURS.test(a.nomFamille));
   console.log('Agents masqués (sans planning) :', agents.length - agentsVisibles.length);
   return { sites, agents:agentsVisibles, affec, absences, rempl, except, fermetures, tournees, pointage };
+}
+/* Contact « Référent de site » sans site, dont le client n'a qu'un site actif → rattaché automatiquement à ce site.
+   Client à plusieurs sites : non rattaché (choix dans la fiche site, liste « Contacts du client »). */
+const _isReferent = c => /r[ée]f[ée]rent/i.test(c.lcs_fonction||'');
+async function _dvLinkReferents(R){
+  const todo=R.contactclient.filter(c=>c.statecode!==1 && !c._lcs_site_value && c._lcs_client_value && _isReferent(c));
+  if(!todo.length) return;
+  const m=await _dvMeta('lcs_contactclient'), ms=await _dvMeta('lcs_site'), nav=m.lookups.lcs_site.nav, multi=[];
+  for(const c of todo){
+    const sites=R.site.filter(s=>s.statecode!==1 && s._lcs_client_value===c._lcs_client_value);
+    if(sites.length!==1){ multi.push(c.lcs_nom+' '+(c.lcs_prenom||'')+' ('+sites.length+' sites)'); continue; }
+    try{ await _dvReq('PATCH', m.set+'('+c.lcs_contactclientid+')', { [nav+'@odata.bind']:'/'+ms.set+'('+sites[0].lcs_siteid+')' }); c._lcs_site_value=sites[0].lcs_siteid;
+      console.log('Référent rattaché :', c.lcs_nom, '→', sites[0].lcs_nom); }
+    catch(e){ console.warn('Référent non rattaché', c.lcs_nom, e); }
+  }
+  if(multi.length) console.log('Référents non rattachés (client à plusieurs sites) :', multi);
+}
+/* ── Filiale d'affectation des agents ──
+   Ordre : filiale déjà en base → filiale des clients de ses sites (la plus fréquente) → filiale du responsable connecté → sinon vide. */
+const _dvFil = { site:{}, me:'' };
+function _dvFilInit(R){
+  const cf={}; R.client.forEach(c=>{ const f=c._lcs_filiale_value; if(f) cf[c.lcs_clientid]=f; });
+  R.site.forEach(s=>{ const f=cf[s._lcs_client_value]; if(f) _dvFil.site[s.lcs_siteid]=f; });
+  let mail=''; try{ const ac=window._msalApp && window._msalApp.getAllAccounts()[0]; mail=((ac&&ac.username)||'').trim().toLowerCase(); }catch(e){}
+  const me = mail && R.agent.find(a=>[a.lcs_mailpro,a.lcs_mailperso].some(m=>(m||'').trim().toLowerCase()===mail));
+  _dvFil.me = (me && me._lcs_filiale_value) || '';
+}
+function _agentFiliale(a){
+  if(a.filiale) return a.filiale;
+  const n={}; gaf().filter(f=>f.agentId===a.id).forEach(f=>{ const g=_dvG['sites:'+f.siteId], fil=g&&_dvFil.site[g]; if(fil) n[fil]=(n[fil]||0)+1; });
+  const best=Object.keys(n).sort((x,y)=>n[y]-n[x])[0];
+  return best || _dvFil.me || '';
+}
+/* Agents existants sans filiale : complétés une fois en arrière-plan après le chargement */
+async function _dvBackfillFiliale(){
+  const list=(_cache.agents||[]).filter(a=>!a.filiale && _dvG['agents:'+a.id]);
+  if(!list.length) return;
+  const m=await _dvMeta('lcs_agent'); let n=0;
+  for(const a of list){
+    const fil=_agentFiliale(a); if(!fil) continue;
+    try{ await _dvReq('PATCH', m.set+'('+_dvG['agents:'+a.id]+')', await _dvBody('lcs_agent',{lcs_filiale:'#'+fil},false));
+      a.filiale=fil; if(_dvSnap.agents) _dvSnap.agents[a.id]=_dvJ(a); n++; }
+    catch(e){ console.warn('Filiale non écrite', a.nom, e); }
+  }
+  if(n) console.log('Filiale complétée pour', n, 'agent(s)');
 }
 function showSyncStatus(msg){
   const el = document.getElementById('sync-status');
@@ -1933,7 +1983,7 @@ function _clearSaveError(){
    À chaque sauvegarde d'une collection, on compare élément par élément à l'état connu (_dvSnap) :
    créé → POST, modifié → PATCH des seules colonnes changées, disparu → DELETE (sites/agents : désactivés).
    Sous-listes (créneaux, compétences, étapes, remplaçants d'une absence) : remplacées en bloc si elles changent. */
-const _dvG = {}, _dvSnap = {}, _dvQ = {}, _dvMetaP = {}, _dvClients = {};
+const _dvG = {}, _dvSnap = {}, _dvQ = {}, _dvMetaP = {}, _dvClients = {}, _dvClientNoms = {}, _dvMetaCache = {}, _dvClientContacts = {};
 const _DV_ENT = { sites:'lcs_site', agents:'lcs_agent', affec:'lcs_affectation', absences:'lcs_absence', rempl:'lcs_remplacement', except:'lcs_exception', fermetures:'lcs_fermeture', tournees:'lcs_tournee', pointage:'lcs_pointage' };
 const _dvJ = x => JSON.stringify(x, (k,v) => k==='_dvid' ? undefined : v);
 function _dvSnapshot(){ Object.keys(_DV_ENT).forEach(k => { const m={}; (_cache[k]||[]).forEach(x => { if(x && x.id) m[x.id]=_dvJ(x); }); _dvSnap[k]=m; }); }
@@ -1960,7 +2010,7 @@ function _dvMeta(ent){
     attrs.forEach(a => M.types[a.LogicalName] = a.AttributeType);
     rels.forEach(r => { if(r.ReferencingAttribute.startsWith('lcs_')) M.lookups[r.ReferencingAttribute] = { target:r.ReferencedEntity, nav:r.ReferencingEntityNavigationPropertyName }; });
     [[pl,false],[ms,true]].forEach(([list,multi]) => list.forEach(a => { const m={}; ((a.OptionSet||{}).Options||[]).forEach(o => m[lbl(o)]=o.Value); M.choices[a.LogicalName]=m; if(multi) M.multi[a.LogicalName]=true; }));
-    return M;
+    _dvMetaCache[ent] = M; return M;
   })().catch(e => { delete _dvMetaP[ent]; throw e; });
 }
 /* Valeurs : '' → vide ; 'coll:id' (recherche vers un élément de l'app) ; '#guid' (recherche directe) ; undefined → colonne non touchée. */
@@ -1988,10 +2038,12 @@ async function _dvBody(ent, fields, create){
   }
   return o;
 }
+const _dvHasCol = (ent,c) => { const m=_dvMetaCache[ent]; return !!(m && m.types && m.types[c]); };
 const _dvRef = (coll,id) => id ? coll+':'+id : '';
 const _DV_JS = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
 const _DVL = {
   sites: s => ({ f:{ lcs_nom:s.nom||'', lcs_adresse:s.adresse||'', lcs_notes:s.notes||'',
+      lcs_typologie:s.typologie||'', lcs_nbsalaries:s.nbSalaries==null?'':s.nbSalaries, lcs_nbsemainespermanence:s.nbSemPerm==null?'':s.nbSemPerm,
       lcs_client: !s.client ? '' : _dvClients[s.client.trim().toLowerCase()] ? '#'+_dvClients[s.client.trim().toLowerCase()] : undefined },
     ch:[ { ent:'lcs_creneausite', fk:'lcs_site', rows:(s.creneaux||[]).map((c,i) => ({ lcs_libelle:s.nom+' · '+(c.jours||[]).join(' ')+' '+c.debut+'-'+c.fin, lcs_jours:c.jours||[], lcs_debut:c.debut||'', lcs_fin:c.fin||'', lcs_idsource:'go:'+s.id+':cr'+i })) },
       { ent:'lcs_couvertureignoree', fk:'lcs_site', rows:(s.covIgnore||[]).map(ci => { const [j,h]=ci.split('|'), [d,f]=(h||'').split('-'); return { lcs_libelle:s.nom+' · '+ci, lcs_jour:j, lcs_debut:d||'', lcs_fin:f||'', lcs_idsource:'go:'+s.id+':ci:'+ci }; }) } ],
@@ -1999,7 +2051,8 @@ const _DVL = {
   agents: a => { const pro=/@conciergerie-solidaire\.fr$/i.test(a.email||'');
     const TY={ accueil:'Accueil', chantier:'Chantier', multisite:'Multisite', logistique:'Logistique', factotum:'Factotum', siege:'Siège' };
     return { f:{ lcs_nom:a.nomFamille||a.nom||'', lcs_prenom:a.nomFamille ? (a.prenom||'') : undefined, lcs_type:TY[a.type]||'Accueil', lcs_remplacant:!!a.remplacant,
-        lcs_mailpro:pro ? a.email : '', lcs_mailperso:pro ? undefined : (a.email||''), lcs_telpro:a.tel||'', lcs_notes:a.notes||'',
+        lcs_filiale:(f=>f?'#'+f:undefined)(_agentFiliale(a)),
+        lcs_mailpro:pro ? a.email : '', lcs_mailperso:pro ? undefined : (a.email||''), lcs_telpro:a.telPro!=null ? a.telPro : undefined, lcs_telperso:a.telPerso!=null ? a.telPerso : (a.tel||''), lcs_notes:a.notes||'',
         lcs_debutcontrat:a.contratDebut||'', lcs_fincontrat:a.contratFin||'', lcs_volumehebdo:a.contratHebdo==null ? '' : a.contratHebdo },
       state:a.inactif ? 1 : 0,
       ch:[ { ent:'lcs_competence', fk:'lcs_agent', rows:[...new Set(a.competences||[])].map(sid => ({ lcs_libelle:(a.nom||'')+' · '+siteNom(sid), lcs_site:_dvRef('sites',sid), lcs_idsource:'go:'+a.id+':comp:'+sid })) } ] }; },
@@ -2021,7 +2074,8 @@ const _DVL = {
       lcs_site:_dvRef('sites',r.siteId), lcs_remplacant:_dvRef('agents',r.remplacantId), lcs_date:r.date||'', lcs_statut:r.statut==='propose' ? 'Proposé' : 'Confirmé', lcs_notes:r.notes||'' } }; },
   except: e => ({ f:{ lcs_libelle:agentNom(e.agentId)+' · '+e.dateStr+' · '+({add:'Ajout',mod:'Modification',del:'Libération'}[e.type]||''), lcs_agent:_dvRef('agents',e.agentId), lcs_date:e.dateStr||'',
       lcs_type:{add:'Ajout',mod:'Modification',del:'Libération'}[e.type]||'Modification', lcs_affectation:_dvRef('affec',e.affecId), lcs_site:_dvRef('sites',e.siteId),
-      lcs_debut:e.debut||'', lcs_fin:e.fin||'', lcs_notes:e.notes||'', lcs_nature:e.nature ? NATURES[natureOf(e)] : '' } }),
+      lcs_debut:e.debut||'', lcs_fin:e.fin||'', lcs_notes:e.notes||'', lcs_nature:e.nature ? NATURES[natureOf(e)] : '',
+      lcs_saisipar:_dvHasCol('lcs_exception','lcs_saisipar') ? (e.createdBy||'') : undefined } }),
   fermetures: f => ({ f:{ lcs_libelle:siteNom(f.siteId)+' · '+f.dateDebut+' → '+f.dateFin, lcs_site:_dvRef('sites',f.siteId), lcs_datedebut:f.dateDebut||'', lcs_datefin:f.dateFin||'', lcs_motif:f.motif||'', lcs_notes:f.notes||'' } }),
   tournees: t => ({ f:{ lcs_nom:t.nom||'', lcs_agent:_dvRef('agents',t.agentId), lcs_notes:t.notes||'' },
     ch:[ { ent:'lcs_etapetournee', fk:'lcs_tournee', rows:(t.siteIds||[]).map((s,i) => ({ lcs_libelle:t.nom+' · '+(i+1)+' · '+siteNom(s), lcs_site:_dvRef('sites',s), lcs_ordre:i+1, lcs_idsource:'go:'+t.id+':'+(i+1) })) } ] }),
@@ -2029,12 +2083,16 @@ const _DVL = {
       lcs_type:p.type==='retard' ? 'Retard' : 'Heures sup.', lcs_duree:p.duree==null ? '' : p.duree, lcs_notes:p.notes||'' } }),
 };
 async function _dvSiteContact(s, old, g){
-  const k = x => x ? [x.contact||'', x.email||'', x.tel||''].join('|') : '||';
+  const k = x => x ? [x.contact||'', x.email||'', x.tel||'', x.client||'', x.contactDvid||''].join('|') : '||||';
   if(k(s)===k(old)) return;
   const m = await _dvMeta('lcs_contactclient');
   const ex = await dvGetAll(`${m.set}?$select=${m.pk}&$filter=_lcs_site_value eq ${g}&$top=1`);
   const t=(s.contact||'').trim().split(/\s+/).filter(Boolean), up=t.filter(w => w===w.toUpperCase() && /[A-ZÀ-Ý]/.test(w)), low=t.filter(w => !up.includes(w));
-  const f = { lcs_nom:(up.length && low.length ? up.join(' ') : s.contact)||'(sans nom)', lcs_prenom:up.length && low.length ? low.join(' ') : '', lcs_mail:s.email||'', lcs_telportable:s.tel||'' };
+  const cg = s.client && _dvClients[s.client.trim().toLowerCase()];
+  const f = { lcs_nom:(up.length && low.length ? up.join(' ') : s.contact)||'(sans nom)', lcs_prenom:up.length && low.length ? low.join(' ') : '', lcs_mail:s.email||'', lcs_telportable:s.tel||'', lcs_client:cg ? '#'+cg : undefined };
+  // Contact du client choisi dans la fiche site (pas encore rattaché à un site) → rattaché à ce site au lieu d'en créer un nouveau
+  if(!ex[0] && s.contactDvid){ await _dvReq('PATCH', `${m.set}(${s.contactDvid})`, await _dvBody('lcs_contactclient', { ...f, lcs_site:'#'+g }));
+    Object.values(_dvClientContacts).forEach(l => l.forEach(c => { if(c.id===s.contactDvid) c.siteLibre=false; })); return; }
   if(ex[0]) await _dvReq('PATCH', `${m.set}(${ex[0][m.pk]})`, await _dvBody('lcs_contactclient', f));
   else if(s.contact || s.email || s.tel) await _dvReq('POST', m.set, await _dvBody('lcs_contactclient', { ...f, lcs_site:'#'+g, lcs_idsource:'go:'+s.id+':contact' }, true));
 }
@@ -2078,7 +2136,8 @@ async function _dvSyncNow(k, list){
   for(const id of Object.keys(snap)) if(!now[id]){ await _dvRemove(k, JSON.parse(snap[id])); delete snap[id]; n++; }
   return n;
 }
-function _dvSync(k, v){ const p=(_dvQ[k]||Promise.resolve()).then(() => _dvSyncNow(k, v)); _dvQ[k]=p.catch(() => {}); return p; }
+function _dvSync(k, v){ const prev = k==='rempl' ? Promise.all([_dvQ.rempl, _dvQ.absences]) : _dvQ[k]; // remplacements après absences (lien lcs_absence)
+  const p=(prev||Promise.resolve()).then(() => _dvSyncNow(k, v)); _dvQ[k]=p.catch(() => {}); return p; }
 async function _attemptSave(k, v, retry){
   if(DV_READONLY){ showSyncStatus('Lecture seule — non enregistré'); setTimeout(()=>showSyncStatus(''),2500); return; }
   if(!_DV_ENT[k]) return;
@@ -2119,7 +2178,25 @@ const gs = () => DB.get('sites');       const ss = v => DB.set('sites',v);
 const ga = () => DB.get('agents');      const sa = v => DB.set('agents',v);
 const gaf = () => DB.get('affec');      const saf = v => DB.set('affec',v);
 const gab = () => DB.get('absences');   const sab = v => DB.set('absences',v);
-const gr = () => DB.get('rempl');       const sr = v => DB.set('rempl',v);
+const gr = () => DB.get('rempl');       const sr = v => { _ensureAbsForRempl(v); DB.set('rempl',v); };
+/* Remplacement sans absence correspondante → absence d'une journée (motif Autre) créée pour le rattacher. Renvoie les remplacements concernés. */
+function _ensureAbsForRempl(list){
+  const abs=gab(), orph=(list||[]).filter(r=>r.agentAbsentId && r.date && !abs.some(a=>a.agentId===r.agentAbsentId && a.dateDebut<=r.date && r.date<=(a.dateFin||a.dateDebut)));
+  if(!orph.length) return [];
+  const seen=new Set();
+  orph.forEach(r=>{ const k=r.agentAbsentId+'|'+r.date; if(seen.has(k)) return; seen.add(k);
+    abs.push({ id:DB.id(), agentId:r.agentAbsentId, dateDebut:r.date, dateFin:r.date, motif:'autre', needsReplacement:true, siteId:r.siteId||'',
+      remplacantId:r.remplacantId||'', ignored:false, notes:'Créée automatiquement pour rattacher un remplacement', createdAt:new Date().toISOString() }); });
+  sab(abs);
+  return orph;
+}
+/* Au chargement : remplacements existants sans absence → absence créée puis lien lcs_absence réécrit */
+function _fixRemplSansAbsence(){
+  const orph=_ensureAbsForRempl(gr()); if(!orph.length) return;
+  orph.forEach(r=>{ if(_dvSnap.rempl && _dvSnap.rempl[r.id]) _dvSnap.rempl[r.id]=_dvJ({...r, agentAbsentId:''}); });
+  DB.set('rempl', gr());
+  console.log('Absences créées pour', orph.length, 'remplacement(s) orphelin(s)');
+}
 const gpt = () => DB.get('pointage');   const spt = v => DB.set('pointage',v);
 const gt = () => DB.get('tournees');    const st = v => DB.set('tournees',v);
 const gex = () => DB.get('except');     const sex = v => DB.set('except',v);
@@ -3772,11 +3849,13 @@ function _agentCoveredShifts(candId, exceptAbsId){
   return out;
 }
 /* Renvoie le 1er conflit trouvé si `candId` est affecté à couvrir `absence`, sinon null */
-function replacerConflict(candId,absence){
-  const shifts=_absenceShifts(absence);
+function replacerConflict(candId,absence,onlyKey){
+  let shifts=_absenceShifts(absence);
+  if(onlyKey) shifts=shifts.filter(s=>_blockKey(s.afId,s.date)===onlyKey); // contrôle limité au bloc sélectionné
   if(!shifts.length) return null; // aucun créneau connu → indétectable, on laisse passer
   const candAffs=gaf().filter(a=>a.agentId===candId);
-  const otherShiftLists=gab().filter(a=>a.id!==absence.id && a.remplacantId===candId)
+  const otherShiftLists=onlyKey ? [_agentCoveredShifts(candId, absence.id)]
+    : gab().filter(a=>a.id!==absence.id && a.remplacantId===candId)
     .map(oa=>_absenceShifts(oa).map(s=>({...s,agentAbsent:oa.agentId})));
   for(const sh of shifts){
     for(const af of candAffs){
@@ -3845,6 +3924,10 @@ function buildPanelRemplacer(body,footer,raw){
   const cands=_replOptions(absence);
   window._prConf={}; cands.forEach(c=>{ if(c.conf) window._prConf[c.v]=c.conf; });
   const opts=['<option value="">— À couvrir —</option>'].concat(cands.map(c=>`<option value="${c.v}">${_escH(_replOptionLabel(c))}</option>`)).join('');
+  // Conflits calculés bloc par bloc (jour + créneau), pas sur toute la période
+  window._prBlockConf={};
+  blocks.forEach(b=>{ const m={}; cands.forEach(c=>{ const cf=replacerConflict(c.v,absence,b.key); if(cf) m[c.v]=cf; }); window._prBlockConf[b.key]=m; });
+  const blockOpts=(key)=>{ const m=window._prBlockConf[key]||{}; return ['<option value="">— À couvrir —</option>'].concat(cands.map(c=>`<option value="${c.v}">${_escH(_replOptionLabel({...c,conf:m[c.v]||null}))}</option>`)).join(''); };
   const multiJours = blocks.length>0 && _isoDate(blocks[0].date)!==_isoDate(blocks[blocks.length-1].date);
   // Regroupement par jour pour ne pas mélanger les créneaux entre plusieurs journées
   const byDay=new Map();
@@ -3854,7 +3937,7 @@ function buildPanelRemplacer(body,footer,raw){
     const rows=bs.map(b=>`
       <div class="pr-block-row" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px${focusAf===b.key?';box-shadow:inset 0 0 0 2px var(--blue)':''}">
         <div style="font-size:12.5px;font-weight:700;margin-bottom:7px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2"/></svg> ${_escH(siteNom(b.siteId))} · ${b.debut}–${b.fin}</div>
-        <select class="form-input pr-block" data-af="${b.key}" data-day="${iso}" onchange="prCheckBlock(this)">${opts}</select>
+        <select class="form-input pr-block" data-af="${b.key}" data-day="${iso}" onchange="prCheckBlock(this)">${blockOpts(b.key)}</select>
         <div class="pr-block-note" style="display:none;margin-top:6px;font-size:11.5px;color:var(--red);line-height:1.4"></div>
       </div>`).join('');
     return `
@@ -3903,7 +3986,7 @@ function prApplyAllDay(v){ document.querySelectorAll('#side-panel .pr-block').fo
 function prApplyDay(iso,v){ document.querySelectorAll(`#side-panel .pr-block[data-day="${iso}"]`).forEach(sel=>{ sel.value=v; prCheckBlock(sel); }); }
 function prCheckBlock(sel){
   const row=sel.closest('.pr-block-row'); const note=row?row.querySelector('.pr-block-note'):null; if(!note) return;
-  const c=(window._prConf||{})[sel.value];
+  const c=((window._prBlockConf||{})[sel.dataset.af]||{})[sel.value];
   if(sel.value && c){ note.style.display='block'; note.innerHTML=`⚠ ${_escH(agentNom(sel.value).split(' ')[0])} déjà occupé le ${_confShort(c)} — ${_confWhere(c)}.`; }
   else { note.style.display='none'; note.innerHTML=''; }
 }
@@ -3913,8 +3996,9 @@ function confirmerRepl(absId){
   if(!rows.length){ toast('Aucun bloc à attribuer',false); return; }
   const notes=document.getElementById('pr-notes')?document.getElementById('pr-notes').value:'';
   // Contrôle de chevauchement (au moins un bloc en conflit) → confirmation unique
-  const confRow=rows.find(s=>s.value && (window._prConf||{})[s.value]);
-  if(confRow){ const c=window._prConf[confRow.value]; if(!confirm(`⚠ ${agentNom(confRow.value)} est déjà occupé le ${_confShort(c)}\n(${_confWhere(c)}).\n\nEnregistrer quand même ?`)) return; }
+  const _bc=s=>((window._prBlockConf||{})[s.dataset.af]||{})[s.value];
+  const confRow=rows.find(s=>s.value && _bc(s));
+  if(confRow){ const c=_bc(confRow); if(!confirm(`⚠ ${agentNom(confRow.value)} est déjà occupé le ${_confShort(c)}\n(${_confWhere(c)}).\n\nEnregistrer quand même ?`)) return; }
   absence.remplacants=absence.remplacants||{};
   let r=gr().filter(x=>!(x.agentAbsentId===absence.agentId && x.date===absence.dateDebut));
   const blocks=_absenceBlocks(absence);
@@ -4282,6 +4366,9 @@ function renderAgents(){
   let agents=ga();
   const q=(document.getElementById('search-agents')?.value||'').toLowerCase();
   if(q) agents=agents.filter(a=>a.nom.toLowerCase().includes(q));
+  const nbIncomplet=ga().filter(a=>!a.inactif && _agentNomIncomplet(a)).length;
+  if(!nbIncomplet) window._agIncomplets=false;
+  if(window._agIncomplets) agents=agents.filter(_agentNomIncomplet);
   if(agTab==='archives') agents=agents.filter(a=>a.inactif);
   else{
     agents=agents.filter(a=>!a.inactif);
@@ -4291,8 +4378,9 @@ function renderAgents(){
   }
   document.getElementById('agents-sub').textContent=`${agents.length} agent${agents.length>1?'s':''}`;
   const grid=document.getElementById('agents-grid');
-  if(!agents.length){ grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg></div><div class="empty-text">Aucun agent trouvé</div></div>`; return; }
-  grid.innerHTML=agents.map(a=>{
+  const banner = nbIncomplet ? `<div style="grid-column:1/-1;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 14px;border-radius:var(--radius-sm);background:var(--orange-light,#FFF1DE);color:var(--text);font-size:12.5px"><span style="flex:1;min-width:200px"><strong>⚠ ${nbIncomplet} agent${nbIncomplet>1?'s':''} sans prénom ou sans nom de famille</strong> — à corriger dans la fiche agent.</span><button class="btn btn-secondary btn-sm" onclick="window._agIncomplets=!window._agIncomplets;renderAgents()">${window._agIncomplets?'Tout afficher':'Afficher ces agents'}</button></div>` : '';
+  if(!agents.length){ grid.innerHTML=banner+`<div class="empty" style="grid-column:1/-1"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg></div><div class="empty-text">Aucun agent trouvé</div></div>`; return; }
+  grid.innerHTML=banner+agents.map(a=>{
     const afs=gaf().filter(af=>af.agentId===a.id);
     return `<div class="card">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
@@ -4333,6 +4421,11 @@ function _splitNom(full){
   if(nomT.length) return {nomFamille:nomT.join(' '), prenom:''};
   return {nomFamille:'', prenom:preT.join(' ')};
 }
+function _agentNomIncomplet(a){ return !(a.prenom||'').trim() || !(a.nomFamille||'').trim(); }
+function _warnNomsIncomplets(){
+  const n=ga().filter(a=>!a.inactif && _agentNomIncomplet(a)).length;
+  if(n) toast(n+' agent'+(n>1?'s':'')+' sans prénom ou nom de famille — voir Agents',false);
+}
 function _canonNom(nomFamille,prenom){ return [(nomFamille||'').trim(),(prenom||'').trim()].filter(Boolean).join(' '); }
 function migrateNomPrenom(){
   let a=ga(), changed=false;
@@ -4356,16 +4449,22 @@ function buildPanelAgent(body,footer,id){
         <input class="form-input" type="text" id="pa2-nomf" value="${_escA(_nf)}" placeholder="Nom de famille" oninput="this.value=this.value.toUpperCase()">
       </div>
       <div class="form-group">
-        <label class="form-label">Prénom</label>
+        <label class="form-label">Prénom *</label>
         <input class="form-input" type="text" id="pa2-prenom" value="${_escA(_pr)}" placeholder="Prénom">
       </div>
     </div>
     <div class="form-section">Coordonnées</div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Téléphone</label>
-        <input class="form-input" type="text" id="pa2-tel" value="${a?.tel||''}" placeholder="06 xx xx xx xx">
+        <label class="form-label">Tél. pro</label>
+        <input class="form-input" type="tel" id="pa2-tel" value="${_escA(a?.telPro||'')}" placeholder="06 xx xx xx xx">
       </div>
+      <div class="form-group">
+        <label class="form-label">Tél. perso</label>
+        <input class="form-input" type="tel" id="pa2-telperso" value="${_escA(a ? (a.telPerso!=null ? a.telPerso : (a.telPro!=null ? '' : (a.tel||''))) : '')}" placeholder="06 xx xx xx xx">
+      </div>
+    </div>
+    <div class="form-row">
       <div class="form-group">
         <label class="form-label">Email</label>
         <input class="form-input" type="email" id="pa2-email" value="${a?.email||''}">
@@ -4439,7 +4538,7 @@ function saveAgent(){
   const nomf=document.getElementById('pa2-nomf').value.trim().toUpperCase();
   const prenom=document.getElementById('pa2-prenom').value.trim();
   const nom=(nomf+' '+prenom).trim();
-  if(!nom){ toast('Nom ou prénom requis',false); return; }
+  if(!nomf||!prenom){ toast('Nom de famille et prénom obligatoires',false); return; }
   const id=document.getElementById('pa2-id').value;
   const agents=ga();
   const competences=[...document.querySelectorAll('#pa2-comps .comp-pill.on')].map(b=>b.dataset.cid);
@@ -4448,7 +4547,7 @@ function saveAgent(){
   if(contratDebut&&contratFin&&contratFin<contratDebut){ toast('La fin de contrat précède le début',false); return; }
   const _ch=parseFloat(String(document.getElementById('pa2-chebdo').value).replace(',','.'));
   const contratHebdo=isFinite(_ch)&&_ch>0?_ch:null;
-  const data={contratDebut,contratFin,contratHebdo,nom,nomFamille:nomf,prenom,tel:document.getElementById('pa2-tel').value,email:document.getElementById('pa2-email').value,notes:document.getElementById('pa2-notes').value,type,remplacant:type==='multisite',competences};
+  const data={contratDebut,contratFin,contratHebdo,nom,nomFamille:nomf,prenom,telPro:document.getElementById('pa2-tel').value.trim(),telPerso:document.getElementById('pa2-telperso').value.trim(),tel:document.getElementById('pa2-telperso').value.trim()||document.getElementById('pa2-tel').value.trim(),email:document.getElementById('pa2-email').value,notes:document.getElementById('pa2-notes').value,type,remplacant:type==='multisite',competences};
   if(id){ const i=agents.findIndex(a=>a.id===id); agents[i]={...agents[i],...data}; }
   else agents.push({id:DB.id(),...data});
   sa(agents); closePanel(); toast(id?'Agent modifié':'Agent ajouté'); renderAgents();
@@ -4901,11 +5000,34 @@ function buildPanelSite(body,footer,id){
       </div>
       <div class="form-group">
         <label class="form-label">Client</label>
-        <input class="form-input" type="text" id="ps-client" value="${s?.client||''}" placeholder="Ex: Bordeaux Métropole">
+        <input class="form-input" type="text" id="ps-client-q" autocomplete="off" placeholder="Rechercher un client…" style="margin-bottom:6px" oninput="_filterSelectOptions('ps-client',this.value)">
+        <div style="display:flex;gap:6px">
+          <select class="form-input" id="ps-client" style="flex:1;min-width:0" onchange="psClientChanged()">${_psClientOpts(s?.client||'')}</select>
+          <button type="button" class="btn btn-secondary btn-sm" title="Créer un nouveau client" onclick="psNewClient()" style="white-space:nowrap">+ Nouveau</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-row" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+      <div class="form-group">
+        <label class="form-label">Typologie</label>
+        <select class="form-input" id="ps-typo"><option value="">—</option>${['Entreprise','Chantier','Accueil','Hospitality'].map(t=>`<option${s?.typologie===t?' selected':''}>${t}</option>`).join('')}</select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nb salariés (approx.)</label>
+        <input class="form-input" type="number" min="0" step="1" id="ps-nbsal" value="${s?.nbSalaries??''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Semaines de permanence</label>
+        <input class="form-input" type="number" min="0" max="53" step="1" id="ps-nbsem" value="${s?.nbSemPerm??''}">
       </div>
     </div>
     <div style="font-size:11px;color:var(--text3);margin:-6px 0 12px;line-height:1.4">L'appartenance à une <strong>tournée</strong> (ordre de passage, agent attitré) se gère dans l'onglet <strong>Tournées</strong>.</div>
     <div class="form-section">Contact sur site</div>
+    <div class="form-group" id="ps-ccontact-wrap" style="display:none">
+      <label class="form-label">Contacts du client</label>
+      <select class="form-input" id="ps-ccontact" onchange="psPickContact(this.value)"></select>
+    </div>
+    <input type="hidden" id="ps-contact-id" value="">
     <div class="form-group">
       <label class="form-label">Nom du contact</label>
       <input class="form-input" type="text" id="ps-contact" value="${s?.contact||''}" placeholder="Ex: Jean Dupont — Responsable accueil">
@@ -4957,6 +5079,7 @@ function buildPanelSite(body,footer,id){
   siteFerms = id ? gferm().filter(f=>f.siteId===id).slice().sort((a,b)=>a.dateDebut.localeCompare(b.dateDebut)) : [];
   renderSiteCrns();
   renderSiteFerms();
+  psClientChanged(true);
   footer.innerHTML=`
     <button class="btn btn-secondary" onclick="closePanel()">Annuler</button>
     <button class="btn btn-primary" onclick="saveSite()">Enregistrer</button>`;
@@ -4990,12 +5113,57 @@ function addSiteCrn(){
   document.getElementById('ps-crn-fin').value='';
 }
 
-function saveSite(){
+function _dvClientNames(){ return Object.values(_dvClientNoms).sort((a,b)=>a.localeCompare(b,'fr')); }
+async function _dvCreateClient(nom){
+  const m=await _dvMeta('lcs_client');
+  const body=await _dvBody('lcs_client',{ lcs_nom:nom, lcs_filiale:_dvFil.me ? '#'+_dvFil.me : undefined }, true);
+  const r=await _dvReq('POST', m.set, body);
+  const g=r[m.pk]; _dvClients[nom.trim().toLowerCase()]=g; _dvClientNoms[g]=nom.trim();
+  return g;
+}
+function _psClientOpts(cur){
+  const names=_dvClientNames(); if(cur && !names.some(n=>n.toLowerCase()===cur.trim().toLowerCase())) names.unshift(cur);
+  return '<option value="">— Aucun client —</option>'+names.map(n=>`<option value="${_escA(n)}"${n.toLowerCase()===(cur||'').trim().toLowerCase()?' selected':''}>${_escH(n)}</option>`).join('');
+}
+/* Contacts Dataverse du client choisi → liste pour remplir le contact du site (pré-rempli si un seul contact et champs vides) */
+function psClientChanged(init){
+  const v=document.getElementById('ps-client').value.trim(), g=v && _dvClients[v.toLowerCase()];
+  const list=(g && _dvClientContacts[g]) || [], wrap=document.getElementById('ps-ccontact-wrap'), sel=document.getElementById('ps-ccontact');
+  if(!wrap||!sel) return;
+  wrap.style.display=list.length?'block':'none';
+  sel.innerHTML='<option value="">— Choisir un contact ('+list.length+') —</option>'+list.map(c=>`<option value="${c.id}">${_escH(c.nom+(c.fonction?' · '+c.fonction:''))}</option>`).join('');
+  const empty=['ps-contact','ps-tel','ps-email'].every(id=>!document.getElementById(id).value.trim());
+  if(!init && empty && list.length===1){ sel.value=list[0].id; psPickContact(list[0].id); }
+}
+function psPickContact(id){
+  const v=document.getElementById('ps-client').value.trim(), g=v && _dvClients[v.toLowerCase()];
+  const c=((g && _dvClientContacts[g])||[]).find(x=>x.id===id); if(!c) return;
+  document.getElementById('ps-contact').value=c.nom; document.getElementById('ps-tel').value=c.tel; document.getElementById('ps-email').value=c.email;
+  document.getElementById('ps-contact-id').value=c.siteLibre ? c.id : '';
+}
+async function psNewClient(){
+  const inp=document.getElementById('ps-client');
+  const nom=(prompt('Nom du nouveau client :', '')||'').trim(); if(!nom) return;
+  if(_dvClients[nom.toLowerCase()]){ inp.innerHTML=_psClientOpts(_dvClientNoms[_dvClients[nom.toLowerCase()]]||nom); psClientChanged(); toast('Ce client existe déjà'); return; }
+  try{ await _dvCreateClient(nom); inp.innerHTML=_psClientOpts(nom); psClientChanged();
+    toast('Client « '+nom+' » créé'); }
+  catch(e){ console.error(e); toast('Création du client impossible',false); }
+}
+async function saveSite(){
   const nom=document.getElementById('ps-nom').value.trim();
   if(!nom){ toast('Nom requis',false); return; }
+  const cl=document.getElementById('ps-client'), clv=cl.value.trim();
+  if(clv){
+    const g=_dvClients[clv.toLowerCase()];
+    if(g) cl.value=_dvClientNoms[g]||clv;
+    else { if(!confirm('Le client « '+clv+' » n\'existe pas encore.\n\nLe créer ?')) return;
+      try{ await _dvCreateClient(clv); } catch(e){ console.error(e); toast('Création du client impossible',false); return; } }
+  }
   const id=document.getElementById('ps-id').value;
   const sites=gs();
-  const data={nom,adresse:document.getElementById('ps-adresse').value,client:document.getElementById('ps-client').value,contact:document.getElementById('ps-contact').value,tel:document.getElementById('ps-tel').value,email:document.getElementById('ps-email').value,notes:document.getElementById('ps-notes').value,creneaux:siteCrns};
+  const _int=id=>{ const v=parseInt(document.getElementById(id).value,10); return isFinite(v)&&v>=0?v:null; };
+  const _cid=document.getElementById('ps-contact-id').value;
+  const data={...(_cid?{contactDvid:_cid}:{}),nom,typologie:document.getElementById('ps-typo').value,nbSalaries:_int('ps-nbsal'),nbSemPerm:_int('ps-nbsem'),adresse:document.getElementById('ps-adresse').value,client:document.getElementById('ps-client').value,contact:document.getElementById('ps-contact').value,tel:document.getElementById('ps-tel').value,email:document.getElementById('ps-email').value,notes:document.getElementById('ps-notes').value,creneaux:siteCrns};
   if(id){ const i=sites.findIndex(s=>s.id===id); sites[i]={...sites[i],...data}; }
   else sites.push({id:DB.id(),...data});
   ss(sites);
