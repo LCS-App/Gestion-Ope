@@ -1618,7 +1618,17 @@ function showLoginScreen(show, errMsg=''){
   if(ls) ls.style.display = show ? 'flex' : 'none';
   if(errMsg){ const e=document.getElementById('login-error'); if(e) e.textContent=errMsg; }
 }
+/* Comptes autorisés sur l'application complète. Pour en ajouter : une adresse de plus dans cette liste. Les autres comptes sont renvoyés vers planning.html. */
+const RESPONSABLES = [
+  'jonathan.garcia@conciergerie-solidaire.fr',
+  'ines.bultez@conciergerie-solidaire.fr',
+  'charlotte.delineau@conciergerie-solidaire.fr',
+  'quentin.renaud@conciergerie-solidaire.fr',
+  'ilana.auque@conciergerie-solidaire.fr'
+];
 function afterAuth(account){
+  const mail=((account&&account.username)||'').trim().toLowerCase();
+  if(mail && !RESPONSABLES.includes(mail)){ location.replace(location.href.replace(/[^\/]*$/,'')+'planning.html'); return; }
   showLoginScreen(false);
   const el=document.getElementById('user-info');
   if(el && account) el.textContent = account.name || account.username || '';
@@ -6759,7 +6769,7 @@ function _agentMonthDay(agentId, d){
   repl.forEach(s=>{ if(!siteFermeLe(s.siteId,d)) mins+=_shiftMin(s); });
   const allClosed = own.length>0 && own.every(s=>siteFermeLe(s.siteId,d));
   let status;
-  if(ab) status='absent';
+  if(ab && own.length>0) status='absent'; // absence sans affectation ce jour : repos (pas de Abs ni d'alerte)
   else if(repl.length>0) status='remplacement';
   else if(own.length>0) status = allClosed ? 'ferme' : 'present';
   else status='repos';
