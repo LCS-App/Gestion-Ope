@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mon planning · La Conciergerie Solidaire</title>
+<link rel="stylesheet" href="_ds/lcs-design-system-bd327249-21f0-4be1-9d16-17b906d09fd9/fonts/fonts.css">
+<style>
+:root{--y:#FCD727;--k:#000;--g:#505252;--c:#FFF8DA;--gl:#CDCCCC;--bg:#F4F2EA;--r:20px;--red:#C0392B;--green:#2E8B5B;--blue:#2C6E9B;
+--font:'MuseoSans',system-ui,-apple-system,Segoe UI,sans-serif;--disp:'DK Lemon Yellow Sun','MuseoSans',system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--k);font:500 15px/1.4 var(--font);-webkit-text-size-adjust:100%}
+a{color:var(--k)}a:hover{color:var(--g)}
+button{font:inherit;cursor:pointer}
+header{background:var(--k);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{margin:0;font:400 22px var(--disp);color:var(--y);flex:1;min-width:150px}
+header .who{font-size:12.5px;color:var(--gl);display:flex;align-items:center;gap:10px}
+header .who button{background:transparent;border:1px solid #666;color:#fff;border-radius:999px;padding:5px 12px;font-size:12px}
+main{max-width:1200px;margin:0 auto;padding:16px 14px 60px}
+.card{background:#fff;border-radius:var(--r);padding:16px;margin-bottom:14px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.btn{background:var(--y);color:#000;border:none;border-radius:999px;padding:12px 24px;font-weight:800;font-size:15px;min-height:44px}
+.btn.ghost{background:#fff;border:1px solid var(--gl);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{border:1px solid var(--gl);background:#fff;border-radius:999px;padding:9px 14px;font-weight:700;font-size:13.5px;min-height:40px}
+.chip.on{background:var(--y);border-color:var(--y)}
+.search{width:100%;height:44px;border:1px solid var(--gl);border-radius:12px;padding:0 14px;font:inherit;background:var(--bg);outline:none}
+.search:focus{border-color:var(--k)}
+.nav{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.nav .t{flex:1;text-align:center;font-weight:800}
+.nav .t small{display:block;font-weight:600;color:var(--g);font-size:12px}
+.nav button{width:44px;height:44px;border-radius:50%;border:1px solid var(--gl);background:#fff;font-size:18px}
+.nav .today{width:auto;border-radius:999px;padding:0 16px;font-size:13px;font-weight:700}
+#days{display:grid;grid-template-columns:repeat(7,minmax(168px,1fr));gap:8px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x proximity}
+.day{background:#fff;border-radius:var(--r);overflow:hidden;scroll-snap-align:start;display:flex;flex-direction:column}
+.day.today{outline:3px solid var(--y)}
+.dh{padding:10px 14px;background:var(--c);display:flex;flex-direction:column;font-weight:800}
+.day.today .dh{background:var(--y)}
+.dh span{font-weight:600;color:var(--g);font-size:13px}
+.row{display:flex;flex-direction:column;gap:4px;padding:10px 14px;border-top:1px solid rgba(0,0,0,.07)}
+.row .h{font-weight:800;font-variant-numeric:tabular-nums;font-size:14px}
+.row .s{flex:1;min-width:0}
+.row .s b{display:block}
+.row .n{font-size:12.5px;color:var(--g);margin-top:2px}
+.tag{display:inline-block;border-radius:999px;padding:2px 10px;font-size:11.5px;font-weight:800;margin-top:4px;margin-right:4px}
+.tag.abs{background:#F8D9D5;color:var(--red)}.tag.rep{background:#DCEBF7;color:#134B72}.tag.close{background:#E6E6E4;color:var(--g)}
+.row.gone .h,.row.gone .s b{text-decoration:line-through;color:var(--g)}
+.empty{padding:12px 14px;color:var(--g);font-size:13.5px;border-top:1px solid rgba(0,0,0,.07)}
+.msg{text-align:center;padding:50px 20px}
+.msg h2{font:400 26px var(--disp);margin:0 0 10px}
+.demo{background:var(--y);text-align:center;font-size:12.5px;font-weight:800;padding:6px}
+#login{display:none}
+</style></head>
+<body>
+<div id="demo" class="demo" style="display:none">Données de démonstration</div>
+<header><h1>Mon planning</h1><div class="who" id="who"></div></header>
+<main>
+  <div id="login" class="msg card"><h2>Mon planning</h2><p style="color:var(--g)">Connectez-vous avec l'adresse e-mail professionnelle renseignée sur votre fiche agent.</p><button class="btn" onclick="login()">Se connecter avec Microsoft</button><p id="lerr" style="color:var(--red);font-size:13px"></p></div>
+  <div id="load" class="msg" style="display:none;color:var(--g)">Chargement du planning…</div>
+  <div id="app" style="display:none">
+    <div class="card" id="filt"></div>
+    <div class="nav"><button onclick="go(-1)" aria-label="Semaine précédente">‹</button><div class="t" id="wk"></div><button onclick="go(1)" aria-label="Semaine suivante">›</button><button class="today" onclick="go(0)">Aujourd'hui</button></div>
+    <div id="days"></div>
+  </div>
+</main>
+<script>
+const CFG={clientId:'99c4bf43-6e9f-4b9d-839c-eab0e1716357',authority:'https://login.microsoftonline.com/4dffba4f-a634-4907-bf2a-a4e013bbf6d3',dv:'https://orgfad8e0a9.crm12.dynamics.com'};
+const API=CFG.dv+'/api/data/v9.2/',SCOPES=[CFG.dv+'/user_impersonation'];
+const JOURS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'],JF=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+const MOTIFS={'Congés payés':'Congés','Maladie':'Maladie','Formation':'Formation','Autre':'Absence'};
+let msalApp,email='',D=null,mine=[],sel=new Set(),weekStart=monday(new Date()),q='';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const pd=s=>new Date(s+'T00:00:00');
+function monday(d){const x=new Date(d);const k=x.getDay();x.setDate(x.getDate()-k+(k===0?-6:1));x.setHours(0,0,0,0);return x}
+function weekNum(d){const u=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const n=u.getUTCDay()||7;u.setUTCDate(u.getUTCDate()+4-n);return Math.ceil(((u-new Date(Date.UTC(u.getUTCFullYear(),0,1)))/864e5+1)/7)}
+const isA=d=>weekNum(d)%2===1;
+const mins=t=>{const m=/(\d+):(\d+)/.exec(t||'');return m?(+m[1])*60+(+m[2]):0};
+
+/* ── Auth ── */
+(function(){
+  let iframed=false;try{iframed=window.parent!==window}catch(e){iframed=true}
+  if(location.hash==='#demo'||iframed){startDemo();return}
+  const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js';
+  s.onload=boot;s.onerror=()=>showLogin('Impossible de charger MSAL. Vérifiez votre connexion.');document.head.appendChild(s);
+})();
+function showLogin(e){$('load').style.display='none';$('app').style.display='none';$('login').style.display='block';$('lerr').textContent=e||''}
+async function boot(){
+  try{
+    msalApp=new msal.PublicClientApplication({auth:{clientId:CFG.clientId,authority:CFG.authority,redirectUri:location.origin+location.pathname},cache:{cacheLocation:'localStorage'}});
+    await msalApp.initialize();await msalApp.handleRedirectPromise();
+    const a=msalApp.getAllAccounts();if(!a.length){showLogin();return}
+    start(a[0]);
+  }catch(e){showLogin('Erreur : '+e.message)}
+}
+function login(){msalApp.loginRedirect({scopes:SCOPES}).catch(e=>showLogin('Erreur : '+e.message))}
+function logout(){if(msalApp)msalApp.logoutRedirect();else location.reload()}
+async function token(acc){
+  try{return (await msalApp.acquireTokenSilent({scopes:SCOPES,account:acc})).accessToken}
+  catch(e){await msalApp.acquireTokenRedirect({scopes:SCOPES,account:acc});await new Promise(()=>{})}
+}
+
+/* ── Données Dataverse ── */
+async function getAll(tok,set){
+  const H={Authorization:'Bearer '+tok,Accept:'application/json','OData-MaxVersion':'4.0','OData-Version':'4.0',Prefer:'odata.include-annotations="OData.Community.Display.V1.FormattedValue",odata.maxpagesize=5000'};
+  let out=[],next=API+set;
+  while(next){const r=await fetch(next,{headers:H});if(!r.ok)throw new Error(set.split('?')[0]+' → '+r.status);const j=await r.json();out=out.concat(j.value);next=j['@odata.nextLink']}
+  return out;
+}
+async function start(acc){
+  email=(acc.username||'').trim().toLowerCase();
+  $('login').style.display='none';$('load').style.display='block';
+  $('who').innerHTML=esc(email)+' <button onclick="logout()">Déconnexion</button>';
+  try{
+    const tok=await token(acc);
+    const T=['agent','affectation','site','absence','remplacement','exception','fermeture'];
+    const res=await Promise.all(T.map(t=>getAll(tok,'lcs_'+t+'s'+(t==='agent'?'?$select=lcs_agentid,lcs_nom,lcs_prenom,lcs_mailpro,lcs_mailperso,statecode':''))));
+    const R={};T.forEach((t,i)=>R[t]=res[i]);
+    D=convert(R);init();
+  }catch(e){showLogin('Chargement impossible : '+e.message)}
+}
+function convert(R){
+  const F=(r,c)=>r[c+'@OData.Community.Display.V1.FormattedValue']||'',V=(r,c)=>r[c]==null?'':r[c],L=(r,c)=>r['_'+c+'_value']||'';
+  const jours=s=>(s||'').split(/;\s*/).map(x=>x.trim()).filter(Boolean),dt=(r,c)=>(V(r,c)+'').slice(0,10);
+  const NAT={'Poste fixe':'','Passage':'Passage','Permanence volante':'Permanence'};
+  const EXT={'Ajout':'add','Modification':'mod','Libération':'del'};
+  return{
+    agents:R.agent.filter(a=>a.statecode!==1).map(a=>({id:a.lcs_agentid,nom:[V(a,'lcs_prenom'),V(a,'lcs_nom')].filter(Boolean).join(' '),mails:[V(a,'lcs_mailpro'),V(a,'lcs_mailperso')].map(m=>m.trim().toLowerCase()).filter(Boolean)})),
+    sites:Object.fromEntries(R.site.map(s=>[s.lcs_siteid,V(s,'lcs_nom')])),
+    affec:R.affectation.filter(f=>f.statecode!==1).map(f=>({id:f.lcs_affectationid,agentId:L(f,'lcs_agent'),siteId:L(f,'lcs_site'),jours:jours(F(f,'lcs_jours')),debut:V(f,'lcs_debut'),fin:V(f,'lcs_fin'),semaine:F(f,'lcs_semaine')||'Toutes',dd:dt(f,'lcs_datedebut'),df:dt(f,'lcs_datefin'),nature:NAT[F(f,'lcs_nature')]||''})),
+    absences:R.absence.filter(a=>a.statecode!==1).map(a=>({id:a.lcs_absenceid,agentId:L(a,'lcs_agent'),dd:dt(a,'lcs_datedebut'),df:dt(a,'lcs_datefin'),motif:MOTIFS[F(a,'lcs_motif')]||'Absence',remplId:L(a,'lcs_remplacant')})),
+    rempl:R.remplacement.filter(r=>r.statecode!==1).map(r=>({absId:L(r,'lcs_absence'),remplId:L(r,'lcs_remplacant'),siteId:L(r,'lcs_site'),afId:L(r,'lcs_affectation'),date:dt(r,'lcs_date')})),
+    except:R.exception.filter(e=>e.statecode!==1).map(e=>({agentId:L(e,'lcs_agent'),date:dt(e,'lcs_date'),type:EXT[F(e,'lcs_type')]||'mod',afId:L(e,'lcs_affectation'),siteId:L(e,'lcs_site'),debut:V(e,'lcs_debut'),fin:V(e,'lcs_fin'),nature:NAT[F(e,'lcs_nature')]||''})),
+    ferm:R.fermeture.filter(f=>f.statecode!==1).map(f=>({siteId:L(f,'lcs_site'),dd:dt(f,'lcs_datedebut'),df:dt(f,'lcs_datefin')}))
+  };
+}
+
+/* ── Calcul du planning d'un agent pour un jour ── */
+function dayItems(agent,d){
+  const ds=ymd(d),lab=JOURS[(d.getDay()+6)%7],a=isA(d),out=[];
+  const ab=D.absences.find(x=>x.agentId===agent.id&&ds>=x.dd&&ds<=(x.df||x.dd));
+  const closed=sid=>D.ferm.some(f=>f.siteId===sid&&ds>=f.dd&&ds<=(f.df||f.dd));
+  const ex=D.except.filter(e=>e.agentId===agent.id&&e.date===ds);
+  D.affec.filter(f=>f.agentId===agent.id&&f.jours.includes(lab)&&!(f.dd&&ds<f.dd)&&!(f.df&&ds>f.df)&&!(f.semaine==='A'&&!a)&&!(f.semaine==='B'&&a)).forEach(f=>{
+    const e=ex.find(x=>x.afId===f.id&&(x.type==='mod'||x.type==='del'));
+    if(e&&e.type==='del')return;
+    const it={debut:f.debut,fin:f.fin,siteId:f.siteId,nature:f.nature};
+    if(e){it.debut=e.debut||f.debut;it.fin=e.fin||f.fin;it.siteId=e.siteId||f.siteId;it.nature=e.nature||f.nature}
+    if(ab){it.abs=ab.motif;const r=D.rempl.find(r=>r.absId===ab.id&&r.date===ds&&(!r.afId||r.afId===f.id));const rid=(r&&r.remplId)||ab.remplId;const ra=rid&&D.agents.find(x=>x.id===rid);if(ra)it.by=ra.nom}
+    out.push(it);
+  });
+  ex.filter(e=>e.type==='add').forEach(e=>out.push({debut:e.debut,fin:e.fin,siteId:e.siteId,nature:e.nature}));
+  D.rempl.filter(r=>r.remplId===agent.id&&r.date===ds).forEach(r=>{
+    const f=D.affec.find(x=>x.id===r.afId),abs=D.absences.find(x=>x.id===r.absId),who=abs&&D.agents.find(x=>x.id===abs.agentId);
+    out.push({debut:f?f.debut:'',fin:f?f.fin:'',siteId:r.siteId||(f&&f.siteId),rep:who?who.nom:'un collègue'});
+  });
+  out.forEach(it=>{if(closed(it.siteId))it.closed=true});
+  return out.sort((x,y)=>mins(x.debut)-mins(y.debut));
+}
+
+/* ── Interface ── */
+const KEY=()=>'lcs-planning-agents:'+email;
+function init(){
+  mine=D.agents.filter(a=>a.mails.includes(email)).sort((x,y)=>x.nom.localeCompare(y.nom,'fr'));
+  $('load').style.display='none';
+  if(!mine.length){$('app').style.display='none';$('login').style.display='block';$('login').innerHTML='<h2>Compte non reconnu</h2><p style="color:var(--g)">'+esc(email)+' n\'est renseignée sur aucune fiche agent. Contactez votre responsable.</p><button class="btn ghost" onclick="logout()">Changer de compte</button>';return}
+  let saved=null;try{saved=JSON.parse(localStorage.getItem(KEY()))}catch(e){}
+  sel=new Set(saved?mine.filter(a=>saved.includes(a.id)).map(a=>a.id):mine.map(a=>a.id));
+  if(!sel.size)sel=new Set(mine.map(a=>a.id));
+  $('app').style.display='block';renderFilt();renderDays();
+}
+function persist(){try{localStorage.setItem(KEY(),JSON.stringify([...sel]))}catch(e){}}
+function renderFilt(){
+  if(mine.length<2){$('filt').style.display='none';return}
+  const list=mine.filter(a=>a.nom.toLowerCase().includes(q.toLowerCase()));
+  $('filt').innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>Agents affichés</b><span style="font-size:12.5px;color:var(--g)">'+sel.size+' sur '+mine.length+' · <a href="#" onclick="allSel(true);return false">Tous</a> · <a href="#" onclick="allSel(false);return false">Aucun</a></span></div>'
+   +(mine.length>6?'<input class="search" style="margin-top:10px" placeholder="Rechercher un agent…" value="'+esc(q)+'" oninput="q=this.value;renderChips()">':'')+'<div class="chips" id="chips"></div><div style="font-size:12px;color:var(--g);margin-top:10px">Votre sélection est enregistrée sur cet appareil.</div>';
+  renderChips();
+}
+function renderChips(){
+  const list=mine.filter(a=>a.nom.toLowerCase().includes(q.toLowerCase()));
+  $('chips').innerHTML=list.map(a=>'<button class="chip'+(sel.has(a.id)?' on':'')+'" onclick="tog(\''+a.id+'\')">'+esc(a.nom)+'</button>').join('')||'<span style="color:var(--g)">Aucun résultat</span>';
+}
+function tog(id){sel.has(id)?sel.delete(id):sel.add(id);persist();renderChips();$('filt').querySelector('span').firstChild.textContent=sel.size+' sur '+mine.length+' · ';renderDays()}
+function allSel(on){sel=new Set(on?mine.map(a=>a.id):[]);persist();renderFilt();renderDays()}
+function go(n){weekStart=n===0?monday(new Date()):new Date(weekStart.getFullYear(),weekStart.getMonth(),weekStart.getDate()+7*n);renderDays()}
+function renderDays(){
+  const end=new Date(weekStart.getFullYear(),weekStart.getMonth(),weekStart.getDate()+6),f=d=>d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+  $('wk').innerHTML='Semaine '+(isA(weekStart)?'A':'B')+'<small>'+f(weekStart)+' – '+f(end)+'</small>';
+  const ags=mine.filter(a=>sel.has(a.id)),multi=ags.length>1,today=ymd(new Date());let html='';
+  if(!ags.length){$('days').innerHTML='<div class="msg card" style="color:var(--g)">Sélectionnez au moins un agent.</div>';return}
+  for(let i=0;i<7;i++){
+    const d=new Date(weekStart.getFullYear(),weekStart.getMonth(),weekStart.getDate()+i);
+    let rows=[];ags.forEach(a=>dayItems(a,d).forEach(it=>rows.push({a,it})));
+    rows.sort((x,y)=>mins(x.it.debut)-mins(y.it.debut));
+    html+='<div class="day'+(ymd(d)===today?' today':'')+'"><div class="dh">'+JF[i]+'<span>'+d.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+'</span></div>'
+     +(rows.length?rows.map(({a,it})=>'<div class="row'+(it.abs?' gone':'')+'"><div class="h">'+esc(it.debut)+'–'+esc(it.fin)+'</div><div class="s"><b>'+esc(D.sites[it.siteId]||'Site')+'</b>'
+       +(multi?'<div class="n">'+esc(a.nom)+'</div>':'')
+       +(it.abs?'<span class="tag abs">'+esc(it.abs)+'</span>'+(it.by?'<span class="tag rep">Remplacé par '+esc(it.by)+'</span>':''):'')
+       +(it.rep?'<span class="tag rep">Remplacement de '+esc(it.rep)+'</span>':'')
+       +(it.closed?'<span class="tag close">Site fermé</span>':'')
+       +(it.nature?'<span class="tag close">'+esc(it.nature)+'</span>':'')+'</div></div>').join(''):'<div class="empty">Pas de créneau</div>')+'</div>';
+  }
+  $('days').innerHTML=html;
+}
+
+/* ── Démo ── */
+function startDemo(){
+  $('demo').style.display='block';email='demo@lcs.fr';$('who').textContent='demo@lcs.fr';
+  const ag=['Camille Durand','Malik Benali','Sophie Lefèvre','Julien Roux','Inès Martin','Paul Girard','Nora Haddad','Théo Blanc'].map((n,i)=>({id:'a'+i,nom:n,mails:['demo@lcs.fr']}));
+  const sites={s1:'Accueil Tour Atlantique',s2:'Chantier Bordeaux Nord',s3:'Siège Mérignac'};
+  const L=['Lun','Mar','Mer','Jeu','Ven'],af=[];
+  ag.forEach((a,i)=>af.push({id:'f'+i,agentId:a.id,siteId:'s'+(1+i%3),jours:L.slice(0,3+(i%3)),debut:['07:30','08:00','09:00','13:00'][i%4],fin:['15:30','16:00','17:30','21:00'][i%4],semaine:i===3?'A':'Toutes',dd:'',df:'',nature:''}));
+  const mo=ymd(monday(new Date())),t=new Date();t.setDate(t.getDate()+1);
+  D={agents:ag,sites,affec:af,absences:[{id:'x1',agentId:'a0',dd:mo,df:mo,motif:'Congés',remplId:'a1'}],rempl:[],except:[],ferm:[]};
+  mine=ag;$('app').style.display='block';
+  let saved=null;try{saved=JSON.parse(localStorage.getItem(KEY()))}catch(e){}
+  sel=new Set(saved?mine.filter(a=>saved.includes(a.id)).map(a=>a.id):mine.slice(0,2).map(a=>a.id));if(!sel.size)sel=new Set(mine.map(a=>a.id));
+  renderFilt();renderDays();
+}
+</script>
+</body></html>
