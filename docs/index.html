@@ -462,6 +462,8 @@ body {
   padding: 8px 0;
   gap: 2px;
   flex-shrink: 0;
+  position: relative;
+  z-index: 40;
 }
 
 .nav-sep {
@@ -815,13 +817,13 @@ body.nav-open .brand-title{ display:inline; }
   max-width: 100%;
   background: var(--white);
   border-left: 1px solid var(--border);
-  overflow: hidden;
+  overflow: visible;
   transform: translateX(100%);
   transition: transform .24s cubic-bezier(.4,0,.2,1);
   box-shadow: -16px 0 48px rgba(0,0,0,.4);
   display: flex;
   flex-direction: column;
-  z-index: 50;
+  z-index: 55;
   will-change: transform;
 }
 .side-panel.open { transform: translateX(0); }
@@ -850,6 +852,27 @@ body.nav-open .brand-title{ display:inline; }
 body.side-panel-open #mois-fab { right: calc(var(--panel-w) + 26px) !important; transition: right .25s; }
 body.side-panel-open #mois-selbar { left: calc(50% - var(--panel-w) / 2) !important; transition: left .25s; }
 .panel-body { flex: 1; overflow-y: auto; padding: 20px; }
+.side-panel { transition: transform .24s cubic-bezier(.4,0,.2,1), width .24s cubic-bezier(.4,0,.2,1); }
+.side-panel.wide { width: min(1240px, calc(100% - 60px)); }
+.ag-week { display: none; }
+.side-panel.wide .ag-wrap { display: grid; grid-template-columns: minmax(0,1fr) 360px; gap: 28px; align-items: start; }
+.side-panel.wide .ag-week { order: -1; }
+.side-panel.wide .ag-week { display: block; position: sticky; top: 0; }
+#panel-expand { display:none; position:absolute; left:-23px; top:50%; transform:translateY(-50%); z-index:5; width:24px; height:56px; padding:0 0 0 2px; border:1px solid var(--border-strong,var(--border)); border-right:0; border-radius:28px 0 0 28px; background:var(--white); color:var(--text2); cursor:pointer; align-items:center; justify-content:center; box-shadow:-3px 0 8px rgba(0,0,0,.12); }
+.side-panel:not(.open) #panel-expand { visibility:hidden; }
+#panel-expand svg { transition: transform .2s; }
+.side-panel.wide #panel-expand svg { transform: scaleX(-1); }
+#panel-expand:hover { background: var(--bg); color:var(--text); }
+.wk-nav { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.wk-grid { display:grid; grid-template-columns: 40px repeat(7, minmax(0,1fr)); border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; background:var(--white); }
+.wk-head { padding:6px 4px; text-align:center; font-size:11.5px; font-weight:700; border-bottom:1px solid var(--border); border-left:1px solid var(--border); background:var(--bg); }
+.wk-head.today { background:#FFF3B8; }
+.wk-col { position:relative; border-left:1px solid var(--border); height:576px; background:repeating-linear-gradient(to bottom, transparent 0, transparent 47px, var(--border) 47px, var(--border) 48px); }
+.wk-col.today { background-color:#FFFBE0; }
+.wk-hours { position:relative; height:576px; }
+.wk-hours span { position:absolute; right:5px; font-size:10px; color:var(--text3); transform:translateY(-6px); }
+.wk-blk { position:absolute; border-radius:6px; padding:3px 5px; font-size:11px; line-height:1.25; overflow:hidden; cursor:pointer; box-sizing:border-box; border:1px solid rgba(0,0,0,.12); }
+.wk-blk b { display:block; font-weight:700; }
 .panel-footer {
   padding: 14px 20px;
   border-top: 1px solid var(--border);
@@ -1583,6 +1606,7 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
   <!-- ══ PANNEAU DROIT ════════════════════════════════ -->
     <div class="panel-scrim" id="panel-scrim" onclick="closePanel()"></div>
   <aside class="side-panel" id="side-panel">
+    <button id="panel-expand" onclick="toggleAgentWide()" title="Déplier / replier la vue planning semaine"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 6l-6 6 6 6"/></svg></button>
     <div class="panel-header">
       <div class="panel-title" id="panel-title">—</div>
       <button class="btn btn-sm" id="panel-next-absence" onclick="goNextAbsence()" title="Aller à l'absence suivante à couvrir" style="display:none;margin-left:auto;margin-right:8px;align-items:center;gap:5px">Absence suivante <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
@@ -2413,6 +2437,61 @@ function showView(v){
 let currentPanel=null;
 let currentPanelData=null;
 
+let _agWide=false,_agWeekFor=null,_agWeekStart=null;
+function toggleAgentWide(){
+  _agWide=!_agWide;
+  document.getElementById('side-panel').classList.toggle('wide',_agWide);
+}
+function agWeekMove(n){ _agWeekStart=n===0?getMonday(new Date()):_addDays(_agWeekStart,7*n); renderAgentWeek(currentPanelData); }
+function renderAgentWeek(agentId){
+  const el=document.getElementById('ag-week'); if(!el||!agentId) return;
+  const H0=7,H1=19,PX=48, mon=_agWeekStart, todayS=_ymd(new Date());
+  const abs=gab().filter(x=>x.agentId===agentId);
+  const days=[...Array(7)].map((_,i)=>_addDays(mon,i));
+  const cols=days.map(d=>{
+    const idx=(d.getDay()+6)%7, label=JOURS[idx], isA=isWeekA(d), ds=_ymd(d);
+    const dayAf=gaf().filter(af=>af.agentId===agentId&&(af.jours||[]).includes(label)&&_affInRange(af,d)&&!(af.semaine==='A'&&!isA)&&!(af.semaine==='B'&&isA));
+    const ab=abs.find(a=>_absCoversDate(a,d));
+    const sh=[];
+    effectiveShifts(agentId,ds,dayAf).forEach(s=>sh.push({s,k:siteFermeLe(s.siteId,d)?'ferme':(ab?'abs':'own')}));
+    agentReplacementShifts(agentId,d).forEach(s=>sh.push({s,k:'repl'}));
+    sh.forEach(x=>{x.a=_mins(x.s.debut);x.b=_mins(x.s.fin);}); sh.sort((p,q)=>p.a-q.a||p.b-q.b);
+    const lanes=[]; sh.forEach(x=>{ let l=lanes.findIndex(e=>e<=x.a); if(l<0){l=lanes.length;lanes.push(0);} lanes[l]=x.b; x.l=l; });
+    const n=Math.max(1,lanes.length);
+    const blks=sh.map(x=>{
+      const top=Math.max(0,(x.a-H0*60)/60*PX), bot=Math.min((H1-H0)*PX,(x.b-H0*60)/60*PX);
+      if(bot<=0||top>=(H1-H0)*PX) return '';
+      const st={own:'background:#DDEFE4;color:#1E5738',repl:'background:#DCEBF7;color:#134B72',abs:'background:repeating-linear-gradient(45deg,#F8DCD7,#F8DCD7 6px,#F3C9C2 6px,#F3C9C2 12px);color:#7A2019',ferme:'background:#ECECEA;color:#6B6D68'}[x.k];
+      const clk=x.k==='own'&&x.s.afId?`editAffectFromAgent('${x.s.afId}','${agentId}')`:(x.k==='abs'&&ab?`openPanel('panel-remplacer','${ab.id}')`:'');
+      return `<div class="wk-blk" onclick="${clk}" title="${_escA(siteNom(x.s.siteId))} · ${x.s.debut}–${x.s.fin}${x.k==='abs'?' · absent':x.k==='repl'?' · remplacement':x.k==='ferme'?' · site fermé':''}" style="top:${top}px;height:${Math.max(18,bot-top)}px;left:calc(${x.l/n*100}% + 1px);width:calc(${100/n}% - 2px);${st}"><b>${_escH(siteNom(x.s.siteId))}</b>${x.s.debut}–${x.s.fin}${x.k==='abs'?' · Absent':x.k==='repl'?' · Remplac.':''}</div>`;
+    }).join('');
+    const mins=sh.filter(x=>x.k==='own'||x.k==='repl').reduce((t,x)=>t+(x.b-x.a),0);
+    return {d,ds,blks,mins};
+  });
+  const tot=cols.reduce((t,c)=>t+c.mins,0);
+  const wn=getWeekNum(mon), fin=_addDays(mon,6);
+  const hrs=[...Array(H1-H0+1)].map((_,i)=>`<span style="top:${i*PX}px">${H0+i}h</span>`).join('');
+  el.innerHTML=`<div class="wk-nav">
+    <button class="btn btn-secondary btn-sm" onclick="agWeekMove(-1)">‹</button>
+    <button class="btn btn-secondary btn-sm" onclick="agWeekMove(0)">Aujourd'hui</button>
+    <button class="btn btn-secondary btn-sm" onclick="agWeekMove(1)">›</button>
+    <div style="font-size:13px;font-weight:700;margin-left:6px">Semaine ${wn} <span style="font-weight:500;color:var(--text2)">· ${isWeekA(mon)?'impaire':'paire'} · ${_dFr(_ymd(mon)).slice(0,5)} → ${_dFr(_ymd(fin)).slice(0,5)}</span></div>
+    <div style="margin-left:auto;font-size:12px;color:var(--text2)">${_fmtDur(tot)} planifiées</div>
+  </div>
+  <div class="wk-grid">
+    <div class="wk-head" style="border-left:0"></div>
+    ${cols.map(c=>`<div class="wk-head${c.ds===todayS?' today':''}">${JOURS[(c.d.getDay()+6)%7]} ${c.d.getDate()}</div>`).join('')}
+    <div class="wk-hours">${hrs}</div>
+    ${cols.map(c=>`<div class="wk-col${c.ds===todayS?' today':''}">${c.blks}</div>`).join('')}
+  </div>
+  <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text2);flex-wrap:wrap">
+    <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#DDEFE4;margin-right:4px"></i>Affectation</span>
+    <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#DCEBF7;margin-right:4px"></i>Remplacement</span>
+    <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#F3C9C2;margin-right:4px"></i>Absent</span>
+    <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#ECECEA;margin-right:4px"></i>Site fermé</span>
+  </div>`;
+}
+
 function openPanel(panelId, data=null){
   currentPanel=panelId;
   currentPanelData=data;
@@ -2448,6 +2527,10 @@ function buildPanel(id,data){
   document.getElementById('panel-title').textContent=titles[id]||'';
   const navBtn=document.getElementById('panel-next-absence');
   if(navBtn) navBtn.style.display=(id==='panel-remplacer')?'inline-flex':'none';
+  const _isAg=id==='panel-agent-detail';
+  document.getElementById('panel-expand').style.display=_isAg?'inline-flex':'none';
+  document.getElementById('side-panel').classList.toggle('wide',_isAg&&_agWide);
+  if(_isAg && _agWeekFor!==data){ _agWeekFor=data; _agWeekStart=getMonday(new Date()); }
 
   const body=document.getElementById('panel-body');
   const footer=document.getElementById('panel-footer');
@@ -4626,7 +4709,7 @@ function buildPanelAgentDetail(body,footer,id){
   const a=ga().find(x=>x.id===id);
   if(!a){ body.innerHTML='Agent introuvable'; return; }
   const afs=gaf().filter(af=>af.agentId===id);
-  body.innerHTML=`
+  body.innerHTML=`<div class="ag-wrap"><div class="ag-info">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
       <div style="width:48px;height:48px;border-radius:50%;background:var(--blue);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px">${a.nom.charAt(0)}</div>
       <div>
@@ -4657,7 +4740,9 @@ function buildPanelAgentDetail(body,footer,id){
       <button class="btn-icon red" title="Supprimer l'affectation" onclick="delAffectFromAgent('${af.id}','${id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4.5 7h15M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg></button>
     </div>`).join(''):`<div style="font-size:13px;color:var(--text3)">Aucune affectation en cours</div>`}
     ${_affHistHTML(afs.filter(_affIsPast), af=>`editAffectFromAgent('${af.id}','${id}')`, af=>`delAffectFromAgent('${af.id}','${id}')`)}
-    <button class="btn btn-secondary btn-sm" style="margin-top:10px;width:100%" onclick="addAffectFromAgent('${id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 5v14M5 12h14"/></svg> Ajouter une affectation</button>`;
+    <button class="btn btn-secondary btn-sm" style="margin-top:10px;width:100%" onclick="addAffectFromAgent('${id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 5v14M5 12h14"/></svg> Ajouter une affectation</button>
+    </div><div class="ag-week" id="ag-week"></div></div>`;
+  renderAgentWeek(id);
   footer.innerHTML=`<button class="btn btn-secondary" onclick="absenceDepuisSelection('${id}',_ymd(new Date()))"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M14.5 14l-4 4M10.5 14l4 4"/></svg> Déclarer absent</button><button class="btn btn-secondary" onclick="openPanel('panel-agent','${id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg> Modifier</button>`;
 }
 
