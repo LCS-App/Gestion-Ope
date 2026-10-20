@@ -112,7 +112,7 @@ async function start(acc){
   try{
     const tok=await token(acc);
     const T=['agent','affectation','site','absence','remplacement','exception','fermeture'];
-    const res=await Promise.all(T.map(t=>getAll(tok,'lcs_'+t+'s'+(t==='agent'?'?$select=lcs_agentid,lcs_nom,lcs_prenom,lcs_mailpro,lcs_mailperso,statecode':''))));
+    const res=await Promise.all(T.map(t=>getAll(tok,'lcs_'+t+'s'+(t==='agent'?'?$select=lcs_agentid,lcs_nom,lcs_prenom,lcs_mailpro,lcs_mailperso,lcs_type,statecode':''))));
     const R={};T.forEach((t,i)=>R[t]=res[i]);
     D=convert(R);init();
   }catch(e){showLogin('Chargement impossible : '+e.message)}
@@ -123,7 +123,7 @@ function convert(R){
   const NAT={'Poste fixe':'','Passage':'Passage','Permanence volante':'Permanence'};
   const EXT={'Ajout':'add','Modification':'mod','Libération':'del'};
   return{
-    agents:R.agent.filter(a=>a.statecode!==1).map(a=>({id:a.lcs_agentid,nom:[V(a,'lcs_prenom'),V(a,'lcs_nom')].filter(Boolean).join(' '),mails:[V(a,'lcs_mailpro'),V(a,'lcs_mailperso')].map(m=>m.trim().toLowerCase()).filter(Boolean)})),
+    agents:R.agent.filter(a=>a.statecode!==1&&(F(a,'lcs_type')!=='Siège'||/^(AUGRAUD|BULTEZ|PERRAUDIN|DELINEAU|GARCIA|BIWOLÉ BIWOLÉ|DUVERGER)$/i.test(V(a,'lcs_nom')))).map(a=>({id:a.lcs_agentid,nom:[V(a,'lcs_prenom'),V(a,'lcs_nom')].filter(Boolean).join(' '),mails:[V(a,'lcs_mailpro'),V(a,'lcs_mailperso')].map(m=>m.trim().toLowerCase()).filter(Boolean)})),
     sites:Object.fromEntries(R.site.map(s=>[s.lcs_siteid,V(s,'lcs_nom')])),
     affec:R.affectation.filter(f=>f.statecode!==1).map(f=>({id:f.lcs_affectationid,agentId:L(f,'lcs_agent'),siteId:L(f,'lcs_site'),jours:jours(F(f,'lcs_jours')),debut:V(f,'lcs_debut'),fin:V(f,'lcs_fin'),semaine:F(f,'lcs_semaine')||'Toutes',dd:dt(f,'lcs_datedebut'),df:dt(f,'lcs_datefin'),nature:NAT[F(f,'lcs_nature')]||''})),
     absences:R.absence.filter(a=>a.statecode!==1).map(a=>({id:a.lcs_absenceid,agentId:L(a,'lcs_agent'),dd:dt(a,'lcs_datedebut'),df:dt(a,'lcs_datefin'),motif:MOTIFS[F(a,'lcs_motif')]||'Absence',remplId:L(a,'lcs_remplacant')})),
