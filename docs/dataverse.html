@@ -1211,6 +1211,55 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
 .disc>summary .chev{ margin-left:auto; transition:transform .18s; }
 .disc[open]>summary .chev{ transform:rotate(90deg); }
 .disc .disc-body{ margin-top:6px; }
+/* Clients */
+.cli-layout{ display:grid; grid-template-columns:280px minmax(0,1fr); gap:20px; align-items:start; }
+.cli-side{ position:sticky; top:0; }
+.cli-list{ display:flex; flex-direction:column; gap:2px; max-height:calc(100vh - 260px); overflow-y:auto; }
+.cli-item{ display:flex; align-items:center; gap:6px; width:100%; text-align:left; background:none; border:0; border-radius:var(--radius-sm); padding:8px 10px; cursor:pointer; font:inherit; color:var(--text); }
+.cli-item:hover{ background:var(--surf2); }
+.cli-item.on{ background:var(--blue-light); }
+.cli-item-nom{ display:block; font-size:13px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cli-item-sub{ display:block; font-size:11px; color:var(--text3); margin-top:1px; }
+.cli-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.cli-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:12px; }
+.cli-h{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:var(--text2); }
+.cli-row{ display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-top:1px solid var(--border); font-size:12.5px; }
+.cli-row:first-child{ border-top:0; padding-top:0; }
+.cli-row.clk{ cursor:pointer; } .cli-row.clk:hover .cli-row-t{ text-decoration:underline; }
+.cli-row-t{ font-weight:700; font-size:13px; }
+.cli-row-s{ color:var(--text3); font-size:11.5px; margin-top:2px; line-height:1.4; }
+.cli-row-s a{ color:var(--text2); } .cli-row-s a:hover{ color:var(--text); }
+.cli-kv{ display:grid; grid-template-columns:auto minmax(0,1fr); gap:7px 18px; font-size:13px; margin:0; }
+.cli-kv dt{ color:var(--text3); } .cli-kv dd{ margin:0; font-weight:600; }
+.cli-pill{ display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:700; }
+.cli-empty{ font-size:12px; color:var(--text3); font-style:italic; }
+.nt-wrap{ display:flex; flex-direction:column; } .nt-main,.nt-side{ display:contents; }
+.nt-i1{order:1} .nt-i2{order:2} .nt-i3{order:3} .nt-i4{order:4} .nt-i5{order:5} .nt-i6{order:6}
+.rte{ min-height:230px; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; background:var(--white); outline:none; } .rte:focus{ border-color:var(--text2); }
+.rte:empty::before{ content:attr(data-ph); color:var(--text3); } .rte[contenteditable=true] .md-box{ cursor:pointer; } .rte a{ cursor:text; }
+.side-panel.wide .nt-wrap{ display:grid; grid-template-columns:minmax(0,1fr) 380px; gap:28px; align-items:start; }
+.side-panel.wide .nt-main,.side-panel.wide .nt-side{ display:block; }
+.side-panel.wide #pn-cr{ min-height:56vh; }
+.note{ border-top:1px solid var(--border); } .note:first-of-type{ border-top:0; }
+.note-h{ display:flex; align-items:center; gap:8px; padding:9px 2px; cursor:pointer; font-size:12.5px; } .note-h:hover .cli-row-t{ text-decoration:underline; }
+.note-d{ width:74px; flex-shrink:0; font-weight:700; }
+.note-b{ padding:2px 2px 14px 82px; }
+.act-row{ display:flex; align-items:center; gap:8px; padding:4px 0; font-size:12.5px; }
+.act-box{ width:16px; height:16px; border:1.5px solid var(--text3); border-radius:4px; background:var(--white); padding:0; cursor:pointer; flex-shrink:0; position:relative; }
+.act-box.on, .md-box.on{ background:var(--green); border-color:var(--green); }
+.act-box.on::after, .md-box.on::after{ content:''; position:absolute; left:4px; top:1px; width:4px; height:8px; border:solid #fff; border-width:0 2px 2px 0; transform:rotate(45deg); }
+.act-box:disabled{ cursor:default; }
+.act-edit{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:6px 8px; align-items:center; padding:8px 0; border-top:1px solid var(--border); }
+.act-edit:first-child{ border-top:0; }
+.md{ font-size:13px; line-height:1.55; } .md > :first-child{ margin-top:0; } .md > :last-child{ margin-bottom:0; }
+.md h3,.md h4,.md h5{ margin:12px 0 4px; font-size:13.5px; font-weight:800; } .md h5{ font-size:12.5px; }
+.md p{ margin:6px 0; } .md ul,.md ol{ margin:6px 0; padding-left:20px; }
+.md blockquote{ margin:8px 0; padding:2px 12px; border-left:3px solid var(--border); color:var(--text2); }
+.md code{ background:var(--surf2); padding:1px 5px; border-radius:4px; font-size:12px; }
+.md table{ border-collapse:collapse; margin:8px 0; font-size:12.5px; } .md th,.md td{ border:1px solid var(--border); padding:4px 10px; text-align:left; } .md th{ background:var(--surf2); }
+.md-task{ list-style:none; margin-left:-20px; display:flex; align-items:center; gap:8px; }
+.md-box{ width:14px; height:14px; border:1.5px solid var(--text3); border-radius:3px; position:relative; flex-shrink:0; display:inline-block; }
+@media (max-width:900px){ .note-b{ padding-left:2px; } .cli-layout{ grid-template-columns:minmax(0,1fr); } .cli-side{ position:static; } .cli-list{ max-height:260px; } }
 </style>
 </head>
 <body>
@@ -1301,8 +1350,8 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
   <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:48px 52px;text-align:center;max-width:440px;width:90%;box-shadow:var(--shadow-lg);">
     <div style="width:52px;height:52px;background:var(--red);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:#fff"><svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="9"/><path d="M8 8l8 8"/></svg></div>
     <div style="font-size:22px;font-weight:800;margin-bottom:8px;color:var(--text)">Accès refusé</div>
-    <div style="font-size:14px;color:var(--text2);line-height:1.55;margin-bottom:8px">Votre compte n'a pas accès à l'espace d'équipe <strong>SharePoint LCS33</strong> où sont stockées les données.</div>
-    <div style="font-size:13px;color:var(--text3);line-height:1.5;margin-bottom:28px">Demandez à un administrateur de vous ajouter au dossier d'équipe, puis reconnectez-vous.</div>
+    <div style="font-size:14px;color:var(--text2);line-height:1.55;margin-bottom:8px">Votre compte n'a pas les droits nécessaires sur <strong>Dataverse</strong> pour lire les données.</div>
+    <div style="font-size:13px;color:var(--text3);line-height:1.5;margin-bottom:28px">Demandez à un administrateur de vous attribuer un rôle de sécurité Dataverse, puis reconnectez-vous.</div>
     <div id="who-denied" style="font-size:12px;color:var(--text3);margin-bottom:16px"></div>
     <button onclick="logout()" style="width:100%;height:44px;background:var(--white);color:var(--text);border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">Se déconnecter</button>
   </div>
@@ -1345,6 +1394,10 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
     <button class="nav-btn" onclick="showView('agents')" id="nav-agents">
       <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg>
       <span class="tooltip">Agents</span>
+    </button>
+    <button class="nav-btn" onclick="showView('clients')" id="nav-clients">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2M3 12.5h18"/></svg>
+      <span class="tooltip">Clients</span>
     </button>
     <button class="nav-btn" onclick="showView('sites')" id="nav-sites">
       <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>
@@ -1514,11 +1567,13 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
         </div>
         <div class="tabs">
           <button class="tab on" onclick="tabAgents('tous',this)">Tous</button>
+          <button class="tab" onclick="tabAgents('concierge',this)">Concierge</button>
           <button class="tab" onclick="tabAgents('accueil',this)">Accueil</button>
           <button class="tab" onclick="tabAgents('multisite',this)">Multisite</button>
           <button class="tab" onclick="tabAgents('logistique',this)">Logistique</button>
           <button class="tab" onclick="tabAgents('factotum',this)">Factotum</button>
           <button class="tab" onclick="tabAgents('chantier',this)">Chantier</button>
+          <button class="tab" onclick="tabAgents('respope',this)">Responsables opé</button>
           <button class="tab" onclick="tabAgents('archives',this)">Archivés</button>
         </div>
         <div class="search-bar">
@@ -1529,6 +1584,27 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
       </div>
     </div>
 
+    <!-- ── CLIENTS ───────────────────────── -->
+    <div class="view" id="view-clients">
+      <div class="view-page">
+        <div class="page-heading">
+          <div><h1>Clients</h1><div class="page-heading-sub" id="clients-sub"></div></div>
+          <button class="btn btn-primary" id="clients-add" onclick="openPanel('panel-client',null)">+ Nouveau client</button>
+        </div>
+        <div class="cli-layout">
+          <div class="cli-side">
+            <div class="search-bar" style="margin-bottom:10px">
+              <span class="search-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg></span>
+              <input type="text" placeholder="Client, site ou contact…" id="search-clients" oninput="renderClients()">
+            </div>
+            <div class="tabs" style="margin-bottom:8px" id="clients-tabs"></div>
+            <div class="cli-list" id="clients-list"></div>
+          </div>
+          <div id="clients-fiche" style="min-width:0"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── SITES ─────────────────────────── -->
     <div class="view" id="view-sites">
       <div class="view-page">
@@ -1536,11 +1612,17 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
           <div><h1>Sites</h1><div class="page-heading-sub" id="sites-sub"></div></div>
           <button class="btn btn-primary" onclick="openPanel('panel-site',null)">+ Ajouter un site</button>
         </div>
-        <div class="search-bar">
+        <div class="cli-layout">
+          <div class="cli-side">
+            <div class="search-bar" style="margin-bottom:10px">
           <span class="search-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg></span>
           <input type="text" placeholder="Rechercher un site…" id="search-sites" oninput="renderSites()">
         </div>
-        <div class="card-grid" id="sites-grid"></div>
+            <div class="tabs" style="margin-bottom:8px" id="sites-tabs"></div>
+            <div class="cli-list" id="sites-list"></div>
+          </div>
+          <div id="sites-fiche" style="min-width:0"></div>
+        </div>
       </div>
     </div>
 
@@ -1606,7 +1688,7 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
   <!-- ══ PANNEAU DROIT ════════════════════════════════ -->
     <div class="panel-scrim" id="panel-scrim" onclick="closePanel()"></div>
   <aside class="side-panel" id="side-panel">
-    <button id="panel-expand" onclick="toggleAgentWide()" title="Déplier / replier la vue planning semaine"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <button id="panel-expand" onclick="toggleAgentWide()" title="Déplier / replier le panneau"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 6l-6 6 6 6"/></svg></button>
     <div class="panel-header">
       <div class="panel-title" id="panel-title">—</div>
       <button class="btn btn-sm" id="panel-next-absence" onclick="goNextAbsence()" title="Aller à l'absence suivante à couvrir" style="display:none;margin-left:auto;margin-right:8px;align-items:center;gap:5px">Absence suivante <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
@@ -1658,7 +1740,7 @@ function afterAuth(account){
   if(el && account) el.textContent = account.name || account.username || '';
   _dvBadge();
   _dvEnsureConsent(account).then(()=>loadAllData()).then(()=>{ seed(); migrateTournees(); migrateAgentTypes(); migrateNomPrenom(); _dvSnapshot(); _dvBackfillFiliale().catch(e=>console.warn('Filiale',e)); _warnNomsIncomplets(); _fixRemplSansAbsence(); updateAbsenceBadge(); showView('planning'); })
-    .catch(e=>{ console.error(e); if(e && e.accessDenied) showAccessDenied(account); else { showSyncStatus(''); alert('Lecture Dataverse impossible :\n\n'+e.message); } });
+    .catch(e=>{ console.error(e); if(e && e.accessDenied) showAccessDenied(account,e); else { showSyncStatus(''); alert('Lecture Dataverse impossible :\n\n'+e.message); } });
 }
 /* Première ouverture : le compte vient de la session de l'app principale (Graph) — le jeton Dataverse
    exige un consentement, impossible en silencieux → une redirection Microsoft, une seule fois. */
@@ -1672,10 +1754,11 @@ async function _dvEnsureConsent(account){
     await new Promise(()=>{});
   }
 }
-function showAccessDenied(account){
+function showAccessDenied(account,err){
   showLoginScreen(false);
   const who = account ? (account.username || account.name || '') : '';
-  const w=document.getElementById('who-denied'); if(w) w.textContent = who;
+  const w=document.getElementById('who-denied'); if(w) w.textContent = who + (err&&err.message ? '\n' + err.message.slice(0,260) : '');
+  if(w) w.style.whiteSpace='pre-wrap';
   const s=document.getElementById('access-denied-screen'); if(s) s.style.display='flex';
 }
 async function ensureStorageReady(){ if(!SHARED) await resolveStorage(); }
@@ -1866,6 +1949,11 @@ async function loadAllData(){
   const res = await Promise.all(T.map(t => dvGetAll('lcs_'+t+'s')));
   T.forEach((t,i)=>R[t]=res[i]);
   _dvFilInit(R);
+  const [_fil,_nt,_na] = await Promise.all([ dvGetAll('lcs_filiales').catch(()=>[]),
+    dvGetAll('lcs_notes').catch(e=>{ console.warn('Table lcs_note indisponible (dataverse/table-notes.js)', e.message); return null; }),
+    dvGetAll('lcs_noteactions').catch(()=>[]) ]);
+  _dvCli.noteOk = !!_nt;
+  _cliInit(R,_fil,_nt||[],_na);
   await _dvLinkReferents(R).catch(e=>console.warn('Référents de site', e));
   const data = dvToApp(R);
   Object.assign(_cache, data);
@@ -1881,6 +1969,8 @@ async function loadAllData(){
   showSyncStatus('');
 }
 /* Agents toujours affichés même sans planning (nom de famille) — les autres sans planning sont masqués, la base Dataverse reste intacte. */
+/* Rôle « Responsable opé » (colonne lcs_responsableope sur lcs_agent) : peut effectuer des remplacements. */
+function isRespOpe(a){ return !!(a&&a.respOpe); }
 const _DV_TOUJOURS = /^(AUGRAUD|BULTEZ|PERRAUDIN|DELINEAU|GARCIA|BIWOLÉ BIWOLÉ|DUVERGER)$/i;
 function dvToApp(R){
   const F = (r,c) => r[c+'@OData.Community.Display.V1.FormattedValue'] || '';
@@ -1900,11 +1990,12 @@ function dvToApp(R){
       covIgnore:(cov[s.lcs_siteid]||[]).map(c=>F(c,'lcs_jour')+'|'+V(c,'lcs_debut')+'-'+V(c,'lcs_fin')), typologie:F(s,'lcs_typologie'), nbSalaries:s.lcs_nbsalaries==null?null:s.lcs_nbsalaries, nbSemPerm:s.lcs_nbsemainespermanence==null?null:s.lcs_nbsemainespermanence, _dvid:s.lcs_siteid };
     if(ct){ o.contact=[ct.lcs_nom,ct.lcs_prenom].filter(Boolean).join(' '); o.email=V(ct,'lcs_mail'); o.tel=V(ct,'lcs_telportable')||V(ct,'lcs_telfixe'); }
     return o; });
-  const TYPE = { 'Accueil':'accueil','Chantier':'chantier','Multisite':'multisite','Logistique':'logistique','Factotum':'factotum','Siège':'siege' };
+  const TYPE = { 'Accueil':'accueil','Concierge':'concierge','Chantier':'chantier','Multisite':'multisite','Logistique':'logistique','Factotum':'factotum','Siège':'siege' };
   const agents = R.agent.filter(a => F(a,'lcs_type')!=='Siège' || _DV_TOUJOURS.test(V(a,'lcs_nom'))).map(a => ({ id:id(a.lcs_agentid), nom:[V(a,'lcs_nom'),V(a,'lcs_prenom')].filter(Boolean).join(' '), nomFamille:V(a,'lcs_nom'), prenom:V(a,'lcs_prenom'),
-    type:TYPE[F(a,'lcs_type')]||'accueil', email:V(a,'lcs_mailpro')||V(a,'lcs_mailperso'), tel:V(a,'lcs_telperso')||V(a,'lcs_telpro'), telPro:V(a,'lcs_telpro'), telPerso:V(a,'lcs_telperso'), remplacant:!!a.lcs_remplacant,
-    inactif:a.statecode===1, notes:V(a,'lcs_notes'), competences:(comp[a.lcs_agentid]||[]).map(c=>id(LK(c,'lcs_site'))).filter(Boolean),
+    types:(F(a,'lcs_types')||'').split(/\s*;\s*/).map(x=>TYPE[x]).filter(Boolean), type:TYPE[F(a,'lcs_type')]||'accueil', email:V(a,'lcs_mailpro')||V(a,'lcs_mailperso'), tel:V(a,'lcs_telperso')||V(a,'lcs_telpro'), telPro:V(a,'lcs_telpro'), telPerso:V(a,'lcs_telperso'), remplacant:!!a.lcs_remplacant,
+    respOpe:!!a.lcs_responsableope, inactif:a.statecode===1, notes:V(a,'lcs_notes'), competences:(comp[a.lcs_agentid]||[]).map(c=>id(LK(c,'lcs_site'))).filter(Boolean),
     filiale:LK(a,'lcs_filiale'), contratDebut:(V(a,'lcs_debutcontrat')+'').slice(0,10), contratFin:(V(a,'lcs_fincontrat')+'').slice(0,10), contratHebdo:a.lcs_volumehebdo==null?null:Number(a.lcs_volumehebdo), _dvid:a.lcs_agentid }));
+  agents.forEach(a=>{ if(!a.types.length) a.types=[a.type]; a.type=a.types[0]; });
   const NAT = { 'Poste fixe':'poste','Passage':'passage','Permanence volante':'permanence' };
   const SEM = { 'Toutes':'toutes','A':'A','B':'B' };
   const affec = R.affectation.map(f => ({ id:id(f.lcs_affectationid), agentId:id(LK(f,'lcs_agent')), siteId:id(LK(f,'lcs_site')), jours:jours(F(f,'lcs_jours')),
@@ -1960,12 +2051,14 @@ async function _dvLinkReferents(R){
 /* ── Filiale d'affectation des agents ──
    Ordre : filiale déjà en base → filiale des clients de ses sites (la plus fréquente) → filiale du responsable connecté → sinon vide. */
 const _dvFil = { site:{}, me:'' };
+const _dvCli = { me:null, clients:[], contacts:[], notes:[], filiales:[], noteOk:false };
 function _dvFilInit(R){
   const cf={}; R.client.forEach(c=>{ const f=c._lcs_filiale_value; if(f) cf[c.lcs_clientid]=f; });
   R.site.forEach(s=>{ const f=cf[s._lcs_client_value]; if(f) _dvFil.site[s.lcs_siteid]=f; });
   let mail=''; try{ const ac=window._msalApp && window._msalApp.getAllAccounts()[0]; mail=((ac&&ac.username)||'').trim().toLowerCase(); }catch(e){}
   const me = mail && R.agent.find(a=>[a.lcs_mailpro,a.lcs_mailperso].some(m=>(m||'').trim().toLowerCase()===mail));
   _dvFil.me = (me && me._lcs_filiale_value) || '';
+  _dvCli.me = me || null;
 }
 function _agentFiliale(a){
   if(a.filiale) return a.filiale;
@@ -2083,8 +2176,8 @@ const _DVL = {
       { ent:'lcs_couvertureignoree', fk:'lcs_site', rows:(s.covIgnore||[]).map(ci => { const [j,h]=ci.split('|'), [d,f]=(h||'').split('-'); return { lcs_libelle:s.nom+' · '+ci, lcs_jour:j, lcs_debut:d||'', lcs_fin:f||'', lcs_idsource:'go:'+s.id+':ci:'+ci }; }) } ],
     after: _dvSiteContact }),
   agents: a => { const pro=/@conciergerie-solidaire\.fr$/i.test(a.email||'');
-    const TY={ accueil:'Accueil', chantier:'Chantier', multisite:'Multisite', logistique:'Logistique', factotum:'Factotum', siege:'Siège' };
-    return { f:{ lcs_nom:a.nomFamille||a.nom||'', lcs_prenom:a.nomFamille ? (a.prenom||'') : undefined, lcs_type:TY[a.type]||'Accueil', lcs_remplacant:!!a.remplacant,
+    const TY={ accueil:'Accueil', concierge:'Concierge', chantier:'Chantier', multisite:'Multisite', logistique:'Logistique', factotum:'Factotum', siege:'Siège' };
+    return { f:{ lcs_nom:a.nomFamille||a.nom||'', lcs_prenom:a.nomFamille ? (a.prenom||'') : undefined, lcs_type:TY[a.type]||'Accueil', lcs_types:agTypes(a).map(t=>TY[t]).filter(Boolean), lcs_remplacant:!!a.remplacant, lcs_responsableope:!!a.respOpe,
         lcs_filiale:(f=>f?'#'+f:undefined)(_agentFiliale(a)),
         lcs_mailpro:pro ? a.email : '', lcs_mailperso:pro ? undefined : (a.email||''), lcs_telpro:a.telPro!=null ? a.telPro : undefined, lcs_telperso:a.telPerso!=null ? a.telPerso : (a.tel||''), lcs_notes:a.notes||'',
         lcs_debutcontrat:a.contratDebut||'', lcs_fincontrat:a.contratFin||'', lcs_volumehebdo:a.contratHebdo==null ? '' : a.contratHebdo },
@@ -2262,7 +2355,7 @@ function _natSegHtml(id,cur){
 }
 function _natSegVal(id){ return document.querySelector('#'+id+' .seg-btn.active')?.dataset.nat||'poste'; }
 function _natSegSet(id,v){ document.querySelectorAll('#'+id+' .seg-btn').forEach(b=>b.classList.toggle('active',b.dataset.nat===v)); }
-function _natDefaultFor(agentId){ const ag=ga().find(a=>a.id===agentId); return ag&&ag.type==='logistique'?'passage':'poste'; }
+function _natDefaultFor(agentId){ const ag=ga().find(a=>a.id===agentId); return ag&&agTypes(ag).includes('logistique')&&!agTypes(ag).some(t=>t==='accueil'||t==='concierge')?'passage':'poste'; }
 function siteTournee(siteId){ return gt().find(t => (t.siteIds||[]).includes(siteId)); }
 
 /* Migration douce :
@@ -2426,7 +2519,7 @@ function showView(v){
     historique:renderHistorique,pointage:renderPointage,
     agents:renderAgents,sites:renderSites,affect:renderAffect,
     jour:renderJour,tournees:renderTournees,croise:renderCroise,mois:renderMois,
-    partage:renderPartage
+    partage:renderPartage,clients:renderClients
   };
   renders[v]?.();
 }
@@ -2437,8 +2530,9 @@ function showView(v){
 let currentPanel=null;
 let currentPanelData=null;
 
-let _agWide=false,_agWeekFor=null,_agWeekStart=null;
+let _agWide=false,_noteWide=false,_panelKind='',_agWeekFor=null,_agWeekStart=null;
 function toggleAgentWide(){
+  if(_panelKind==='panel-note'){ _noteWide=!_noteWide; document.getElementById('side-panel').classList.toggle('wide',_noteWide); return; }
   _agWide=!_agWide;
   document.getElementById('side-panel').classList.toggle('wide',_agWide);
 }
@@ -2474,9 +2568,10 @@ function renderAgentWeek(agentId){
     const blks=sh.map(x=>{
       const top=Math.max(0,(x.a-H0*60)/60*PX), bot=Math.min((H1-H0)*PX,(x.b-H0*60)/60*PX);
       if(bot<=0||top>=(H1-H0)*PX) return '';
-      const st={own:'background:#DDEFE4;color:#1E5738',repl:'background:#DCEBF7;color:#134B72',abs:'background:repeating-linear-gradient(45deg,#F8DCD7,#F8DCD7 6px,#F3C9C2 6px,#F3C9C2 12px);color:#7A2019',ghost:'background:#FFF3B8;color:#4D3B00;border:2px dashed #C9A100;z-index:2',ferme:'background:#ECECEA;color:#6B6D68'}[x.k];
+      const nat=x.k==='own'?natureOf(x.s):'poste';
+      const st={own:nat==='passage'?'background:#FFFFFF;color:#1E5738;border:1px dashed #3E9A69;border-left:3px dashed #3E9A69':nat==='permanence'?'background:#D3EDEA;color:#0E4F48;border-left:3px solid #1F8A7E':'background:#DDEFE4;color:#1E5738;border-left:3px solid #3E9A69',repl:'background:#DCEBF7;color:#134B72',abs:'background:repeating-linear-gradient(45deg,#F8DCD7,#F8DCD7 6px,#F3C9C2 6px,#F3C9C2 12px);color:#7A2019',ghost:'background:#FFF3B8;color:#4D3B00;border:2px dashed #C9A100;z-index:2',ferme:'background:#ECECEA;color:#6B6D68'}[x.k];
       const clk=inAff||x.k==='ghost'?'':x.k==='own'&&x.s.afId?`editAffectFromAgent('${x.s.afId}','${agentId}')`:(x.k==='abs'&&ab?`openPanel('panel-remplacer','${ab.id}')`:'');
-      return `<div class="wk-blk" onclick="${clk}" title="${_escA(siteNom(x.s.siteId))} · ${x.s.debut}–${x.s.fin}${x.k==='abs'?' · absent':x.k==='ghost'?' · en cours de modification':x.k==='repl'?' · remplacement':x.k==='ferme'?' · site fermé':''}" style="top:${top}px;height:${Math.max(18,bot-top)}px;left:calc(${x.l/n*100}% + 1px);width:calc(${100/n}% - 2px);${st}"><b>${_escH(siteNom(x.s.siteId))}</b>${x.s.debut}–${x.s.fin}${x.k==='abs'?' · Absent':x.k==='repl'?' · Remplac.':x.k==='ghost'?' · En cours':''}</div>`;
+      return `<div class="wk-blk" onclick="${clk}" title="${_escA(siteNom(x.s.siteId))} · ${x.s.debut}–${x.s.fin}${x.k==='own'&&nat!=='poste'?' · '+NATURES[nat]:''}${x.k==='abs'?' · absent':x.k==='ghost'?' · en cours de modification':x.k==='repl'?' · remplacement':x.k==='ferme'?' · site fermé':''}" style="top:${top}px;height:${Math.max(18,bot-top)}px;left:calc(${x.l/n*100}% + 1px);width:calc(${100/n}% - 2px);${st}"><b>${x.k==='own'?_natIcon(nat):''} ${_escH(siteNom(x.s.siteId))}</b>${x.s.debut}–${x.s.fin}${x.k==='abs'?' · Absent':x.k==='repl'?' · Remplac.':x.k==='ghost'?' · En cours':''}</div>`;
     }).join('');
     const mins=sh.filter(x=>x.k==='own'||x.k==='repl'||x.k==='ghost').reduce((t,x)=>t+(x.b-x.a),0);
     return {d,ds,blks,mins};
@@ -2499,7 +2594,9 @@ function renderAgentWeek(agentId){
   </div>
   <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text2);flex-wrap:wrap">
     ${ghost?'<span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#FFF3B8;border:1px dashed #C9A100;margin-right:4px"></i>En cours de modification</span>':''}
-    <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#DDEFE4;margin-right:4px"></i>Affectation</span>
+    <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#DDEFE4;margin-right:4px"></i>Poste fixe</span>
+    <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#fff;border:1px dashed #3E9A69;margin-right:4px"></i>Passage</span>
+    <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#D3EDEA;margin-right:4px"></i>Permanence volante</span>
     <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#DCEBF7;margin-right:4px"></i>Remplacement</span>
     <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#F3C9C2;margin-right:4px"></i>Absent</span>
     <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#ECECEA;margin-right:4px"></i>Site fermé</span>
@@ -2537,13 +2634,16 @@ function buildPanel(id,data){
     'panel-jour':'Ajuster ce jour',
     'panel-couverture':"Créneaux d'ouverture non couverts",
     'panel-couvrir':'Couvrir ce créneau',
+    'panel-client': data?'Modifier le client':'Nouveau client',
+    'panel-contact': data&&data.id?'Modifier le contact':'Nouveau contact',
+    'panel-note': data&&data.id?'Entrée du journal':'Nouvelle entrée',
   };
   document.getElementById('panel-title').textContent=titles[id]||'';
   const navBtn=document.getElementById('panel-next-absence');
   if(navBtn) navBtn.style.display=(id==='panel-remplacer')?'inline-flex':'none';
-  const _isAg=id==='panel-agent-detail'||id==='panel-affect';
-  document.getElementById('panel-expand').style.display=_isAg?'inline-flex':'none';
-  document.getElementById('side-panel').classList.toggle('wide',_isAg&&_agWide);
+  const _isAg=id==='panel-agent-detail'||id==='panel-affect', _isNote=id==='panel-note'; _panelKind=id;
+  document.getElementById('panel-expand').style.display=(_isAg||_isNote)?'inline-flex':'none';
+  document.getElementById('side-panel').classList.toggle('wide',(_isAg&&_agWide)||(_isNote&&_noteWide));
   document.getElementById('panel-body').oninput=document.getElementById('panel-body').onchange=document.getElementById('panel-body').onclick=null;
   if(_isAg && _agWeekFor!==data){ _agWeekFor=data; _agWeekStart=getMonday(new Date()); }
 
@@ -2563,6 +2663,9 @@ function buildPanel(id,data){
     'panel-agent-detail': buildPanelAgentDetail,
     'panel-creneau': buildPanelCreneau,
     'panel-jour': buildPanelJour,
+    'panel-client': buildPanelClient,
+    'panel-contact': buildPanelContact,
+    'panel-note': buildPanelNote,
   };
   renders[id]?.(body,footer,data);
   if(id==='panel-affect'){
@@ -2899,7 +3002,7 @@ function agentReplacementShifts(agentId, date){
 function _croiseCands(gap){
   const compKnown=_croiseCompKnown();
   // Candidats = remplaçants (multisite) + tout agent formé sur le site vacant
-  const pool=ga().filter(a=> !a.inactif && a.id!==gap.agentId && (a.remplacant || (a.competences||[]).includes(gap.siteId)));
+  const pool=ga().filter(a=> !a.inactif && a.id!==gap.agentId && (a.remplacant || isRespOpe(a) || (a.competences||[]).includes(gap.siteId)));
   const scored=pool.map(a=>{
     const comp=(a.competences||[]).includes(gap.siteId);
     const busy=_croiseBusy(a.id, gap.date, gap.deb, gap.fin, gap.absenceId);
@@ -2927,7 +3030,7 @@ function _croiseCandPanelHTML(gap, header){
     const isCov=covName===c.a.id, isBest=best&&c.a.id===best.a.id;
     const [fg,bg]=_agColor(c.a.id);
     const status=c.busy?{l:'Occupé',bg:'var(--red-light)',fg:'var(--red)'}:{l:'Libre',bg:'var(--green-light)',fg:'var(--green)'};
-    const roleTxt=c.a.remplacant?'Remplaçant':'Agent formé';
+    const roleTxt=isRespOpe(c.a)?'Responsable opé':c.a.remplacant?'Remplaçant':'Agent formé';
     const note=c.busy? ('Déjà pris '+c.busy.debut+'–'+c.busy.fin+(c.busy.type==='poste'?' · '+siteNom(c.busy.siteId):' · remplacement')) : (roleTxt+' · libre ce créneau');
     const compTag=c.comp?'<span style="font-size:9px;font-weight:800;background:var(--blue-light);color:var(--blue-mid);padding:1px 6px;border-radius:20px">formé</span>':'';
     return `<div class="cx-cand${isBest&&!isCov?' reco':''}" data-nm="${_escA(c.a.nom.toLowerCase())}" draggable="true" ondragstart="croiseDrag='${c.a.id}'" style="${isCov?'border-color:var(--green);background:var(--green-light)':''}">
@@ -4000,8 +4103,8 @@ function _replOptions(absenceLike){
   else if(absenceLike.agentId) targetSites=[...new Set(gaf().filter(a=>a.agentId===absenceLike.agentId).map(a=>a.siteId))];
   const compKnown = ga().some(a=>(a.competences||[]).length);
   const isComp=(a)=> targetSites.length>0 && (a.competences||[]).some(c=>targetSites.includes(c));
-  const cands=ga().filter(a=> !a.inactif && a.id!==absenceLike.agentId && (a.remplacant || (compKnown && isComp(a))))
-    .map(a=>({v:a.id, nom:a.nom, comp:isComp(a), rempl:!!a.remplacant, conf: absenceLike.dateDebut? replacerConflict(a.id, absenceLike):null}));
+  const cands=ga().filter(a=> !a.inactif && a.id!==absenceLike.agentId && (a.remplacant || isRespOpe(a) || (compKnown && isComp(a))))
+    .map(a=>({v:a.id, nom:a.nom, comp:isComp(a), rempl:!!a.remplacant||isRespOpe(a), conf: absenceLike.dateDebut? replacerConflict(a.id, absenceLike):null}));
   cands.sort((x,y)=> (x.conf?1:0)-(y.conf?1:0) || (x.comp?0:1)-(y.comp?0:1) || x.nom.localeCompare(y.nom));
   return cands;
 }
@@ -4450,12 +4553,15 @@ function delPointage(id){
 ═══════════════════════════════════════ */
 let agTab='tous';
 const AGENT_TYPES=[
+  {v:'concierge',l:'Concierge'},
   {v:'accueil',l:'Accueil'},
   {v:'multisite',l:'Multisite (remplaçant)'},
   {v:'logistique',l:'Logistique'},
   {v:'factotum',l:'Factotum'},
   {v:'chantier',l:'Chantier'},
 ];
+function agTypes(a){ return a&&a.types&&a.types.length ? a.types : [(a&&a.type)||'accueil']; }
+function agentTypeBadges(a,st){ return agTypes(a).map(t=>`<span class="badge ${agentTypeBadgeClass(t)}" style="${st||''}">${agentTypeLabel(t)}</span>`).join(' '); }
 function agentTypeLabel(t){ const x=AGENT_TYPES.find(o=>o.v===t); return x?x.l:'Accueil'; }
 function agentTypeBadgeClass(t){ return t==='multisite'?'badge-orange':t==='logistique'?'badge-blue':t==='factotum'?'badge-purple':t==='chantier'?'badge-gray':'badge-green'; }
 // Migration : dériver le type d'agent (les remplaçants = multisite), par nom sur les données existantes
@@ -4491,8 +4597,9 @@ function renderAgents(){
   else{
     agents=agents.filter(a=>!a.inactif);
     if(agTab==='remplacant') agents=agents.filter(a=>a.remplacant);
+    else if(agTab==='respope') agents=agents.filter(isRespOpe);
     else if(agTab==='fixe') agents=agents.filter(a=>!a.remplacant);
-    else if(agTab!=='tous') agents=agents.filter(a=>(a.type||'accueil')===agTab);
+    else if(agTab!=='tous') agents=agents.filter(a=>agTypes(a).includes(agTab));
   }
   document.getElementById('agents-sub').textContent=`${agents.length} agent${agents.length>1?'s':''}`;
   const grid=document.getElementById('agents-grid');
@@ -4505,7 +4612,8 @@ function renderAgents(){
         <div style="width:36px;height:36px;border-radius:50%;background:var(--blue);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0">${a.nom.charAt(0)}</div>
         <div style="flex:1">
           <div style="font-weight:700;font-size:13px">${_escH(a.nom)}</div>
-          <span class="badge ${agentTypeBadgeClass(a.type)}" style="font-size:10px">${agentTypeLabel(a.type)}</span>
+          ${agentTypeBadges(a,'font-size:10px')}
+          ${isRespOpe(a)?'<span class="badge badge-blue" style="font-size:10px;margin-left:4px">Responsable opé</span>':''}
           ${a.inactif?'<span class="badge" style="font-size:10px;background:#E7E5E0;color:#6B6D6D;margin-left:4px">Archivé</span>':''}
         </div>
         <button class="btn-icon" onclick="event.stopPropagation();openPanel('panel-agent','${a.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></button>
@@ -4610,11 +4718,10 @@ function buildPanelAgent(body,footer,id){
     </div>
     <div class="form-section">Rôle</div>
     <div class="form-group">
-      <label class="form-label">Type d'agent</label>
-      <select class="form-input" id="pa2-type">
-        ${AGENT_TYPES.map(o=>`<option value="${o.v}"${(a?.type||'accueil')===o.v?' selected':''}>${o.l}</option>`).join('')}
-      </select>
-      <div style="font-size:11px;color:var(--text3);margin-top:4px">Les agents <strong>multisite</strong> sont les remplaçants.</div>
+      <label class="form-label">Types de poste</label>
+      <div id="pa2-types" style="display:flex;flex-wrap:wrap;gap:6px 14px">${AGENT_TYPES.map(o=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" value="${o.v}"${agTypes(a).includes(o.v)&&(a||o.v==='concierge')?' checked':''}> ${o.l}</label>`).join('')}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">Plusieurs types possibles. Les agents <strong>multisite</strong> sont les remplaçants.</div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="pa2-respope"${a?.respOpe?' checked':''}> Responsable opé <span style="font-size:11px;color:var(--text3)">(peut effectuer des remplacements)</span></label>
     </div>
     <div class="form-section">Sites maîtrisés</div>
     <div class="form-group">
@@ -4660,12 +4767,12 @@ function saveAgent(){
   const id=document.getElementById('pa2-id').value;
   const agents=ga();
   const competences=[...document.querySelectorAll('#pa2-comps .comp-pill.on')].map(b=>b.dataset.cid);
-  const type=document.getElementById('pa2-type').value;
+  let types=[...document.querySelectorAll('#pa2-types input:checked')].map(i=>i.value); if(!types.length) types=['concierge']; const type=types[0]; const respOpe=document.getElementById('pa2-respope').checked;
   const contratDebut=document.getElementById('pa2-cdebut').value||null, contratFin=document.getElementById('pa2-cfin').value||null;
   if(contratDebut&&contratFin&&contratFin<contratDebut){ toast('La fin de contrat précède le début',false); return; }
   const _ch=parseFloat(String(document.getElementById('pa2-chebdo').value).replace(',','.'));
   const contratHebdo=isFinite(_ch)&&_ch>0?_ch:null;
-  const data={contratDebut,contratFin,contratHebdo,nom,nomFamille:nomf,prenom,telPro:document.getElementById('pa2-tel').value.trim(),telPerso:document.getElementById('pa2-telperso').value.trim(),tel:document.getElementById('pa2-telperso').value.trim()||document.getElementById('pa2-tel').value.trim(),email:document.getElementById('pa2-email').value,notes:document.getElementById('pa2-notes').value,type,remplacant:type==='multisite',competences};
+  const data={respOpe,contratDebut,contratFin,contratHebdo,nom,nomFamille:nomf,prenom,telPro:document.getElementById('pa2-tel').value.trim(),telPerso:document.getElementById('pa2-telperso').value.trim(),tel:document.getElementById('pa2-telperso').value.trim()||document.getElementById('pa2-tel').value.trim(),email:document.getElementById('pa2-email').value,notes:document.getElementById('pa2-notes').value,type,types,remplacant:types.includes('multisite'),competences};
   if(id){ const i=agents.findIndex(a=>a.id===id); agents[i]={...agents[i],...data}; }
   else agents.push({id:DB.id(),...data});
   sa(agents); closePanel(); toast(id?'Agent modifié':'Agent ajouté'); renderAgents();
@@ -4739,7 +4846,7 @@ function buildPanelAgentDetail(body,footer,id){
       <div style="width:48px;height:48px;border-radius:50%;background:var(--blue);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px">${a.nom.charAt(0)}</div>
       <div>
         <div style="font-size:16px;font-weight:700">${_escH(a.nom)}</div>
-        <span class="badge ${agentTypeBadgeClass(a.type)}">${agentTypeLabel(a.type)}</span>
+        ${agentTypeBadges(a)}
       </div>
     </div>
     ${(a.competences||[]).length?`<div class="form-section">Sites maîtrisés</div>
@@ -4808,43 +4915,79 @@ function addSiteFerm(){
   renderSiteFerms();
 }
 
+/* Sites : liste à gauche + fiche à droite (même mise en page que Clients) */
+const _site = { sel:null, tab:'tous' };
+function siteSelect(id){ _site.sel=id; renderSites(); }
+function siteTab(t){ _site.tab=t; renderSites(); }
+function cliOpen(cid){ _cli.sel=cid; _cli.tab='tous'; const i=document.getElementById('search-clients'); if(i) i.value=''; showView('clients'); }
 function renderSites(){
-  let sites=gs();
-  const q=(document.getElementById('search-sites')?.value||'').toLowerCase();
-  if(q) sites=sites.filter(s=>s.nom.toLowerCase().includes(q)||(s.client||'').toLowerCase().includes(q)||(siteTournee(s.id)?.nom||'').toLowerCase().includes(q));
-  document.getElementById('sites-sub').textContent=`${sites.length} site${sites.length>1?'s':''}`;
-  const grid=document.getElementById('sites-grid');
-  if(!sites.length){ grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg></div><div class="empty-text">Aucun site</div></div>`; return; }
-  const recBySite={}; covGapsRecurrents().forEach(g=>{ (recBySite[g.siteId]=recBySite[g.siteId]||[]).push(g); });
-  grid.innerHTML=sites.map(s=>{
-    const afs=gaf().filter(af=>af.siteId===s.id);
-    const agents=[...new Set(afs.map(af=>af.agentId))];
-    const recGaps=recBySite[s.id]||[];
-    return `<div class="card">
-      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
-        <div style="font-size:20px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg></div>
-        <div style="flex:1">
-          <div style="font-weight:700;font-size:13px">${_escH(s.nom)}</div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">
-            ${(()=>{const t=siteTournee(s.id);return t?`<span class="badge badge-blue" style="font-size:10px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="6" cy="6.5" r="2.4"/><circle cx="18" cy="17.5" r="2.4"/><path d="M8.4 6.5H15a3 3 0 010 6H9a3 3 0 000 6h6.6"/></svg> ${_escH(t.nom)}</span>`:'';})()}
-            ${s.client?`<span class="badge badge-gray" style="font-size:10px">${_escH(s.client)}</span>`:''}
-            ${recGaps.length?`<span class="badge" style="font-size:10px;background:#FFF3D6;color:#7A5A0B;cursor:pointer" onclick="covOpenRec()" title="Créneaux d'ouverture non couverts par le planning récurrent">⚠ ${recGaps.length} créneau${recGaps.length>1?'x':''} non couvert${recGaps.length>1?'s':''}</span>`:''}
-          </div>
-        </div>
-        <button class="btn-icon" onclick="openPanel('panel-site','${s.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></button>
-        <button class="btn-icon red" onclick="delSite('${s.id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4.5 7h15M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg></button>
+  const list=document.getElementById('sites-list'); if(!list) return;
+  const q=(document.getElementById('search-sites')?.value||'').trim().toLowerCase();
+  const rec={}; covGapsRecurrents().forEach(g=>{ (rec[g.siteId]=rec[g.siteId]||[]).push(g); });
+  const all=gs().slice().sort((a,b)=>a.nom.localeCompare(b.nom,'fr'));
+  let rows=all;
+  if(_site.tab==='trous') rows=rows.filter(s=>rec[s.id]);
+  if(q) rows=rows.filter(s=>s.nom.toLowerCase().includes(q)||(s.client||'').toLowerCase().includes(q)||(siteTournee(s.id)?.nom||'').toLowerCase().includes(q)||(s.adresse||'').toLowerCase().includes(q));
+  document.getElementById('sites-sub').textContent=`${all.length} site${all.length>1?'s':''}`;
+  document.getElementById('sites-tabs').innerHTML=`<button class="tab${_site.tab==='tous'?' on':''}" onclick="siteTab('tous')">Tous</button><button class="tab${_site.tab==='trous'?' on':''}" onclick="siteTab('trous')">Non couverts (${Object.keys(rec).length})</button>`;
+  if(!rows.some(s=>s.id===_site.sel)) _site.sel=rows[0]?.id||null;
+  list.innerHTML=rows.length?rows.map(s=>`<button class="cli-item${s.id===_site.sel?' on':''}" onclick="siteSelect('${s.id}')">
+      <span style="flex:1;min-width:0"><span class="cli-item-nom">${_escH(s.nom)}</span><span class="cli-item-sub">${_escH(s.client||'Sans client')}</span></span>
+      ${rec[s.id]?`<span class="cli-dot" style="background:var(--orange)" title="${rec[s.id].length} créneau(x) non couvert(s)"></span>`:''}
+    </button>`).join(''):`<div class="cli-empty" style="padding:16px 10px">Aucun site</div>`;
+  const s=all.find(x=>x.id===_site.sel);
+  document.getElementById('sites-fiche').innerHTML=s?_siteFiche(s,rec):`<div class="empty"><div class="empty-text">Sélectionnez un site</div></div>`;
+}
+function _siteFiche(s,rec){
+  const today=new Date(); today.setHours(0,0,0,0); const ts=_ymd(today), sid=`'${s.id}'`;
+  const t=siteTournee(s.id), cid=s.client?_dvClients[s.client.trim().toLowerCase()]:'';
+  const afs=gaf().filter(af=>af.siteId===s.id&&_affInRange(af,today)), gaps=rec[s.id]||[];
+  const wk=[]; for(let i=0;i<7;i++) covGapsOnDate(_addDays(today,i)).filter(g=>g.siteId===s.id&&g.degrade).forEach(g=>wk.push(g));
+  const ferms=gferm().filter(f=>f.siteId===s.id&&(f.dateFin||f.dateDebut)>=ts).sort((a,b)=>a.dateDebut.localeCompare(b.dateDebut));
+  const closed=ferms.find(f=>f.dateDebut<=ts);
+  const cts=cid?_dvCli.contacts.filter(x=>x.clientId===cid&&(!x.siteG||x.siteG===(s._dvid||s.id))).sort((a,b)=>(!!b.siteG)-(!!a.siteG)):[];
+  const byAg={}; afs.forEach(af=>(byAg[af.agentId]=byAg[af.agentId]||[]).push(af));
+  const kv=(k,v)=>`<dt>${k}</dt><dd>${v||'<span class="cli-empty">—</span>'}</dd>`;
+  const head=`<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:22px;font-weight:800;line-height:1.2">${_escH(s.nom)}</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          ${s.client?(cid?`<a href="#" onclick="cliOpen('${cid}');return false" style="font-weight:700">${_escH(s.client)}</a>`:`<span style="font-weight:700">${_escH(s.client)}</span>`):'<span class="cli-empty">Sans client</span>'}
+          ${s.typologie?`<span class="badge badge-gray" style="font-size:10px">${_escH(s.typologie)}</span>`:''}
+          ${t?`<span class="badge badge-blue" style="font-size:10px">Tournée · ${_escH(t.nom)}</span>`:''}
+          ${s.adresse?`<span>· ${_escH(s.adresse)}</span>`:''}</div>
       </div>
-      ${s.adresse?`<div style="font-size:12px;color:var(--text3);margin-bottom:6px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> ${_escH(s.adresse)}</div>`:''}
-      ${s.creneaux?.length?`<div style="font-size:12px;color:var(--text2)"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8.5V12.5l3 1.8"/></svg> ${s.creneaux.map(c=>c.jours.slice(0,2).join('+')+' '+c.debut+'–'+c.fin).join(' · ')}</div>`:''}
-      ${agents.length?`<details class="disc">
-        <summary>Agents affectés <span style="color:var(--text2)">(${agents.length})</span><span class="chev"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2"><path d="M9 6l6 6-6 6"/></svg></span></summary>
-        <div class="disc-body">${afs.map(af=>`<div style="display:flex;align-items:baseline;gap:6px;font-size:12px;margin-bottom:3px">
-          <span style="width:5px;height:5px;border-radius:50%;background:var(--blue);flex-shrink:0;transform:translateY(-2px)"></span>
-          <span style="flex:1;min-width:0"><span style="font-weight:600">${_escH(agentNom(af.agentId))}</span> <span style="color:var(--text3)">· ${af.jours.join(', ')} · ${af.debut}–${af.fin}</span></span>
-        </div>`).join('')}</div>
-      </details>`:`<div style="font-size:11px;color:var(--text3);margin-top:6px;font-style:italic">Aucun agent affecté</div>`}
-    </div>`;
-  }).join('');
+      <button class="btn btn-secondary btn-sm" onclick="openPanel('panel-site','${s.id}')">Modifier</button>
+      <button class="btn btn-secondary btn-sm" style="color:var(--red)" onclick="delSite('${s.id}')">Supprimer</button>
+    </div>
+    ${(gaps.length||closed)?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      ${gaps.length?`<span class="cli-pill" style="${_cliTone('orange')};cursor:pointer" onclick="covOpenRec()">${gaps.length} créneau${gaps.length>1?'x':''} non couvert${gaps.length>1?'s':''}</span>`:''}
+      ${closed?`<span class="cli-pill" style="${_cliTone('red')}">Fermé jusqu'au ${_dFr(closed.dateFin||closed.dateDebut)}${closed.motif?' · '+_escH(closed.motif):''}</span>`:''}</div>`:''}`;
+
+  const ouv=_cliCard('Ouverture', '', (s.creneaux||[]).length?(s.creneaux).map(c=>`<div class="cli-row"><div style="flex:1"><div class="cli-row-t">${c.jours.join(', ')}</div><div class="cli-row-s">${c.debut}–${c.fin}</div></div></div>`).join(''):`<div class="cli-empty">Aucun créneau d'ouverture</div>`)
+    .replace(/<\/div>$/, (ferms.length?`<div class="cli-h" style="margin:14px 0 6px">Fermetures</div>`+ferms.map(f=>`<div class="cli-row"><div style="flex:1"><div class="cli-row-t">${_dFr(f.dateDebut)}${f.dateFin&&f.dateFin!==f.dateDebut?' → '+_dFr(f.dateFin):''}</div>${f.motif?`<div class="cli-row-s">${_escH(f.motif)}</div>`:''}</div></div>`).join(''):'')+'</div>');
+
+  const infos=_cliCard('Informations', '', `<dl class="cli-kv">
+      ${kv('Typologie',_escH(s.typologie||''))}${kv('Salariés (approx.)',s.nbSalaries!=null&&s.nbSalaries!==''?s.nbSalaries:'')}${kv('Semaines de permanence',s.nbSemPerm!=null&&s.nbSemPerm!==''?s.nbSemPerm:'')}
+      ${kv('Tournée',t?_escH(t.nom):'')}</dl>`);
+
+  const contact=_cliCard('Contacts', '', ((s.contact||s.tel||s.email)?`<div class="cli-row"><div style="flex:1;min-width:0"><div class="cli-row-t">${_escH(s.contact||'Contact sur site')}</div><div class="cli-row-s" style="display:flex;gap:12px;flex-wrap:wrap">${s.tel?`<a href="tel:${_escA(s.tel)}">${_escH(s.tel)}</a>`:''}${s.email?`<a href="mailto:${_escA(s.email)}">${_escH(s.email)}</a>`:''}</div></div></div>`:'')
+    +cts.filter(x=>[x.prenom,x.nom].filter(Boolean).join(' ')!==s.contact&&(x.nom+' '+x.prenom)!==s.contact&&(x.prenom+' '+x.nom)!==s.contact).map(x=>`<div class="cli-row"><div style="flex:1;min-width:0"><div class="cli-row-t">${_escH([x.prenom,x.nom].filter(Boolean).join(' '))}</div><div class="cli-row-s">${[x.fonction,x.siteG?'':'Contact du client'].filter(Boolean).map(_escH).join(' · ')}</div><div class="cli-row-s" style="display:flex;gap:12px;flex-wrap:wrap">${x.telport?`<a href="tel:${_escA(x.telport)}">${_escH(x.telport)}</a>`:''}${x.telfixe?`<a href="tel:${_escA(x.telfixe)}">${_escH(x.telfixe)}</a>`:''}${x.mail?`<a href="mailto:${_escA(x.mail)}">${_escH(x.mail)}</a>`:''}</div></div></div>`).join('')
+    ||((s.contact||s.tel||s.email)?'':`<div class="cli-empty">Aucun contact</div>`));
+
+  const notes=s.notes?_cliCard('Particularités', '', `<div style="font-size:13px;line-height:1.5;white-space:pre-wrap">${_escH(s.notes)}</div>`,true):'';
+
+  const ags=_cliCard(`Agents affectés <span style="color:var(--text3)">(${Object.keys(byAg).length})</span>`, `<button class="btn btn-secondary btn-sm" onclick="openPanel('panel-affect',{siteId:${sid}})">+ Affecter</button>`,
+    Object.keys(byAg).length?Object.entries(byAg).sort((x,y)=>agentNom(x[0]).localeCompare(agentNom(y[0]),'fr')).map(([aid,l])=>`<div class="cli-row clk" onclick="openPanel('panel-agent-detail','${aid}')"><div style="flex:1;min-width:0"><div class="cli-row-t">${_escH(agentNom(aid))}</div>${l.map(af=>`<div class="cli-row-s">${af.jours.join(', ')} · ${af.debut}–${af.fin}</div>`).join('')}</div></div>`).join('')
+    :`<div class="cli-empty">Aucun agent affecté</div>`);
+
+  const cov=_cliCard('Couverture', '', `
+    <div style="font-size:12px;font-weight:700;margin-bottom:6px">7 prochains jours</div>
+    ${wk.length?wk.map(g=>_covRowHtml(g,'jour')).join(''):`<div class="cli-empty" style="margin-bottom:6px">Aucun trou ponctuel</div>`}
+    <div style="font-size:12px;font-weight:700;margin:14px 0 6px">Récurrents</div>
+    ${gaps.length?gaps.map(g=>_covRowHtml(g,'rec')).join(''):`<div class="cli-empty">Tous les créneaux d'ouverture sont couverts</div>`}`);
+
+  return head+`<div class="cli-grid">${ouv}${infos}${contact}${ags}${notes}${cov}</div>`;
 }
 
 /* ═════════════════════════════════════
@@ -4891,7 +5034,7 @@ function covToggleIgnore(siteId,jour,debut,fin){
 /* Seuls les agents d'accueil tiennent un créneau d'ouverture de site.
    Les multisites sont inclus : ce sont les remplaçants des postes d'accueil.
    Logistique, factotum et chantier passent sur site sans assurer l'ouverture. */
-function estAgentAccueil(ag){ const t=ag?.type||'accueil'; return t==='accueil'||t==='multisite'; }
+function estAgentAccueil(ag){ return agTypes(ag).some(t=>t==='accueil'||t==='concierge'||t==='multisite'); }
 function couvreAccueil(ag,x){ const n=natureOf(x); if(n==='permanence') return true; if(n==='passage') return false; return estAgentAccueil(ag); }
 function _afCouvreFn(){ const m=new Map(ga().filter(a=>!a.inactif).map(a=>[a.id,a])); return af=>m.has(af.agentId)&&couvreAccueil(m.get(af.agentId),af); }
 function _accueilIds(){ return new Set(ga().filter(a=>!a.inactif&&estAgentAccueil(a)).map(a=>a.id)); }
@@ -5077,7 +5220,7 @@ function buildPanelCouvrir(body,footer,raw){
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;font-size:13px">${_escH(a.nom)}</div>
         ${why?`<div style="font-size:11.5px;color:var(--red);margin-top:2px">⚠ ${why}</div>`
-              :`<div style="font-size:11.5px;color:var(--text3);margin-top:2px">Libre sur ce créneau${a.remplacant?' · remplaçant':''}</div>`}
+              :`<div style="font-size:11.5px;color:var(--text3);margin-top:2px">Libre sur ce créneau${isRespOpe(a)?' · responsable opé':a.remplacant?' · remplaçant':''}</div>`}
       </div>
     </div>`;
   };
@@ -5288,7 +5431,7 @@ async function saveSite(){
   else sites.push({id:DB.id(),...data});
   ss(sites);
   if(id){ sferm([...gferm().filter(f=>f.siteId!==id), ...siteFerms.map(f=>({...f,siteId:id}))]); }
-  closePanel(); toast(id?'Site modifié':'Site ajouté'); renderSites();
+  closePanel(); toast(id?'Site modifié':'Site ajouté'); renderSites(); if(currentView==='clients') renderClients();
   buildTourneeFilters();
 }
 
@@ -5300,6 +5443,560 @@ function delSite(id){
   st(gt().map(t=>({...t,siteIds:(t.siteIds||[]).filter(x=>x!==id)})));
   renderSites(); toast('Site supprimé'); buildTourneeFilters();
 }
+
+/* ═══════════════════════════════════════
+   CLIENTS — vue opérationnelle
+   Données : lcs_client, lcs_contactclient, lcs_bilan (+ sites, affectations, absences de l'app).
+   Écriture directe Dataverse (hors diff _dvSync). Création / modification : responsables opé uniquement.
+   Profil : 'ops' pour tous aujourd'hui. Vue commerciale à venir, choisie selon le rôle de sécurité Dataverse
+   de l'utilisateur (WhoAmI → systemuserroles_association) : _cliProfil() renverra 'commercial' et CLIENT_VUES.commercial prendra le relais.
+═══════════════════════════════════════ */
+const _cli = { sel:null, tab:'tous', type:'', open:{} };
+function _cliProfil(){ return 'ops'; }
+async function _cliDv(table,id,f){
+  if(DEMO_MODE) return id||('demo-'+Math.random().toString(36).slice(2,10));
+  const m=await _dvMeta(table);
+  if(id){ await _dvReq('PATCH', m.set+'('+id+')', await _dvBody(table,f,false)); return id; }
+  return (await _dvReq('POST', m.set, await _dvBody(table,f,true)))[m.pk];
+}
+async function _cliDvDel(table,id){
+  if(DEMO_MODE) return;
+  const m=await _dvMeta(table); await _dvReq('DELETE', m.set+'('+id+')');
+}
+/* Démo : clients fictifs rattachés aux sites de data/sites.json, dates relatives à aujourd'hui pour montrer les alertes */
+function _cliDemoSeed(){
+  const t=new Date(); t.setHours(12,0,0,0);
+  const D=n=>_ymd(_addDays(t,n)), M=n=>{ const d=new Date(t); d.setMonth(d.getMonth()+n); return _ymd(d); };
+  _dvCli.me={ lcs_responsableope:true }; _dvCli.noteOk=true;
+  _dvCli.filiales=[{id:'f-bdx',nom:'LCS Bordeaux'},{id:'f-lim',nom:'LCS Limoges'}];
+  const C=[
+    ['c1','COMPAGNIE FIDUCIAIRE','12 rue Lafaurie de Monbadon, 33000 Bordeaux','f-bdx',M(-30),D(25),'Trimestriel',/^COMPAGNIE FIDUCIAIRE/],
+    ['c2','BORDEAUX MÉTROPOLE','Esplanade Charles de Gaulle, 33000 Bordeaux','f-bdx',M(-40),'','2x / an',/^BM —/],
+    ['c3','EAU DE BORDEAUX','91 rue Paulin, 33000 Bordeaux','f-bdx',M(-14),'','Trimestriel',/^EAU DE BORDEAUX/],
+    ['c4','MAIRIE DE CENON','1 avenue Carnot, 33150 Cenon','f-bdx',M(-8),D(50),'Annuel',/^MAIRIE DE CENON/],
+    ['c5','ITEAM','','f-lim',M(-2),'','Mensuel',/^ITEAM/],
+    ['c6','THALES','75-77 avenue Marcel Dassault, 33700 Mérignac','f-bdx',M(-24),'','Annuel',/^THALES$/],
+    ['c7','UBISOFT','2 rue Lucien Faure, 33000 Bordeaux','f-bdx',M(-6),'','Trimestriel',/^UBISOFT$/],
+    ['c8','AÉROPORT DE BORDEAUX','Cidex 40, 33700 Mérignac','f-bdx','','','À la demande',/^AÉROPORT/],
+    ['c9','MEXENS','31 allée de Chartres, 33000 Bordeaux','f-bdx',M(-36),D(-20),'Annuel',/^MEXENS$/],
+  ];
+  _dvCli.clients=C.map(([id,nom,adresse,filiale,debut,fin,periodicite])=>({id,nom,adresse,filiale,debut,fin,periodicite}));
+  C.forEach(([id,nom,,,,,,re])=>{ _dvClients[nom.toLowerCase()]=id; _dvClientNoms[id]=nom; gs().forEach(s=>{ if(re.test(s.nom)) s.client=nom; }); });
+  const sid=re=>(gs().find(s=>re.test(s.nom))||{}).id||'';
+  _dvCli.contacts=[
+    {id:'k1',clientId:'c1',siteG:'',nom:'Bertin',prenom:'Claire',fonction:'Responsable services généraux',mail:'c.bertin@cfiduciaire.fr',telport:'06 12 34 56 78',telfixe:'05 56 00 11 22'},
+    {id:'k2',clientId:'c1',siteG:sid(/PESSAC$/),nom:'Lopez',prenom:'Marc',fonction:'Office manager',mail:'m.lopez@cfiduciaire.fr',telport:'06 98 76 54 32',telfixe:''},
+    {id:'k3',clientId:'c2',siteG:'',nom:'Durand',prenom:'Sophie',fonction:'Cheffe de projet QVT',mail:'s.durand@bordeaux-metropole.fr',telport:'',telfixe:'05 56 99 84 84'},
+    {id:'k4',clientId:'c2',siteG:sid(/MERIADECK/),nom:'Nguyen',prenom:'Thomas',fonction:'Gestionnaire de site',mail:'t.nguyen@bordeaux-metropole.fr',telport:'07 11 22 33 44',telfixe:''},
+    {id:'k5',clientId:'c3',siteG:'',nom:'Martin',prenom:'Julie',fonction:'DRH adjointe',mail:'j.martin@eaudebordeaux.fr',telport:'06 45 67 89 01',telfixe:''},
+    {id:'k6',clientId:'c6',siteG:'',nom:'Rousseau',prenom:'Paul',fonction:'Facility manager',mail:'paul.rousseau@thalesgroup.com',telport:'06 22 44 66 88',telfixe:''},
+    {id:'k7',clientId:'c7',siteG:'',nom:'Petit',prenom:'Léa',fonction:'Happiness manager',mail:'lea.petit@ubisoft.com',telport:'',telfixe:'05 57 00 00 00'},
+  ];
+  const AG=ga().filter(a=>!a.inactif).slice(0,3).map(a=>a.id), r=i=>AG[i%AG.length]||'';
+  const N=(id,clientId,type,titre,date,participants,contenu,actions,lien)=>({ id,clientId,type,titre,date,participants,contenu,lien:lien||'',actions:actions||[] });
+  const Ac=(id,libelle,i,echeance,fait)=>({ id,libelle,respId:r(i),echeance,fait:!!fait });
+  _dvCli.notes=[
+    N('n1','c1','Bilan','Bilan trimestriel',M(-4),'Claire Bertin (client), Charlotte (LCS)',"## Points abordés\n- Satisfaction **globale très bonne**\n- Demande d'élargir les horaires du site de Pessac le vendredi\n\n> « Le service est devenu indispensable. »\n\n| Indicateur | Résultat |\n|---|---|\n| Présence | 98 % |\n| Réclamations | 0 |",
+      [Ac('a1',"Chiffrer l'extension d'horaires à Pessac",0,D(-10),false),Ac('a2','Envoyer le compte rendu au client',1,D(-12),true)]),
+    N('n2','c1','Réunion / CR','Point renouvellement du contrat',M(-1),'Claire Bertin, Marc Lopez (client), Charlotte (LCS)',"Le contrat arrive à échéance. Le client souhaite **renouveler** avec un site en plus.\n\n## Décisions\n- [x] Proposition de renouvellement sur 12 mois\n- [ ] Ajouter le site de Paludate\n- [ ] Revoir les conditions tarifaires",
+      [Ac('a3','Préparer la proposition de renouvellement',0,D(5),false)],'https://example.com/CR-renouvellement.pdf'),
+    N('n3','c1','Appel','Planning du vendredi',D(-3),'Marc Lopez (client)',"Appel pour décaler la permanence du vendredi de 9h à 10h pendant les travaux. *Validé.*",[]),
+    N('n4','c2','Bilan','Bilan semestriel',M(-5),'Sophie Durand (client), Jonathan (LCS)',"Bilan semestriel : 8 sites, retours positifs sur Mériadeck.",[]),
+    N('n5','c2','Note interne','',D(-20),'',"Interlocuteur à privilégier : **Thomas Nguyen** pour tout ce qui touche à Mériadeck.\nÉviter les appels après 17h.",[]),
+    N('n6','c3','Bilan','Bilan de démarrage',M(-1),'Julie Martin (client), Charlotte (LCS)',"Mise en place réussie sur les trois sites.",[]),
+    N('n7','c3','Réclamation / incident','Retard d\'accueil site Paulin',D(-6),'Julie Martin (client)',"Retard de **20 minutes** le matin du lundi, agent bloqué dans les transports. Client prévenu, remplacement organisé la fois suivante.",
+      [Ac('a4','Rappeler le client pour confirmer la solution',2,D(-4),true),Ac('a5',"Prévoir un remplaçant d'astreinte le lundi",1,D(7),false)]),
+    N('n8','c6','Bilan','Bilan annuel',D(9),'Paul Rousseau (client), Jonathan (LCS)','',[Ac('a6','Préparer les chiffres de fréquentation',0,D(7),false)]),
+    N('n9','c7','Bilan','',M(-2),'Léa Petit (client)','RAS.',[]),
+    N('n10','c7','Renouvellement / upsell','Offre petits-déjeuners',D(-15),'Léa Petit (client)',"Intérêt pour des petits-déjeuners mensuels. Devis à transmettre au pôle Animation.",[Ac('a7','Transmettre la demande à Valérie',2,D(-8),false)]),
+  ];
+  Object.keys(_dvClientNoms).forEach(_cliSyncContacts);
+}
+function _cliCanEdit(){ return !!(_dvCli.me && _dvCli.me.lcs_responsableope); }
+const _CLI_PER = ['Mensuel','Trimestriel','2x / an','Annuel','À la demande'];
+const _CLI_MOT = { conges:'Congés payés', maladie:'Maladie', formation:'Formation', autre:'Autre' };
+function _cliMois(p){ return {'Mensuel':1,'Trimestriel':3,'2x / an':6,'Annuel':12}[p]||0; }
+function _cliInit(R, fil, notes, acts){
+  const F=(r,c)=>r[c+'@OData.Community.Display.V1.FormattedValue']||'', d=v=>(v||'').slice(0,10);
+  _dvCli.filiales = fil.filter(f=>f.statecode!==1).map(f=>({ id:f.lcs_filialeid, nom:f.lcs_nom||f.lcs_code||'' }));
+  _dvCli.clients = R.client.filter(c=>c.statecode!==1 && c.lcs_nom).map(c=>({ id:c.lcs_clientid, nom:c.lcs_nom.trim(), adresse:c.lcs_adresse||'', filiale:c._lcs_filiale_value||'',
+    debut:d(c.lcs_debutcontrat), fin:d(c.lcs_fincontrat), periodicite:F(c,'lcs_periodicitebilan') }));
+  _dvCli.contacts = R.contactclient.filter(c=>c.statecode!==1).map(c=>({ id:c.lcs_contactclientid, clientId:c._lcs_client_value||'', siteG:c._lcs_site_value||'',
+    nom:c.lcs_nom||'', prenom:c.lcs_prenom||'', fonction:c.lcs_fonction||'', mail:c.lcs_mail||'', telport:c.lcs_telportable||'', telfixe:c.lcs_telfixe||'' }));
+  const by={}; (acts||[]).filter(a=>a.statecode!==1).forEach(a=>(by[a._lcs_note_value]=by[a._lcs_note_value]||[]).push({ id:a.lcs_noteactionid, libelle:a.lcs_libelle||'', respG:a._lcs_responsable_value||'', respId:'', echeance:d(a.lcs_echeance), fait:!!a.lcs_fait }));
+  _dvCli.notes = notes.filter(n=>n.statecode!==1).map(n=>{ const type=F(n,'lcs_type')||'Note interne', lib=n.lcs_libelle||'';
+    return { id:n.lcs_noteid, clientId:n._lcs_client_value||'', type, titre:lib===type?'':lib, date:d(n.lcs_date), participants:n.lcs_participants||'', contenu:n.lcs_contenu||'', lien:n.lcs_lien||'', actions:by[n.lcs_noteid]||[] }; });
+}
+function _cliSyncContacts(cid){
+  _dvClientContacts[cid]=_dvCli.contacts.filter(c=>c.clientId===cid).map(c=>({ id:c.id, nom:[c.nom,c.prenom].filter(Boolean).join(' '), fonction:c.fonction, email:c.mail, tel:c.telport||c.telfixe, siteLibre:!c.siteG }))
+    .sort((a,b)=>a.nom.localeCompare(b.nom,'fr'));
+}
+function _cliSites(cid){ return gs().filter(s=>s.client && _dvClients[s.client.trim().toLowerCase()]===cid).sort((a,b)=>a.nom.localeCompare(b.nom,'fr')); }
+function _cliDays(ymd){ const t=new Date(); t.setHours(0,0,0,0); return Math.round((new Date(ymd+'T00:00:00')-t)/864e5); }
+function _cliAddMonths(ymd,n){ const d=new Date(ymd+'T12:00:00'); d.setMonth(d.getMonth()+n); return _ymd(d); }
+function _cliFin(c){ return !!(c.fin && c.fin<_ymd(new Date())); }
+/* Prochain bilan : bilan futur déjà saisi, sinon dernier bilan (ou début de contrat) + périodicité */
+function _cliBilan(c){
+  const ts=_ymd(new Date()), bs=_dvCli.notes.filter(b=>b.clientId===c.id&&b.type==='Bilan'&&b.date).sort((a,b)=>b.date.localeCompare(a.date));
+  const futur=bs.filter(b=>b.date>ts).pop(), dernier=(bs.find(b=>b.date<=ts)||{}).date||'', m=_cliMois(c.periodicite);
+  if(futur) return { etat:'planifie', date:futur.date, dernier };
+  if(_cliFin(c) || !m) return { etat:c.periodicite==='À la demande'?'demande':'', date:'', dernier };
+  const base=dernier||c.debut;
+  if(!base) return { etat:'aplanifier', date:'', dernier };
+  const date=_cliAddMonths(base,m), j=_cliDays(date);
+  return { etat:j<0?'retard':j<=30?'aplanifier':'ok', date, dernier };
+}
+function _cliAlertes(c){
+  const out=[];
+  if(c.fin){ const j=_cliDays(c.fin); if(j>=0&&j<=60) out.push({ txt:'Fin de contrat '+(j===0?"aujourd'hui":'dans '+j+' j')+' ('+_dFr(c.fin)+')', tone:j<=15?'red':'orange' }); }
+  const b=_cliBilan(c);
+  if(b.etat==='retard') out.push({ txt:'Bilan en retard depuis le '+_dFr(b.date), tone:'red' });
+  else if(b.etat==='aplanifier') out.push({ txt:b.date?'Bilan à planifier avant le '+_dFr(b.date):'Bilan à planifier (aucun bilan ni début de contrat)', tone:'orange' });
+  const late=_cliLate(c.id); if(late) out.push({ txt:late+' action'+(late>1?'s':'')+' en retard', tone:'red' });
+  return out;
+}
+function cliSelect(id){ _cli.sel=id; renderClients(); }
+function cliTab(t){ _cli.tab=t; renderClients(); }
+function renderClients(){
+  const list=document.getElementById('clients-list'); if(!list) return;
+  const q=(document.getElementById('search-clients')?.value||'').trim().toLowerCase();
+  const all=_dvCli.clients.slice().sort((a,b)=>a.nom.localeCompare(b.nom,'fr')).map(c=>({ c, sites:_cliSites(c.id), al:_cliAlertes(c) }));
+  const nAl=all.filter(r=>r.al.length).length;
+  document.getElementById('clients-sub').textContent=`${all.length} client${all.length>1?'s':''}`+(_cliCanEdit()?'':' · lecture seule (modification réservée aux responsables opé)');
+  document.getElementById('clients-add').style.display=_cliCanEdit()?'':'none';
+  document.getElementById('clients-tabs').innerHTML=`<button class="tab${_cli.tab==='tous'?' on':''}" onclick="cliTab('tous')">Tous</button><button class="tab${_cli.tab==='alertes'?' on':''}" onclick="cliTab('alertes')">À traiter (${nAl})</button>`;
+  let rows=all;
+  if(_cli.tab==='alertes') rows=rows.filter(r=>r.al.length);
+  if(q) rows=rows.filter(r=>r.c.nom.toLowerCase().includes(q)||r.sites.some(s=>s.nom.toLowerCase().includes(q))
+    ||_dvCli.contacts.some(x=>x.clientId===r.c.id&&(x.nom+' '+x.prenom+' '+x.prenom+' '+x.nom).toLowerCase().includes(q)));
+  if(!_cli.sel || !all.some(r=>r.c.id===_cli.sel)) _cli.sel=(rows[0]||{c:{}}).c.id||null;
+  list.innerHTML=rows.length ? rows.map(r=>`<button class="cli-item${r.c.id===_cli.sel?' on':''}" onclick="cliSelect('${r.c.id}')">
+      <span style="flex:1;min-width:0"><span class="cli-item-nom">${_escH(r.c.nom)}</span><span class="cli-item-sub">${r.sites.length} site${r.sites.length>1?'s':''}${_cliFin(r.c)?' · contrat terminé':''}</span></span>
+      ${r.al.map(a=>`<span class="cli-dot" style="background:var(--${a.tone})" title="${_escA(a.txt)}"></span>`).join('')}
+    </button>`).join('') : `<div class="cli-empty" style="padding:16px 10px">Aucun client</div>`;
+  const el=document.getElementById('clients-fiche'), c=_dvCli.clients.find(x=>x.id===_cli.sel);
+  el.innerHTML = c ? (CLIENT_VUES[_cliProfil()]||CLIENT_VUES.ops)(c) : `<div class="empty"><div class="empty-text">Sélectionnez un client</div></div>`;
+}
+const CLIENT_VUES = { ops: c=>_cliFicheOps(c) /* , commercial: c=>… (à venir) */ };
+
+function _cliCard(titre, action, inner, wide){
+  return `<div class="card" style="${wide?'grid-column:1/-1;':''}">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><div class="cli-h">${titre}</div><div style="margin-left:auto;display:flex;gap:6px">${action||''}</div></div>${inner}</div>`;
+}
+function _cliTone(t){ return t==='red'?'background:var(--red-light);color:var(--red)':t==='orange'?'background:var(--orange-light);color:var(--orange)':t==='green'?'background:var(--green-light);color:var(--green)':'background:var(--surf2);color:var(--text2)'; }
+function _cliFicheOps(c){
+  const ed=_cliCanEdit(), today=new Date(); today.setHours(0,0,0,0);
+  const sites=_cliSites(c.id), sids=new Set(sites.map(s=>s.id)), cq=`'${c.id}'`;
+  const fil=(_dvCli.filiales.find(f=>f.id===c.filiale)||{}).nom||'';
+  const al=_cliAlertes(c), b=_cliBilan(c);
+  const contacts=_dvCli.contacts.filter(x=>x.clientId===c.id).sort((x,y)=>(x.nom+x.prenom).localeCompare(y.nom+y.prenom,'fr'));
+  const afs=gaf().filter(af=>sids.has(af.siteId)&&_affInRange(af,today));
+  const rec=covGapsRecurrents().filter(g=>sids.has(g.siteId));
+  const wk=[]; if(sites.length) for(let i=0;i<7;i++) covGapsOnDate(_addDays(today,i)).filter(g=>sids.has(g.siteId)&&g.degrade).forEach(g=>wk.push(g));
+  const agIds=new Set(afs.map(a=>a.agentId)), d0=_ymd(_addDays(today,-30)), d1=_ymd(_addDays(today,30));
+  const abs=gab().filter(a=>agIds.has(a.agentId)&&(a.dateFin||a.dateDebut)>=d0&&a.dateDebut<=d1).sort((x,y)=>y.dateDebut.localeCompare(x.dateDebut));
+  const siteG=g=>sites.find(s=>(s._dvid||s.id)===g);
+  const recBySite={}; rec.forEach(g=>recBySite[g.siteId]=(recBySite[g.siteId]||0)+1);
+
+  const head=`<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:22px;font-weight:800;line-height:1.2">${_escH(c.nom)}</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:4px">${[fil,c.adresse].filter(Boolean).map(_escH).join(' · ')||'<span class="cli-empty">Adresse non renseignée</span>'}</div>
+      </div>
+      ${ed?`<button class="btn btn-secondary btn-sm" onclick="openPanel('panel-client',${cq})">Modifier</button>`:''}
+    </div>
+    ${al.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">${al.map(a=>`<span class="cli-pill" style="${_cliTone(a.tone)}">${_escH(a.txt)}</span>`).join('')}</div>`:''}`;
+
+  const prochain = b.etat==='planifie'?`${_dFr(b.date)} <span class="cli-pill" style="${_cliTone('green')};font-size:11px;padding:1px 8px">planifié</span>`
+    : b.etat==='retard'?`<span style="color:var(--red)">${_dFr(b.date)} · en retard</span>`
+    : b.etat==='aplanifier'?`<span style="color:var(--orange)">${b.date?'avant le '+_dFr(b.date):'à planifier'}</span>`
+    : b.etat==='ok'?_dFr(b.date) : b.etat==='demande'?'À la demande' : '<span class="cli-empty">—</span>';
+  const contrat=_cliCard('Contrat', '', `
+    <dl class="cli-kv">
+      <dt>Début de contrat</dt><dd>${c.debut?_dFr(c.debut):'<span class="cli-empty">—</span>'}</dd>
+      <dt>Fin de contrat</dt><dd>${c.fin?_dFr(c.fin)+(_cliFin(c)?' <span class="cli-pill" style="'+_cliTone()+';font-size:11px;padding:1px 8px">terminé</span>':''):'<span class="cli-empty">Sans fin</span>'}</dd>
+      <dt>Périodicité bilan</dt><dd>${_escH(c.periodicite)||'<span class="cli-empty">—</span>'}</dd>
+      <dt>Dernier bilan</dt><dd>${b.dernier?_dFr(b.dernier):'<span class="cli-empty">Aucun</span>'}</dd>
+      <dt>Prochain bilan</dt><dd>${prochain}</dd>
+    </dl>`);
+  const jrn=_cliJournal(c,ed);
+
+  const cts=_cliCard('Contacts', ed?`<button class="btn btn-secondary btn-sm" onclick="openPanel('panel-contact',{cid:${cq}})">+ Contact</button>`:'',
+    contacts.length?contacts.map(x=>{ const s=x.siteG&&siteG(x.siteG); return `<div class="cli-row${ed?' clk':''}"${ed?` onclick="openPanel('panel-contact',{cid:${cq},id:'${x.id}'})"`:''}>
+      <div style="flex:1;min-width:0">
+        <div class="cli-row-t">${_escH([x.prenom,x.nom].filter(Boolean).join(' '))}</div>
+        <div class="cli-row-s">${[x.fonction,s?s.nom:''].filter(Boolean).map(_escH).join(' · ')}</div>
+        <div class="cli-row-s" style="display:flex;gap:12px;flex-wrap:wrap">${x.telport?`<a href="tel:${_escA(x.telport)}" onclick="event.stopPropagation()">${_escH(x.telport)}</a>`:''}${x.telfixe?`<a href="tel:${_escA(x.telfixe)}" onclick="event.stopPropagation()">${_escH(x.telfixe)}</a>`:''}${x.mail?`<a href="mailto:${_escA(x.mail)}" onclick="event.stopPropagation()">${_escH(x.mail)}</a>`:''}</div>
+      </div></div>`; }).join('') : `<div class="cli-empty">Aucun contact</div>`);
+
+  const sts=_cliCard(`Sites <span style="color:var(--text3)">(${sites.length})</span>`,
+    (sites.length?`<button class="btn btn-secondary btn-sm" onclick="cliGoSites(${cq})">Voir dans Sites</button>`:'')+`<button class="btn btn-secondary btn-sm" onclick="cliNewSite(${cq})">+ Site</button>`,
+    sites.length?sites.map(s=>`<div class="cli-row clk" onclick="openPanel('panel-site','${s.id}')">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="cli-row-t">${_escH(s.nom)}</span>${s.typologie?`<span class="badge badge-gray" style="font-size:10px">${_escH(s.typologie)}</span>`:''}
+          ${recBySite[s.id]?`<span class="badge" style="font-size:10px;background:#FFF3D6;color:#7A5A0B">⚠ ${recBySite[s.id]} créneau${recBySite[s.id]>1?'x':''} non couvert${recBySite[s.id]>1?'s':''}</span>`:''}</div>
+        <div class="cli-row-s">${[s.adresse, (s.creneaux||[]).map(k=>k.jours.slice(0,2).join('+')+' '+k.debut+'–'+k.fin).join(' · ')].filter(Boolean).map(_escH).join(' · ')}</div>
+      </div></div>`).join('') : `<div class="cli-empty">Aucun site rattaché</div>`, true);
+
+  const byAg={}; afs.forEach(af=>(byAg[af.agentId]=byAg[af.agentId]||[]).push(af));
+  const ags=_cliCard(`Agents affectés <span style="color:var(--text3)">(${Object.keys(byAg).length})</span>`, '',
+    Object.keys(byAg).length?Object.entries(byAg).sort((x,y)=>agentNom(x[0]).localeCompare(agentNom(y[0]),'fr')).map(([aid,l])=>`<div class="cli-row clk" onclick="openPanel('panel-agent-detail','${aid}')">
+      <div style="flex:1;min-width:0"><div class="cli-row-t">${_escH(agentNom(aid))}</div>
+      ${l.map(af=>`<div class="cli-row-s">${sites.length>1?_escH(siteNom(af.siteId))+' · ':''}${af.jours.join(', ')} · ${af.debut}–${af.fin}</div>`).join('')}</div></div>`).join('')
+    : `<div class="cli-empty">Aucune affectation en cours</div>`);
+
+  const cov=_cliCard('Couverture', '', `
+    <div style="font-size:12px;font-weight:700;margin-bottom:6px">7 prochains jours</div>
+    ${wk.length?wk.map(g=>_covRowHtml(g,'jour')).join(''):`<div class="cli-empty" style="margin-bottom:6px">Aucun trou ponctuel</div>`}
+    <div style="font-size:12px;font-weight:700;margin:14px 0 6px">Récurrents</div>
+    ${rec.length?rec.map(g=>_covRowHtml(g,'rec')).join(''):`<div class="cli-empty">Tous les créneaux d'ouverture sont couverts</div>`}`);
+
+  const abv=_cliCard('Absences & remplacements', '<span style="font-size:11px;color:var(--text3)">± 30 jours</span>',
+    abs.length?abs.map(a=>{ const r=[...new Set([a.remplacantId,...Object.values(a.remplacants||{})].filter(Boolean))];
+      const st=r.length?{t:'Remplacé · '+r.map(agentNom).join(', '),k:'green'}:a.needsReplacement&&!a.ignored?{t:'Non remplacé',k:'red'}:{t:'Sans remplacement',k:''};
+      return `<div class="cli-row clk" onclick="openPanel('panel-remplacer','${a.id}')">
+        <div style="flex:1;min-width:0"><div class="cli-row-t">${_escH(agentNom(a.agentId))}</div>
+        <div class="cli-row-s">${_dFr(a.dateDebut)}${a.dateFin&&a.dateFin!==a.dateDebut?' → '+_dFr(a.dateFin):''} · ${_CLI_MOT[a.motif]||'Autre'}</div></div>
+        <span class="cli-pill" style="${_cliTone(st.k)};font-size:11px;padding:2px 8px;flex-shrink:0;max-width:50%;white-space:normal;text-align:right">${_escH(st.t)}</span></div>`; }).join('')
+    : `<div class="cli-empty">Aucune absence sur la période</div>`);
+
+  return head+`<div class="cli-grid">${contrat}${cts}${jrn}${sts}${ags}${cov}${abv}</div>`;
+}
+function cliGoSites(cid){ showView('sites'); const i=document.getElementById('search-sites'); if(i){ i.value=_dvClientNoms[cid]||''; renderSites(); } }
+function cliNewSite(cid){
+  openPanel('panel-site',null);
+  const sel=document.getElementById('ps-client'); if(sel){ sel.innerHTML=_psClientOpts(_dvClientNoms[cid]||''); psClientChanged(); }
+}
+
+/* ── Panneau client ── */
+function buildPanelClient(body,footer,cid){
+  const c=cid?_dvCli.clients.find(x=>x.id===cid):null, filCur=c?c.filiale:_dvFil.me;
+  body.innerHTML=`
+    <div class="form-group"><label class="form-label">Nom du client *</label><input class="form-input" type="text" id="pc-nom" value="${_escA(c?.nom||'')}"></div>
+    <div class="form-group"><label class="form-label">Filiale</label><select class="form-input" id="pc-filiale"><option value="">—</option>${_dvCli.filiales.map(f=>`<option value="${f.id}"${f.id===filCur?' selected':''}>${_escH(f.nom)}</option>`).join('')}</select></div>
+    <div class="form-group"><label class="form-label">Adresse</label><input class="form-input" type="text" id="pc-adresse" value="${_escA(c?.adresse||'')}"></div>
+    <div class="form-section">Contrat</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Début</label><input class="form-input" type="date" id="pc-debut" value="${c?.debut||''}"></div>
+      <div class="form-group"><label class="form-label">Fin</label><input class="form-input" type="date" id="pc-fin" value="${c?.fin||''}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Périodicité des bilans</label><select class="form-input" id="pc-per"><option value="">—</option>${_CLI_PER.map(p=>`<option${c?.periodicite===p?' selected':''}>${p}</option>`).join('')}</select></div>
+    <input type="hidden" id="pc-id" value="${cid||''}">`;
+  footer.innerHTML=`<button class="btn btn-secondary" onclick="closePanel()">Annuler</button><button class="btn btn-primary" id="pc-save" onclick="saveClient()">Enregistrer</button>`;
+}
+function _cliRename(oldNom,nom,id){
+  const o=oldNom.trim().toLowerCase(); delete _dvClients[o]; _dvClients[nom.toLowerCase()]=id; _dvClientNoms[id]=nom;
+  gs().forEach(s=>{ if(s.client && s.client.trim().toLowerCase()===o){ s.client=nom; if(_dvSnap.sites&&_dvSnap.sites[s.id]) _dvSnap.sites[s.id]=_dvJ(s); } });
+}
+async function saveClient(){
+  if(!_cliCanEdit()){ toast('Réservé aux responsables opé',false); return; }
+  const v=i=>document.getElementById(i).value.trim();
+  const id=v('pc-id'), nom=v('pc-nom'), debut=v('pc-debut'), fin=v('pc-fin'), filiale=v('pc-filiale'), periodicite=v('pc-per'), adresse=v('pc-adresse');
+  if(!nom){ toast('Nom requis',false); return; }
+  const dup=_dvClients[nom.toLowerCase()]; if(dup && dup!==id){ toast('Un client porte déjà ce nom',false); return; }
+  if(debut && fin && fin<debut){ toast('La fin de contrat doit être après le début',false); return; }
+  const f={ lcs_nom:nom, lcs_adresse:adresse, lcs_filiale:filiale?'#'+filiale:'', lcs_debutcontrat:debut, lcs_fincontrat:fin, lcs_periodicitebilan:periodicite };
+  const btn=document.getElementById('pc-save'); btn.disabled=true;
+  let gid=id;
+  try{
+    gid=await _cliDv('lcs_client',id,f);
+  }catch(e){ console.error(e); toast('Enregistrement impossible',false); btn.disabled=false; return; }
+  const o={ id:gid, nom, adresse, filiale, debut, fin, periodicite };
+  const old=_dvCli.clients.find(x=>x.id===gid);
+  if(old){ if(old.nom!==nom) _cliRename(old.nom,nom,gid); Object.assign(old,o); }
+  else { _dvCli.clients.push(o); _dvClients[nom.toLowerCase()]=gid; _dvClientNoms[gid]=nom; }
+  _cli.sel=gid; closePanel(); toast(id?'Client modifié':'Client créé'); renderClients();
+}
+
+/* ── Panneau contact ── */
+function buildPanelContact(body,footer,data){
+  const c=data.id?_dvCli.contacts.find(x=>x.id===data.id):null, sites=_cliSites(data.cid);
+  const inp=(id,l,v,t)=>`<div class="form-group"><label class="form-label">${l}</label><input class="form-input" type="${t||'text'}" id="${id}" value="${_escA(v||'')}"></div>`;
+  body.innerHTML=`
+    <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Client : <strong style="color:var(--text)">${_escH(_dvClientNoms[data.cid]||'')}</strong></div>
+    <div class="form-row">${inp('pcc-prenom','Prénom',c?.prenom)}${inp('pcc-nom','Nom *',c?.nom)}</div>
+    ${inp('pcc-fonction','Fonction',c?.fonction)}
+    <div class="form-group"><label class="form-label">Site</label><select class="form-input" id="pcc-site"><option value="">— Tous les sites / siège —</option>${sites.map(s=>`<option value="${s._dvid||s.id}"${c&&c.siteG===(s._dvid||s.id)?' selected':''}>${_escH(s.nom)}</option>`).join('')}</select></div>
+    <div class="form-row">${inp('pcc-port','Tél. portable',c?.telport)}${inp('pcc-fixe','Tél. fixe',c?.telfixe)}</div>
+    ${inp('pcc-mail','E-mail',c?.mail,'email')}`;
+  footer.innerHTML=(c?`<button class="btn btn-danger" style="margin-right:auto" onclick="delContact('${_escA(data.cid)}','${c.id}')">Supprimer</button>`:'')
+    +`<button class="btn btn-secondary" onclick="closePanel()">Annuler</button><button class="btn btn-primary" id="pcc-save" onclick="saveContact('${_escA(data.cid)}','${c?c.id:''}')">Enregistrer</button>`;
+}
+/* Contact rattaché à un site : la fiche site (contact/tel/email) suit, sans déclencher de réécriture */
+function _cliSiteContactSync(oldC, newC){
+  [oldC&&oldC.siteG, newC&&newC.siteG].filter(Boolean).forEach(g=>{
+    const s=gs().find(x=>(x._dvid||x.id)===g); if(!s) return;
+    const oldNom=oldC?[oldC.nom,oldC.prenom].filter(Boolean).join(' '):'';
+    if(newC && newC.siteG===g && (!s.contact || s.contact===oldNom)){ s.contact=[newC.nom,newC.prenom].filter(Boolean).join(' '); s.tel=newC.telport||newC.telfixe; s.email=newC.mail; }
+    else if(oldC && oldC.siteG===g && s.contact===oldNom){ s.contact=''; s.tel=''; s.email=''; }
+    else return;
+    if(_dvSnap.sites&&_dvSnap.sites[s.id]) _dvSnap.sites[s.id]=_dvJ(s);
+  });
+}
+async function saveContact(cid,id){
+  if(!_cliCanEdit()){ toast('Réservé aux responsables opé',false); return; }
+  const v=i=>document.getElementById(i).value.trim();
+  const o={ clientId:cid, siteG:v('pcc-site'), nom:v('pcc-nom'), prenom:v('pcc-prenom'), fonction:v('pcc-fonction'), mail:v('pcc-mail'), telport:v('pcc-port'), telfixe:v('pcc-fixe') };
+  if(!o.nom){ toast('Nom requis',false); return; }
+  const f={ lcs_nom:o.nom, lcs_prenom:o.prenom, lcs_fonction:o.fonction, lcs_mail:o.mail, lcs_telportable:o.telport, lcs_telfixe:o.telfixe, lcs_client:'#'+cid, lcs_site:o.siteG?'#'+o.siteG:'' };
+  const btn=document.getElementById('pcc-save'); btn.disabled=true;
+  try{
+    o.id=await _cliDv('lcs_contactclient',id,f);
+  }catch(e){ console.error(e); toast('Enregistrement impossible',false); btn.disabled=false; return; }
+  const old=id&&_dvCli.contacts.find(x=>x.id===id), prev=old?{...old}:null;
+  if(old) Object.assign(old,o); else _dvCli.contacts.push(o);
+  _cliSiteContactSync(prev, old||o); _cliSyncContacts(cid);
+  closePanel(); toast(id?'Contact modifié':'Contact ajouté'); renderClients();
+}
+async function delContact(cid,id){
+  if(!_cliCanEdit() || !confirm('Supprimer ce contact ?')) return;
+  try{ if(!DEMO_MODE){ const m=await _dvMeta('lcs_contactclient'); await _dvReq('PATCH', m.set+'('+id+')', { statecode:1, statuscode:2 }); } }
+  catch(e){ console.error(e); toast('Suppression impossible',false); return; }
+  const i=_dvCli.contacts.findIndex(x=>x.id===id), prev=_dvCli.contacts[i]; _dvCli.contacts.splice(i,1);
+  _cliSiteContactSync(prev,null); _cliSyncContacts(cid);
+  closePanel(); toast('Contact supprimé'); renderClients();
+}
+
+/* ═══════════════════════════════════════
+   JOURNAL CLIENT — lcs_note (contenu en Markdown) + lcs_noteaction (actions avec responsable / échéance)
+═══════════════════════════════════════ */
+const _NOTE_TYPES=['Bilan','Réunion / CR','Note interne','Appel','Échange e-mail','Réclamation / incident','Renouvellement / upsell'];
+const _NOTE_TONE={ 'Bilan':'blue','Réclamation / incident':'red','Renouvellement / upsell':'orange','Réunion / CR':'green' };
+function _cliNoteTone(t){ const k=_NOTE_TONE[t]; return k?`background:var(--${k}-light);color:var(--${k})`:'background:var(--surf2);color:var(--text2)'; }
+function _cliAgApp(g){ if(!g) return ''; for(const k in _dvG){ if(_dvG[k]===g && k.startsWith('agents:')) return k.slice(7); } return ''; }
+function _cliResp(a){ return a.respId || _cliAgApp(a.respG); }
+function _cliNotes(cid){ return _dvCli.notes.filter(n=>n.clientId===cid).sort((a,b)=>(b.date||'').localeCompare(a.date||'')); }
+function _cliLate(cid){ const ts=_ymd(new Date()); let n=0; _cliNotes(cid).forEach(x=>x.actions.forEach(a=>{ if(!a.fait && a.echeance && a.echeance<ts) n++; })); return n; }
+
+/* Markdown (échappé : seul le balisage ci-dessous produit du HTML) */
+function _mdInline(s){
+  return _escH(s).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\s][^*]*)\*/g,'$1<em>$2</em>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)"]+|mailto:[^\s)"]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/(^|[\s(])(https?:\/\/[^\s<)"]+)/g,'$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+}
+function mdRender(src){
+  const L=String(src||'').replace(/\r/g,'').split('\n'), out=[]; let i=0;
+  const isT=l=>/^\s*\|.*\|\s*$/.test(l), cells=r=>r.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
+  while(i<L.length){
+    const l=L[i]; let m;
+    if(!l.trim()){ i++; continue; }
+    if((m=l.match(/^(#{1,3})\s+(.*)$/))){ const n=m[1].length+2; out.push(`<h${n}>${_mdInline(m[2])}</h${n}>`); i++; continue; }
+    if(/^\s*[-*]\s/.test(l)||/^\s*\d+[.)]\s/.test(l)){
+      const ord=/^\s*\d+/.test(l), re=ord?/^\s*\d+[.)]\s+/:/^\s*[-*]\s+/, it=[];
+      while(i<L.length&&re.test(L[i])){ const t=L[i].replace(re,''), cb=t.match(/^\[([ xX])\]\s+(.*)$/);
+        it.push(cb?`<li class="md-task"><span class="md-box${cb[1]!==' '?' on':''}" contenteditable="false"></span>${_mdInline(cb[2])}</li>`:`<li>${_mdInline(t)}</li>`); i++; }
+      out.push(`<${ord?'ol':'ul'}>${it.join('')}</${ord?'ol':'ul'}>`); continue; }
+    if(/^>/.test(l)){ const b=[]; while(i<L.length&&/^>/.test(L[i])) b.push(L[i++].replace(/^>\s?/,'')); out.push(`<blockquote>${b.map(_mdInline).join('<br>')}</blockquote>`); continue; }
+    if(isT(l)&&i+1<L.length&&/^\s*\|[\s:|-]+\|\s*$/.test(L[i+1])){
+      const hd=cells(l), rows=[]; i+=2; while(i<L.length&&isT(L[i])) rows.push(cells(L[i++]));
+      out.push(`<table><thead><tr>${hd.map(c=>`<th>${_mdInline(c)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${_mdInline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`); continue; }
+    const p=[]; while(i<L.length&&L[i].trim()&&!/^(#{1,3}\s|\s*[-*]\s|\s*\d+[.)]\s|>)/.test(L[i])) p.push(L[i++]);
+    if(!p.length) p.push(L[i++]);
+    out.push(`<p>${p.map(_mdInline).join('<br>')}</p>`);
+  }
+  return out.join('');
+}
+/* Éditeur riche (contenteditable) : le contenu est stocké en Markdown */
+function _rteNorm(e){
+  e.querySelectorAll('li.md-task').forEach(li=>{ if(!li.querySelector(':scope > .md-box')){ const b=document.createElement('span'); b.className='md-box'; b.contentEditable='false'; li.insertBefore(b,li.firstChild); } });
+  e.querySelectorAll('li:not(.md-task) > .md-box').forEach(b=>b.remove());
+  if(!e.textContent.replace(/\u200b/g,'').trim() && !e.querySelector('li,table,blockquote')) e.innerHTML='';
+}
+function _rte(c){
+  const e=document.getElementById('pn-cr'); if(!e) return; e.focus();
+  document.execCommand('styleWithCSS',false,false); document.execCommand('defaultParagraphSeparator',false,'p');
+  const cur=(document.queryCommandValue('formatBlock')||'').toLowerCase().replace(/[<>]/g,'');
+  if(c==='h') document.execCommand('formatBlock',false,cur==='h3'?'p':'h3');
+  else if(c==='q') document.execCommand('formatBlock',false,cur==='blockquote'?'p':'blockquote');
+  else if(c==='task'){
+    const n=getSelection().anchorNode, li0=n&&(n.nodeType===3?n.parentNode:n).closest('li');
+    document.execCommand('insertUnorderedList');
+    if(!(li0&&li0.classList.contains('md-task'))){ const m=getSelection().anchorNode, li=m&&(m.nodeType===3?m.parentNode:m).closest('li'); if(li) li.classList.add('md-task'); }
+  }
+  else if(c==='link'){ const u=prompt('Adresse du lien','https://'); if(u&&/^(https?:\/\/|mailto:)/i.test(u)) document.execCommand('createLink',false,u); }
+  else document.execCommand(c);
+  _rteNorm(e);
+}
+function _rteKey(ev){
+  if(ev.key!==' ') return;
+  const sel=getSelection(); if(!sel.rangeCount||!sel.isCollapsed) return;
+  const tn=sel.anchorNode; if(!tn||tn.nodeType!==3||sel.anchorOffset!==tn.nodeValue.length) return;
+  const blk=tn.parentNode.closest('p,div,h3,h4,h5,blockquote,li'); if(!blk||blk.textContent!==tn.nodeValue) return;
+  const M={ '#':'h', '##':'h', '-':'insertUnorderedList', '*':'insertUnorderedList', '1.':'insertOrderedList', '>':'q', '[]':'task', '[ ]':'task' }, c=M[tn.nodeValue.trim()];
+  if(!c) return;
+  ev.preventDefault(); tn.nodeValue='\u200b'; sel.collapse(tn,1); _rte(c);
+}
+function _htmlToMd(root){
+  const T=s=>s.replace(/\u200b/g,'').replace(/\u00a0/g,' ');
+  const wrap=(c,m)=>{ const x=c.match(/^(\s*)([\s\S]*?)(\s*)$/); return x[2]?x[1]+m+x[2]+m+x[3]:c; };
+  const inl=n=>{
+    if(n.nodeType===3) return T(n.nodeValue);
+    if(n.nodeType!==1) return '';
+    const t=n.tagName; if(t==='BR') return '\n';
+    if(n.classList.contains('md-box')) return '';
+    const c=[...n.childNodes].map(inl).join('');
+    if(t==='B'||t==='STRONG') return wrap(c,'**');
+    if(t==='I'||t==='EM') return wrap(c,'*');
+    if(t==='CODE') return '`'+c+'`';
+    if(t==='A' && n.getAttribute('href')) return '['+c+']('+n.getAttribute('href')+')';
+    return c;
+  };
+  const BLK=/^(P|DIV|H[1-6]|UL|OL|BLOCKQUOTE|TABLE)$/;
+  const walk=parent=>{
+    const out=[]; let buf='';
+    const flush=()=>{ const s=buf.trim(); if(s) out.push(s); buf=''; };
+    [...parent.childNodes].forEach(n=>{
+      const t=n.nodeType===1?n.tagName:'';
+      if(!BLK.test(t)){ buf+=inl(n); return; }
+      flush();
+      if(/^H[1-6]$/.test(t)){ const s=inl(n).trim(); if(s) out.push('#'.repeat(Math.max(1,+t[1]-2))+' '+s.replace(/\n/g,' ')); }
+      else if(t==='UL'||t==='OL'){ const L=[...n.children].filter(x=>x.tagName==='LI').map((li,i)=>{
+          const txt=[...li.childNodes].filter(x=>!(x.nodeType===1&&/^(UL|OL)$/.test(x.tagName))).map(inl).join('').trim().replace(/\n+/g,' ');
+          const pre=t==='OL'?(i+1)+'. ':li.classList.contains('md-task')?(li.querySelector('.md-box.on')?'- [x] ':'- [ ] '):'- ';
+          return pre+txt; });
+        if(L.length) out.push(L.join('\n')); }
+      else if(t==='BLOCKQUOTE'){ const s=walk(n).join('\n'); if(s) out.push(s.split('\n').map(l=>'> '+l).join('\n')); }
+      else if(t==='TABLE'){ const R=[...n.rows].map(r=>[...r.cells].map(c=>inl(c).trim().replace(/\n+/g,' ')));
+        if(R.length){ out.push('| '+R[0].join(' | ')+' |\n|'+R[0].map(()=>'---').join('|')+'|'+R.slice(1).map(r=>'\n| '+r.join(' | ')+' |').join('')); } }
+      else if([...n.children].some(x=>BLK.test(x.tagName))) out.push(...walk(n));
+      else { const s=inl(n).trim(); if(s) out.push(s); }
+    });
+    flush(); return out;
+  };
+  return walk(root).join('\n\n');
+}
+
+/* Journal dans la fiche */
+function cliType(t){ _cli.type=t; renderClients(); }
+function cliNoteToggle(id){ if(_cli.open[id]) delete _cli.open[id]; else _cli.open[id]=1; renderClients(); }
+function _cliJournal(c,ed){
+  const cq=`'${c.id}'`, ts=_ymd(new Date()), all=_cliNotes(c.id), flt=_cli.type, list=flt?all.filter(n=>n.type===flt):all, counts={};
+  all.forEach(n=>counts[n.type]=(counts[n.type]||0)+1);
+  const add=ed&&_dvCli.noteOk?`<button class="btn btn-secondary btn-sm" onclick="openPanel('panel-note',{cid:${cq}})">+ Entrée</button>`:'';
+  if(!_dvCli.noteOk) return _cliCard('Journal', '', `<div class="cli-empty">Indisponible : les tables « Note client » et « Action de note » n'existent pas encore dans Dataverse (dataverse/table-notes.js).</div>`, true);
+  const chips=['',..._NOTE_TYPES].filter(t=>!t||counts[t]).map(t=>`<button class="tab${flt===t?' on':''}" data-t="${_escA(t)}" onclick="cliType(this.dataset.t)">${t||'Tout'} <span style="opacity:.6">${t?counts[t]:all.length}</span></button>`).join('');
+  const row=n=>{
+    const open=!!_cli.open[n.id], A=n.actions, nd=A.filter(a=>a.fait).length, late=A.filter(a=>!a.fait&&a.echeance&&a.echeance<ts).length;
+    const ex=(n.contenu||'').replace(/[#*>`|\[\]]|^\s*[-\d.)]+\s/gm,'').trim().split('\n')[0].slice(0,100);
+    const head=`<div class="note-h" onclick="cliNoteToggle('${n.id}')">
+      <span class="note-d">${_dFr(n.date)}</span>
+      <span class="cli-pill" style="${_cliNoteTone(n.type)};font-size:11px;padding:2px 9px;flex-shrink:0">${_escH(n.type)}</span>
+      <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span class="cli-row-t">${_escH(n.titre)||''}</span>${!open&&ex?`<span style="color:var(--text3);font-size:12px">${n.titre?' · ':''}${_escH(ex)}</span>`:''}</span>
+      ${n.date>ts?`<span class="cli-pill" style="${_cliTone('green')};font-size:11px;padding:1px 8px">à venir</span>`:''}
+      ${A.length?`<span class="cli-pill" style="${late?_cliTone('red'):nd===A.length?_cliTone('green'):_cliTone()};font-size:11px;padding:1px 8px">${nd}/${A.length} action${A.length>1?'s':''}${late?' · '+late+' en retard':''}</span>`:''}
+      ${n.lien?`<a href="${_escA(n.lien)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Ouvrir le document" style="font-size:13px">↗</a>`:''}
+      <span style="color:var(--text3);font-size:11px;width:10px;text-align:center">${open?'▾':'▸'}</span></div>`;
+    if(!open) return `<div class="note">${head}</div>`;
+    const body=`<div class="note-b">
+      ${n.participants?`<div class="cli-row-s" style="margin:0 0 8px"><strong style="color:var(--text2)">Participants</strong> · ${_escH(n.participants)}</div>`:''}
+      ${n.contenu?`<div class="md">${mdRender(n.contenu)}</div>`:`<div class="cli-empty">Pas de contenu</div>`}
+      ${n.lien?`<div style="margin-top:10px;font-size:12px"><a href="${_escA(n.lien)}" target="_blank" rel="noopener">Ouvrir le document ↗</a></div>`:''}
+      ${A.length?`<div class="cli-h" style="margin:14px 0 6px">Actions</div>`+A.map(a=>{ const r=_cliResp(a), lt=!a.fait&&a.echeance&&a.echeance<ts;
+        return `<div class="act-row"><button class="act-box${a.fait?' on':''}"${ed?` onclick="cliToggleAct('${n.id}','${a.id}')"`:' disabled'} title="${a.fait?'Fait':'À faire'}"></button>
+          <span style="flex:1;min-width:0;${a.fait?'text-decoration:line-through;color:var(--text3)':''}">${_escH(a.libelle)}</span>
+          ${r?`<span style="font-size:11.5px;color:var(--text2)">${_escH(agentNom(r))}</span>`:''}
+          ${a.echeance?`<span style="font-size:11.5px;font-weight:700;${lt?'color:var(--red)':'color:var(--text3)'}">${_dFr(a.echeance)}</span>`:''}</div>`; }).join(''):''}
+      ${ed?`<div style="margin-top:12px"><button class="btn btn-secondary btn-sm" onclick="openPanel('panel-note',{cid:${cq},id:'${n.id}'})">Modifier</button></div>`:''}</div>`;
+    return `<div class="note open">${head}${body}</div>`;
+  };
+  return _cliCard(`Journal <span style="color:var(--text3)">(${all.length})</span>`, add,
+    (all.length?`<div class="tabs" style="flex-wrap:wrap;margin-bottom:10px">${chips}</div>`:'')
+    +(list.length?list.map(row).join(''):`<div class="cli-empty">${all.length?'Aucune entrée de ce type':'Aucune entrée : bilans, comptes rendus, appels, notes…'}</div>`), true);
+}
+async function cliToggleAct(nid,aid){
+  if(!_cliCanEdit()) return;
+  const n=_dvCli.notes.find(x=>x.id===nid), a=n&&n.actions.find(x=>x.id===aid); if(!a) return;
+  const fait=!a.fait;
+  try{ await _cliDv('lcs_noteaction',aid,{ lcs_fait:fait }); }catch(e){ console.error(e); toast('Mise à jour impossible',false); return; }
+  a.fait=fait; renderClients();
+}
+
+/* ── Panneau entrée du journal ── */
+let _noteDraft=null;
+function buildPanelNote(body,footer,data){
+  const n=data.id?_dvCli.notes.find(x=>x.id===data.id):null, ed=_cliCanEdit(), dis=ed?'':' disabled';
+  _noteDraft={ acts:(n?n.actions:[]).map(a=>({...a,respId:_cliResp(a)})), del:[] };
+  const cts=_dvCli.contacts.filter(x=>x.clientId===data.cid), tp=n?n.type:(data.type||'Réunion / CR');
+  const tb=(l,fn,t,st)=>`<button type="button" class="btn btn-secondary btn-sm" style="padding:2px 9px;${st||''}" title="${t}" onmousedown="event.preventDefault()" onclick="${fn}">${l}</button>`;
+  body.innerHTML=`
+    <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Client : <strong style="color:var(--text)">${_escH(_dvClientNoms[data.cid]||'')}</strong></div>
+    <div class="nt-wrap">
+      <div class="nt-main">
+        <div class="nt-i2"><div class="form-group"><label class="form-label">Objet</label><input class="form-input" type="text" id="pn-titre" value="${_escA(n?.titre||'')}" placeholder="Ex : Bilan trimestriel, Point renouvellement"${dis}></div></div>
+        <div class="nt-i4"><div class="form-group"><label class="form-label">Contenu</label>
+      ${ed?`<div id="pn-tools" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px">${tb('<b>G</b>',"_rte('bold')",'Gras')}${tb('<i>I</i>',"_rte('italic')",'Italique')}${tb('Titre',"_rte('h')",'Titre')}${tb('• Liste',"_rte('insertUnorderedList')",'Liste à puces')}${tb('1. Liste',"_rte('insertOrderedList')",'Liste numérotée')}${tb('☐ Tâche',"_rte('task')",'Case à cocher')}${tb('Citation',"_rte('q')",'Citation')}${tb('Lien',"_rte('link')",'Lien (sélectionner le texte avant)')}</div>`:''}
+      <div id="pn-cr" class="md rte"${ed?' contenteditable="true"':''} data-ph="Écrivez ici…  (« - » liste, « [] » tâche, « # » titre se transforment en direct)"></div></div></div>
+      </div>
+      <div class="nt-side">
+        <div class="nt-i1"><div class="form-row">
+      <div class="form-group"><label class="form-label">Type</label><select class="form-input" id="pn-type"${dis}>${_NOTE_TYPES.map(t=>`<option${t===tp?' selected':''}>${t}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Date *</label><input class="form-input" type="date" id="pn-date" value="${n?n.date:_ymd(new Date())}"${dis}></div>
+    </div></div>
+        <div class="nt-i3"><div class="form-group"><label class="form-label">Participants</label><input class="form-input" type="text" id="pn-part" value="${_escA(n?.participants||'')}" placeholder="Ex : Mme Bertin (client), Charlotte (LCS)"${dis}>
+      ${ed&&cts.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">${cts.map(x=>{ const nm=[x.prenom,x.nom].filter(Boolean).join(' '); return `<button type="button" class="btn btn-secondary btn-sm" style="padding:1px 8px;font-size:11px" data-n="${_escA(nm)}" onclick="_notePart(this.dataset.n)">+ ${_escH(nm)}</button>`; }).join('')}</div>`:''}</div></div>
+        <div class="nt-i5"><div class="form-group"><label class="form-label">Lien du document (SharePoint…)</label><input class="form-input" type="url" id="pn-lien" value="${_escA(n?.lien||'')}" placeholder="https://"${dis}></div></div>
+        <div class="nt-i6"><div class="form-section">Actions décidées</div>
+    <div id="pn-acts"></div>
+    ${ed?`<button type="button" class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="_noteActAdd()">+ Action</button>`:''}</div>
+      </div></div>`;
+  const ce=document.getElementById('pn-cr'); ce.innerHTML=mdRender(n?n.contenu:'');
+  if(ed){
+    ce.addEventListener('keydown',_rteKey); ce.addEventListener('input',()=>_rteNorm(ce));
+    ce.addEventListener('paste',e=>{ e.preventDefault(); document.execCommand('insertText',false,(e.clipboardData||window.clipboardData).getData('text/plain')); });
+    ce.addEventListener('click',e=>{ if(e.target.classList&&e.target.classList.contains('md-box')) e.target.classList.toggle('on'); });
+  }
+  _noteActsRender(ed);
+  footer.innerHTML=!ed?`<button class="btn btn-secondary" onclick="closePanel()">Fermer</button>`
+    :(n?`<button class="btn btn-danger" style="margin-right:auto" onclick="delNote('${n.id}')">Supprimer</button>`:'')
+    +`<button class="btn btn-secondary" onclick="closePanel()">Annuler</button><button class="btn btn-primary" id="pn-save" onclick="saveNote('${_escA(data.cid)}','${n?n.id:''}')">Enregistrer</button>`;
+}
+function _notePart(nm){ const i=document.getElementById('pn-part'); if(!i) return; i.value=i.value.trim()?i.value.trim().replace(/,$/,'')+', '+nm:nm; }
+function _noteActsRender(ed){
+  if(ed===undefined) ed=_cliCanEdit();
+  const el=document.getElementById('pn-acts'); if(!el) return;
+  const ags=ga().filter(a=>!a.inactif).slice().sort((x,y)=>(x.nom||'').localeCompare(y.nom||'','fr')), dis=ed?'':' disabled';
+  el.innerHTML=_noteDraft.acts.length?_noteDraft.acts.map((a,i)=>`<div class="act-edit">
+      <input type="checkbox" ${a.fait?'checked':''}${dis} onchange="_noteActSet(${i},'fait',this.checked)" title="Fait">
+      <input class="form-input" type="text" value="${_escA(a.libelle)}" placeholder="Action à mener"${dis} oninput="_noteActSet(${i},'libelle',this.value)">
+      ${ed?`<button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px" onclick="_noteActDel(${i})" title="Retirer">×</button>`:'<span></span>'}
+      <span></span>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 140px;gap:6px">
+        <select class="form-input"${dis} onchange="_noteActSet(${i},'respId',this.value)"><option value="">Responsable…</option>${ags.map(g=>`<option value="${_escA(g.id)}"${g.id===a.respId?' selected':''}>${_escH(g.nom)}</option>`).join('')}</select>
+        <input class="form-input" type="date" value="${a.echeance||''}"${dis} onchange="_noteActSet(${i},'echeance',this.value)"></div>
+      <span></span></div>`).join(''):`<div class="cli-empty">Aucune action</div>`;
+}
+function _noteActSet(i,k,v){ if(_noteDraft.acts[i]) _noteDraft.acts[i][k]=v; }
+function _noteActAdd(){ _noteDraft.acts.push({ id:'', libelle:'', respId:'', echeance:'', fait:false }); _noteActsRender(true); const l=document.querySelectorAll('#pn-acts .act-edit input[type=text]'); if(l.length) l[l.length-1].focus(); }
+function _noteActDel(i){ const a=_noteDraft.acts.splice(i,1)[0]; if(a&&a.id) _noteDraft.del.push(a.id); _noteActsRender(true); }
+async function saveNote(cid,id){
+  if(!_cliCanEdit()){ toast('Réservé aux responsables opé',false); return; }
+  const v=i=>document.getElementById(i).value.trim();
+  const o={ clientId:cid, type:v('pn-type'), date:v('pn-date'), titre:v('pn-titre'), participants:v('pn-part'), contenu:_htmlToMd(document.getElementById('pn-cr')), lien:v('pn-lien') };
+  if(!o.date){ toast('Date requise',false); return; }
+  if(o.lien && !/^https?:\/\//i.test(o.lien)){ toast('Le lien doit commencer par http:// ou https://',false); return; }
+  const acts=_noteDraft.acts.filter(a=>(a.libelle||'').trim()), del=_noteDraft.del.slice();
+  _noteDraft.acts.forEach(a=>{ if(!(a.libelle||'').trim() && a.id) del.push(a.id); });
+  const f={ lcs_libelle:o.titre||o.type, lcs_type:o.type, lcs_date:o.date, lcs_participants:o.participants, lcs_contenu:o.contenu, lcs_lien:o.lien, lcs_client:'#'+cid };
+  const btn=document.getElementById('pn-save'); btn.disabled=true;
+  try{
+    o.id=await _cliDv('lcs_note',id,f);
+    for(const d of del) await _cliDvDel('lcs_noteaction',d);
+    for(const a of acts){
+      a.id=await _cliDv('lcs_noteaction',a.id,{ lcs_libelle:a.libelle.trim(), lcs_note:'#'+o.id, lcs_responsable:a.respId?_dvRef('agents',a.respId):'', lcs_echeance:a.echeance||'', lcs_fait:!!a.fait });
+    }
+  }catch(e){ console.error(e); toast('Enregistrement impossible',false); btn.disabled=false; return; }
+  o.actions=acts.map(a=>({ id:a.id, libelle:a.libelle.trim(), respId:a.respId||'', respG:'', echeance:a.echeance||'', fait:!!a.fait }));
+  const old=id&&_dvCli.notes.find(x=>x.id===id); if(old) Object.assign(old,o); else _dvCli.notes.push(o);
+  _cli.open[o.id]=1; closePanel(); toast(id?'Entrée modifiée':'Entrée ajoutée'); renderClients();
+}
+async function delNote(id){
+  if(!_cliCanEdit() || !confirm('Supprimer cette entrée et ses actions ?')) return;
+  try{ await _cliDvDel('lcs_note',id); }catch(e){ console.error(e); toast('Suppression impossible',false); return; }
+  _dvCli.notes=_dvCli.notes.filter(x=>x.id!==id); delete _cli.open[id];
+  closePanel(); toast('Entrée supprimée'); renderClients();
+}
+
 
 /* ═══════════════════════════════════════
    TOURNÉES
@@ -5852,7 +6549,7 @@ function buildPanelCreneau(body,footer,raw){
       <div style="width:38px;height:38px;border-radius:50%;background:var(--blue);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0">${agent.nom.charAt(0)}</div>
       <div>
         <div style="font-weight:700;font-size:14px">${_escH(agent.nom)}</div>
-        <span class="badge ${agentTypeBadgeClass(agent.type)}" style="font-size:10px">${agentTypeLabel(agent.type)}</span>
+        ${agentTypeBadges(agent,'font-size:10px')}
         ${agent.tel?`<div style="font-size:12px;color:var(--text2)"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M5 4h3l1.5 4-2 1.5a11 11 0 005 5l1.5-2 4 1.5v3a2 2 0 01-2 2A15 15 0 014 6a2 2 0 011-2z"/></svg> ${agent.tel}</div>`:''}
       </div>
       <span style="margin-left:auto;color:var(--text3);font-size:12px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"/></svg></span>
@@ -5895,7 +6592,7 @@ function buildPanelCreneau(body,footer,raw){
   } else if(!absence){
     // Chercher binôme : même affectation (site + créneau commun) et type "accueil" des deux côtés
     // (l'échange de créneau ne concerne que les postes fixes accueil, pas les multisites/logistique/etc.)
-    const isAccueil=(id)=>(ga().find(a=>a.id===id)?.type||'accueil')==='accueil';
+    const isAccueil=(id)=>{ const t=agTypes(ga().find(a=>a.id===id)); return t.includes('accueil')||t.includes('concierge'); };
     const binome=isAccueil(agent.id) ? gaf().filter(b=>b.siteId===af.siteId && b.id!==af.id && b.agentId!==agent.id && b.jours.some(j=>af.jours.includes(j)) && isAccueil(b.agentId)) : [];
     const swapIc='<svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M7 7h12l-3.2-3.2M17 17H5l3.2 3.2"/></svg>';
 
@@ -7110,7 +7807,7 @@ window.addEventListener('DOMContentLoaded', function(){
     showLoginScreen(false);
     if(iframed && location.hash!=='#demo'){ const b=document.getElementById('demo-banner'); if(b) b.style.display='block'; }
     Promise.all(FILES.map(f => fetch('./data/'+f+'.json').then(r=>r.ok?r.json():[]).catch(()=>[])))
-      .then(res => { FILES.forEach((f,i)=>_cache[f]=res[i]||[]); if(!gs().length) seed(); migrateTournees(); migrateAgentTypes(); migrateNomPrenom(); updateAbsenceBadge(); showView('planning'); });
+      .then(res => { FILES.forEach((f,i)=>_cache[f]=res[i]||[]); if(!gs().length) seed(); migrateTournees(); migrateAgentTypes(); migrateNomPrenom(); _cliDemoSeed(); updateAbsenceBadge(); showView('planning'); });
   } else {
     showLoginScreen(true);
   }
