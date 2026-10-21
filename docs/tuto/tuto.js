@@ -1,6 +1,6 @@
 /* Gestion Opé — tutoriel interactif (surcouche, mode démo) */
 (function(){
-const FONT_CSS='_ds/lcs-design-system-bd327249-21f0-4be1-9d16-17b906d09fd9/fonts/fonts.css';
+const FONT_CSS='tuto/fonts/fonts.css';
 const Y='#FCD727', K='#000', CREAM='#FFF8DA', GD='#505252', GL='#CDCCCC';
 const Z=2147483000, PAD=8;
 const LS='gope_tuto_done';
@@ -17,7 +17,7 @@ css.textContent=`
 .tt-card{position:fixed;z-index:${Z+2};width:370px;max-width:calc(100vw - 32px);background:${K};color:#fff;border-radius:20px;padding:20px 22px 18px;font-family:'MuseoSans',system-ui,sans-serif;box-shadow:0 18px 50px rgba(0,0,0,.35);transition:left .28s cubic-bezier(.3,.7,.2,1),top .28s cubic-bezier(.3,.7,.2,1),opacity .2s}
 .tt-card *{box-sizing:border-box}
 .tt-lab{font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:${Y};margin-bottom:8px;display:flex;gap:8px;align-items:center}
-.tt-ttl{font-family:'DK Lemon Yellow Sun',cursive;font-size:27px;line-height:1.08;font-weight:400;margin:0 0 10px;color:#fff}
+.tt-ttl{font-family:'MuseoSans',system-ui,sans-serif;font-size:25px;line-height:1.12;font-weight:900;letter-spacing:-.01em;margin:0 0 10px;color:#fff}
 .tt-txt{font-size:14px;line-height:1.55;font-weight:300;color:#fff}
 .tt-txt b{font-weight:700;color:${Y}}
 .tt-do{margin-top:12px;font-size:12.5px;font-weight:700;color:${Y};display:flex;gap:8px;align-items:flex-start;line-height:1.4}
@@ -100,7 +100,8 @@ function moisRow(c){
 async function resetData(){
   const res=await Promise.all(FILES.map(f=>fetch('./tuto/data/'+f+'.json').then(r=>r.ok?r.json():[]).catch(()=>[])));
   FILES.forEach((f,i)=>_cache[f]=res[i]||[]);
-  try{migrateTournees();migrateAgentTypes();migrateNomPrenom();}catch(e){}
+  try{migrateTournees();migrateAgentTypes();migrateNomPrenom();_cliDemoSeed();}catch(e){}
+  try{_site.sel=null;_site.tab='tous';_cli.sel=null;_cli.tab='tous';_cli.type='';_cli.open={};window._agIncomplets=false;ptTab='tous';const sc=$('#search-clients');if(sc)sc.value='';}catch(e){}
   tourneeFilter=[];siteFilter=[];agentFilter=[];
   try{const i=$('#scope-search-input');if(i)i.value='';closeScopeMenu();updateScopeLabel();}catch(e){}
   weekStart=getMonday(workDay());
@@ -112,6 +113,11 @@ async function resetData(){
   updateAbsenceBadge();
 }
 
+const cliCard=re=>$$('#clients-fiche .card').find(k=>re.test(k.querySelector('.cli-h')?.textContent||''));
+function seedAbs(c){
+  const abs=gab();abs.push({id:'tuto-abs',agentId:c.agent.id,dateDebut:c.dateStr,dateFin:c.dateStr,motif:'maladie',needsReplacement:true,remplacantId:null,siteId:c.site.id,notes:'',createdAt:new Date().toISOString()});
+  sab(abs);croiseScreen='postes';croiseScope='semaine';croiseGapKey=null;renderPlanning();
+}
 /* ─── chapitres ─── */
 const CH=[
 {id:'decouverte',t:"Découvrir l'interface",d:"Les zones de l'écran et où se fait chaque geste.",min:2,
@@ -120,7 +126,7 @@ const CH=[
   {t:'La semaine',el:()=>$('#header-week-section'),x:()=>`La semaine affichée. Les flèches avancent ou reculent, un clic sur la date ouvre le calendrier, <b>Auj.</b> ramène à aujourd'hui.`},
   {t:'Le filtre',el:()=>$('#scope-filter'),x:()=>`Tapez une <b>tournée</b>, un <b>site</b> ou un <b>agent</b> : le planning se restreint. Les sélections s'empilent en pastilles.`},
   {t:'Extraire',el:()=>$('button[onclick="openExport()"]'),x:()=>`Plannings, absences, retards et heures sup. : aperçu, <b>CSV</b> ou impression.`},
-  {t:'Le rail',el:()=>$('.nav-rail'),x:()=>`En haut, l'exploitation du quotidien. En bas, le référentiel : agents, sites, tournées, partage. Survolez une icône pour voir son nom.`},
+  {t:'Le rail',el:()=>$('.nav-rail'),x:()=>`En haut, l'exploitation du quotidien. En bas, le référentiel : agents, clients, sites, tournées. Survolez une icône pour voir son nom.`},
   {t:'Les alertes',skip:()=>!shown($('#alert-band'))&&!shown($('#cov-band')),el:()=>[$('#alert-band'),$('#cov-band')].filter(shown),x:()=>`<b>Rouge</b> : un agent absent sans remplaçant. <b>Ambre</b> : un créneau d'ouverture que personne ne tient. Chaque bande a son bouton pour régler le problème.`},
   {t:'Le planning',el:()=>[$('#planning-header'),...$$('#planning-rows .agent-row').slice(0,3)],x:()=>`Une ligne par agent, une colonne par jour. Chaque carte est un créneau : <b>site et horaires</b>.`},
   {t:'Le code couleur',el:()=>[$('#legend-btn'),$('#legend-popover')].filter(shown),
@@ -163,10 +169,10 @@ const CH=[
    todo:c=>`Cliquez sur la case du ${c.jourB}`,x:()=>`Second clic sur la même ligne : la fin. La période s'entoure en jaune.`},
   {t:'Déclarer',el:()=>$('#mois-selbar'),place:'top',done:()=>currentPanel==='panel-absence',auto:()=>moisDeclareAbsence(),
    todo:'Cliquez sur « Déclarer une absence »',x:()=>`La barre rappelle l'agent et la période.`},
-  {t:'Formulaire pré-rempli',el:()=>[grp('pa-agent'),$('#pa-debut')?.closest('.form-row')],place:'left',x:()=>`Agent, date de début et date de fin viennent de la sélection. Il reste le motif et le remplacement, comme au chapitre « Un agent appelle malade ».`,
+  {t:'Formulaire pré-rempli',el:()=>[grp('pa-agent'),$('#pa-debut')?.closest('.form-row')],place:'left',x:()=>`Agent, date de début et date de fin viennent de la sélection. Il reste le motif et le remplacement, comme au chapitre « Déclarer une absence ».`,
    leave:()=>{closePanel();moisSelMode=false;moisSelAgent=null;moisSelStart=null;moisSelEnd=null;renderMois();}}
  ]},
-{id:'absence',t:'Un agent appelle malade',d:"Déclarer l'absence depuis le planning.",min:2,
+{id:'absence',t:'Déclarer une absence',d:"Déclarer l'absence depuis le planning.",min:2,
  setup:c=>{},
  steps:[
   {t:'7 h 45, le téléphone sonne',x:c=>`<b>${esc(c.P)}</b> ne viendra pas ${c.jour}. Au planning : <b>${esc(c.site.nom)}</b>, ${c.af.debut}–${c.af.fin}. On retrouve sa ligne et on déclare l'absence.`},
@@ -191,16 +197,29 @@ const CH=[
   {t:'Le créneau passe en rouge',el:c=>cellFor(c),x:c=>`La carte de ${esc(c.P)} affiche <b>Absent</b>. Elle reste rouge tant que personne ne la reprend.`},
   {t:'L’alerte',el:()=>$('#alert-band'),x:()=>`La bande rouge compte les absences sans remplaçant, sur toutes les vues planning. Son bouton mène droit à la liste à combler.`}
  ]},
-{id:'remplacant',t:'Trouver un remplaçant',d:'Couvrir un poste avec le planning croisé.',min:2,
- setup:c=>{
-   const abs=gab();abs.push({id:'tuto-abs',agentId:c.agent.id,dateDebut:c.dateStr,dateFin:c.dateStr,motif:'maladie',needsReplacement:true,remplacantId:null,siteId:c.site.id,notes:'',createdAt:new Date().toISOString()});
-   sab(abs);croiseScreen='postes';croiseScope='semaine';croiseGapKey=null;renderPlanning();
- },
+{id:'remplacant',t:'Trouver un remplaçant',d:'Le cas courant : depuis le planning de la semaine.',min:2,
+ setup:c=>seedAbs(c),
  steps:[
-  {t:'Un poste à couvrir',x:c=>`<b>${esc(c.P)}</b> est absent·e ${c.jour}. Personne ne tient <b>${esc(c.site.nom)}</b> de ${c.af.debut} à ${c.af.fin}. Il faut trouver quelqu'un de libre.`},
-  {t:'L’alerte',el:()=>$('#alert-band'),x:()=>`La bande rouge le signale sur le planning.`},
+  {t:'Un poste à couvrir',x:c=>`<b>${esc(c.P)}</b> est absent·e ${c.jour}. Personne ne tient <b>${esc(c.site.nom)}</b> de ${c.af.debut} à ${c.af.fin}. Le cas le plus fréquent se règle directement depuis le <b>planning de la semaine</b>.`},
+  {t:'L’alerte',el:()=>$('#alert-band'),x:()=>`La bande rouge compte les absences sans remplaçant.`},
+  {t:'Plusieurs entrées possibles',el:c=>cellFor(c)?.querySelector('.shift-bar-absent'),x:c=>`La carte rouge de ${esc(c.P)} est cliquable : son panneau propose <b>Trouver un remplaçant</b>. Même bouton depuis la liste des Absences et depuis le détail d'un jour au planning du mois. Ici, on passe par la bande rouge.`},
+  {t:'Absences à combler',el:()=>byText('#alert-band button',/Absences à combler/),done:()=>currentPanel==='panel-remplacer',auto:()=>goAbsencesToFill(),
+   todo:'Cliquez sur « Absences à combler »',x:()=>`Le bouton amène la semaine sur l'absence concernée, la fait clignoter et ouvre le panneau de remplacement.`},
+  {t:'Le panneau',el:()=>$('#side-panel'),place:'left',x:()=>`En haut, le rappel de l'absence. Dessous, un sélecteur par <b>bloc à couvrir</b> : site et horaires. Une absence de plusieurs jours propose aussi un remplaçant unique pour toute la période.`},
+  {t:'Choisir',el:()=>[$('#pr-search')?.closest('.form-group'),$('.pr-block')].filter(Boolean),place:'left',
+   done:()=>!!$('.pr-block')?.value,auto:()=>{const sel=$('.pr-block');const m=(window._prBlockConf||{})[sel.dataset.af]||{};const o=[...sel.options].find(o=>o.value&&!m[o.value]);if(o){sel.value=o.value;prCheckBlock(sel);}},
+   todo:'Choisissez un remplaçant dans la liste',x:()=>`Les candidats sont classés : <b>formé</b> sur le site ou non, libre ou déjà occupé avec l'endroit. Un avertissement rouge apparaît en cas de conflit. Le champ au-dessus filtre par nom.`},
+  {t:'Enregistrer',enter:c=>{c.nR=gr().length;},el:()=>byText('#panel-footer button',/Enregistrer/),place:'left',done:c=>gr().length>c.nR,auto:()=>confirmerRepl('tuto-abs'),
+   todo:'Cliquez sur « Enregistrer »',x:()=>`Le remplacement est enregistré et apparaît dans l'<b>Historique</b>.`},
+  {t:'Le cas particulier',el:()=>$('#nav-croise'),x:()=>`Quand plusieurs absences se chevauchent ou qu'il faut arbitrer entre plusieurs agents, le <b>planning croisé</b> prend le relais. C'est le chapitre suivant.`},
+  {t:'C’est réglé',enter:c=>{siteFilter=[c.site.id];tourneeFilter=[];agentFilter=[];try{updateScopeLabel();}catch(e){}refreshCurrentView();},el:c=>cellFor(c),x:c=>`Le planning est filtré sur <b>${esc(c.site.nom)}</b>. La carte de ${esc(c.P)} passe au <b>jaune</b> avec le prénom du remplaçant, et le poste apparaît sur la ligne du remplaçant. La bande rouge a disparu.`}
+ ]},
+{id:'croise',t:'Cas complexe : planning croisé',d:'Plusieurs agents et plannings à arbitrer.',min:2,
+ setup:c=>seedAbs(c),
+ steps:[
+  {t:'Quand l’utiliser',x:c=>`Le panneau du planning suffit pour un poste isolé. Dès qu'il y a <b>plusieurs absences</b> en même temps ou des <b>plannings individuels</b> à comparer, le planning croisé met tout à plat. Exemple : <b>${esc(c.P)}</b> est absent·e ${c.jour}, ${esc(c.site.nom)} n'est plus tenu.`},
   {t:'Le planning croisé',el:()=>$('#nav-croise'),done:()=>currentView==='croise',auto:()=>showView('croise'),
-   todo:'Cliquez sur l’icône du planning croisé',x:()=>`C'est l'outil d'aide à la décision pour les remplacements.`},
+   todo:'Cliquez sur l’icône du planning croisé',x:()=>`L'outil d'aide à la décision pour les remplacements délicats.`},
   {t:'Deux écrans',el:()=>$('.croise-seg'),x:()=>`<b>Postes à couvrir</b> : la liste et les candidats. <b>Calendrier croisé</b> : les journées des remplaçants superposées. On commence par la liste.`},
   {t:'Le poste',el:c=>$$('.cx-gap-row').find(r=>(r.dataset.q||'').includes(c.agent.nom.toLowerCase())),
    x:c=>`Les postes de la semaine. Point rouge : non couvert. Titulaire : ${esc(c.P)}. Le poste sélectionné est surligné ; ses candidats s'affichent à droite.`},
@@ -210,7 +229,9 @@ const CH=[
    auto:()=>{const c=$('.cx-cand.reco')||$$('.cx-cand').find(x=>/Libre/.test(x.textContent))||$('.cx-cand');byText('span',/^Assigner$/,c)?.click();},
    todo:'Cliquez sur « Assigner »',x:()=>`Sur la ligne du candidat proposé.`},
   {t:'Poste couvert',el:()=>$('.cx-gap-row.sel'),x:()=>`Le poste passe au vert avec le prénom du remplaçant. Le remplacement est enregistré et apparaît dans l'<b>Historique</b>.`},
-  {t:'Le calendrier croisé',el:()=>$('.croise-seg-btn[data-cseg="calendrier"]'),x:()=>`Pour arbitrer entre plusieurs candidats, cet écran superpose leurs journées de 7 h à 19 h. On peut y glisser un agent directement sur le poste.`},
+  {t:'Le calendrier croisé',el:()=>$('.croise-seg-btn[data-cseg="calendrier"]'),done:()=>croiseScreen==='calendrier',auto:()=>croiseGo('calendrier'),
+   todo:'Cliquez sur « Calendrier croisé »',x:()=>`Pour arbitrer entre plusieurs candidats.`},
+  {t:'Les journées superposées',el:()=>$('#view-croise'),place:'center',x:()=>`Les journées des candidats se superposent de 7 h à 19 h : on voit qui est libre, quand, et où. On peut glisser un agent directement sur le poste à couvrir.`},
   {t:'Retour au planning',el:()=>$('#nav-planning'),done:()=>currentView==='planning',auto:()=>showView('planning'),todo:'Cliquez sur le planning semaine',x:()=>`Vérifions le résultat.`},
   {t:'C’est réglé',enter:c=>{siteFilter=[c.site.id];tourneeFilter=[];agentFilter=[];try{updateScopeLabel();}catch(e){}refreshCurrentView();},el:c=>cellFor(c),x:c=>`Le planning est filtré sur <b>${esc(c.site.nom)}</b>. La carte de ${esc(c.P)} passe au <b>jaune</b> avec le prénom du remplaçant, et le poste apparaît sur la ligne du remplaçant. La bande rouge a disparu.`}
  ]},
@@ -226,7 +247,8 @@ const CH=[
    done:c=>$$('#panel-body .cov-row').length<c.nCov,auto:()=>byText('#panel-body .cov-row button',/C'est normal/)?.click(),
    todo:'Cliquez sur « C’est normal »',x:()=>`Si le site n'a besoin de personne à ce moment, ce bouton fait taire l'alerte pour ce créneau.`},
   {t:'Côté sites',enter:()=>closePanel(),el:()=>$('#nav-sites'),done:()=>currentView==='sites',auto:()=>showView('sites'),todo:'Ouvrez les Sites',x:()=>`La même information vit sur les fiches.`},
-  {t:'La pastille',el:()=>byText('#sites-grid .badge',/non couvert/),x:()=>`Chaque carte signale ses créneaux non couverts. Un clic sur la pastille rouvre la liste.`}
+  {t:'Sites non couverts',el:()=>byText('#sites-tabs .tab',/Non couverts/),done:()=>_site.tab==='trous',auto:()=>siteTab('trous'),todo:'Cliquez sur l’onglet « Non couverts »',x:()=>`L'onglet isole les sites dont un créneau d'ouverture récurrent n'a aucun agent. Un point orange les repère aussi dans la liste.`},
+  {t:'La fiche du site',el:()=>$$('#sites-fiche .cli-pill').find(k=>/non couvert/.test(k.textContent))||$('#sites-fiche'),place:'left',x:()=>`La fiche rappelle les créneaux non couverts. Un clic sur la pastille orange rouvre la liste détaillée ; la carte <b>Couverture</b> les répète, avec les mêmes boutons pour corriger.`}
  ]},
 {id:'fermeture',t:"Fermeture exceptionnelle d'un site",d:'Fermer un site un jour donné et libérer ses agents.',min:2,
  steps:[
@@ -235,35 +257,58 @@ const CH=[
   {t:'Rechercher',el:()=>$('#search-sites')?.closest('.search-bar'),
    done:c=>c.site.nom.toLowerCase().includes(($('#search-sites')?.value||'~').toLowerCase().trim())&&($('#search-sites')?.value||'').trim().length>2,
    auto:c=>{const i=$('#search-sites');i.value=c.site.nom;renderSites();},todo:c=>`Tapez « ${esc(c.site.nom.split(/[ —-]/)[0])} »`,x:()=>`Toutes les listes longues ont leur champ de recherche.`},
-  {t:'Ouvrir la fiche',el:c=>{const card=$$('#sites-grid .card').find(k=>k.textContent.includes(c.site.nom));return card?.querySelector(`.btn-icon[onclick*="panel-site"]`);},
-   done:()=>currentPanel==='panel-site',auto:c=>openPanel('panel-site',c.site.id),todo:'Cliquez sur le crayon',x:()=>`La fiche site s'ouvre dans le panneau.`},
-  {t:'La période',el:()=>{const r=$('#pf-debut')?.closest('.form-row');if(r)reveal(r);return [r,grp('pf-motif')];},place:'left',
-   done:()=>!!$('#pf-debut')?.value,auto:c=>{$('#pf-debut').value=c.dateStr;$('#pf-fin').value=c.dateStr;$('#pf-motif').value='Fermeture exceptionnelle';},
-   todo:'Saisissez la date dans « Du »',x:c=>`Section Fermetures : <b>${c.jour}</b> du… au…, et un motif.`},
-  {t:'Ajouter',enter:c=>{c.nF=$$('#ps-ferms > *').length;},el:()=>byText('#panel-body button',/Ajouter une fermeture/),place:'left',
-   done:c=>$$('#ps-ferms > *').length>c.nF,auto:()=>addSiteFerm(),todo:'Cliquez sur « + Ajouter une fermeture »',x:()=>`La plage rejoint la liste des fermetures du site.`},
-  {t:'Enregistrer',enter:c=>{c.nG=gferm().length;},el:()=>byText('#panel-footer button',/Enregistrer/),place:'left',
-   done:c=>gferm().length>c.nG,auto:()=>saveSite(),todo:'Cliquez sur « Enregistrer »',x:()=>`La fermeture est active.`},
+  {t:'Ouvrir la fiche',el:c=>$$('#sites-list .cli-item').find(k=>k.textContent.includes(c.site.nom)),
+   done:c=>_site.sel===c.site.id,auto:c=>siteSelect(c.site.id),todo:'Cliquez sur le site dans la liste',x:()=>`La fiche s'affiche à droite : ouverture, informations, contacts, agents affectés et couverture.`},
+  {t:'Les fermetures',el:()=>byText('#sites-fiche button',/Ajouter une fermeture/),done:()=>shown($('#sf-form')),auto:()=>siteFermToggle(),
+   todo:'Cliquez sur « + Ajouter une fermeture »',x:()=>`Les fermetures se programment directement sur la fiche du site.`},
+  {t:'La période',el:()=>$('#sf-form'),done:()=>!!$('#sf-debut')?.value,auto:c=>{$('#sf-debut').value=c.dateStr;$('#sf-fin').value=c.dateStr;$('#sf-motif').value='Fermeture exceptionnelle';},
+   todo:'Saisissez la date dans « Du »',x:c=>`<b>${c.jour}</b> : début, fin et motif. Sans date de fin, la fermeture dure un seul jour.`},
+  {t:'Enregistrer',enter:c=>{c.nG=gferm().length;},el:()=>byText('#sf-form button',/Enregistrer la fermeture/),
+   done:c=>gferm().length>c.nG,auto:c=>siteFermAdd(c.site.id),todo:'Cliquez sur « Enregistrer la fermeture »',x:()=>`La fermeture rejoint la liste de la fiche. Une pastille « Fermé jusqu'au… » apparaît tant qu'elle est en cours.`},
   {t:'Au planning',enter:c=>{closePanel();showView('planning');siteFilter=[c.site.id];tourneeFilter=[];agentFilter=[];try{updateScopeLabel();}catch(e){}refreshCurrentView();},el:c=>cellFor(c),x:c=>`Planning filtré sur le site. La carte de ${esc(c.P)} affiche <b>Fermé</b>, hachurée. Elle ne compte plus dans ses heures, ne crée pas d'alerte, et ${esc(c.P)} peut être proposé·e en remplacement ce jour-là.`}
  ]},
 {id:'agents',t:'Fiche agent et archivage',d:'Profils, sites maîtrisés, départ d’un agent.',min:2,
  steps:[
   {t:'Les fiches agents',x:()=>`Elles alimentent les propositions de remplaçant : un profil et des sites maîtrisés bien renseignés donnent de meilleures suggestions.`},
   {t:'Les agents',el:()=>$('#nav-agents'),done:()=>currentView==='agents',auto:()=>showView('agents'),todo:'Cliquez sur l’icône Agents',x:()=>`La liste de l'équipe.`},
-  {t:'Les profils',el:()=>$('#view-agents .tabs'),x:()=>`<b>Multisite</b> = remplaçants. Logistique, factotum et chantier ne comptent pas pour couvrir un accueil.`},
+  {t:'Les profils',el:()=>$('#view-agents .tabs'),x:()=>`<b>Concierge</b>, <b>accueil</b> et <b>multisite</b> (les remplaçants) couvrent les ouvertures de site. Logistique, factotum et chantier n'en font pas partie. L'onglet <b>Responsables opé</b> regroupe ceux qui peuvent effectuer des remplacements.`},
   {t:'Rechercher',el:()=>$('#search-agents')?.closest('.search-bar'),
    done:c=>($('#search-agents')?.value||'').trim().length>1&&c.agent.nom.toLowerCase().includes($('#search-agents').value.toLowerCase().trim()),
    auto:c=>{$('#search-agents').value=c.P;renderAgents();},todo:c=>`Tapez « ${esc(c.P)} »`,x:()=>``},
   {t:'La carte',el:c=>$$('#agents-grid .card').find(k=>k.textContent.includes(c.agent.nom)),x:()=>`Coordonnées, sites maîtrisés et affectations, dépliables.`},
   {t:'Modifier',el:c=>$$('#agents-grid .card').find(k=>k.textContent.includes(c.agent.nom))?.querySelector('.btn-icon:not(.red)'),
    done:()=>currentPanel==='panel-agent',auto:c=>openPanel('panel-agent',c.agent.id),todo:'Cliquez sur le crayon',x:()=>`La fiche s'ouvre.`},
-  {t:'Le type',el:()=>grp('pa2-type'),place:'left',x:()=>`Accueil, multisite, logistique, factotum, chantier. Il détermine qui est proposé pour couvrir quoi.`},
+  {t:'Le type',el:()=>grp('pa2-type'),place:'left',x:()=>`Concierge, accueil, multisite, logistique, factotum, chantier. Plusieurs types peuvent se cumuler. Il détermine qui est proposé pour couvrir quoi.`},
   {t:'Sites maîtrisés',el:()=>{const g=$('#pa2-comps')?.closest('.form-group');if(g)reveal(g);return g;},place:'left',x:()=>`Cochez les sites que l'agent sait tenir. Le planning croisé les place en tête avec le badge <b>formé</b>.`},
   {t:'Un départ',enter:()=>closePanel(),el:c=>$$('#agents-grid .card').find(k=>k.textContent.includes(c.agent.nom))?.querySelector('.btn-icon.red'),
    done:c=>!!ga().find(a=>a.id===c.agent.id)?.inactif,auto:c=>noConfirm(()=>delAgent(c.agent.id)),
    todo:'Cliquez sur la corbeille, puis confirmez',x:()=>`On archive plutôt que de supprimer : ses affectations sont retirées, son historique reste.`},
   {t:'Les archivés',el:()=>byText('#view-agents .tab',/Archivés/),done:()=>agTab==='archives',auto:()=>byText('#view-agents .tab',/Archivés/)?.click(),todo:'Cliquez sur l’onglet « Archivés »',x:()=>``},
   {t:'Réversible',el:c=>$$('#agents-grid .card').find(k=>k.textContent.includes(c.agent.nom)),x:()=>`Absences, remplacements et pointages passés sont conservés. La flèche circulaire réactive l'agent.`}
+ ]},
+{id:'clients',t:'Clients et journal',d:'Contrat, contacts, sites et journal des échanges.',min:2,
+ setup:c=>{c.cli=_dvCli.clients[0];c.cid=c.cli&&c.cli.id;c.cnom=c.cli?c.cli.nom:'';c.cq=(c.cnom.split(/\s+/)[0]||'').toLowerCase();},
+ steps:[
+  {t:'Un client, plusieurs sites',x:()=>`Un client regroupe ses <b>sites</b>, ses <b>contacts</b>, son <b>contrat</b> et le <b>journal</b> des échanges. Les agents affectés, la couverture et les absences de ses sites s'y retrouvent aussi.`},
+  {t:'Les clients',el:()=>$('#nav-clients'),done:()=>currentView==='clients',auto:()=>showView('clients'),todo:'Cliquez sur l’icône Clients',x:()=>`Dans le rail, à côté des agents et des sites.`},
+  {t:'La liste',el:()=>$('#clients-list'),place:'right',x:()=>`Liste à gauche, fiche à droite. Un point coloré signale une alerte : fin de contrat proche ou bilan en retard.`},
+  {t:'À traiter',el:()=>byText('#clients-tabs .tab',/À traiter/),done:()=>_cli.tab==='alertes',auto:()=>cliTab('alertes'),todo:'Cliquez sur l’onglet « À traiter »',x:()=>`Il ne garde que les clients qui demandent une action.`},
+  {t:'Rechercher',enter:()=>cliTab('tous'),el:()=>$('#search-clients')?.closest('.search-bar'),
+   done:c=>($('#search-clients')?.value||'').trim().length>2,auto:c=>{const i=$('#search-clients');i.value=c.cq;renderClients();},
+   todo:c=>`Tapez « ${esc(c.cq)} »`,x:()=>`La recherche porte sur le client, ses sites et ses contacts.`},
+  {t:'Ouvrir la fiche',el:c=>$$('#clients-list .cli-item').find(k=>k.textContent.includes(c.cnom)),done:c=>_cli.sel===c.cid,auto:c=>cliSelect(c.cid),todo:'Cliquez sur le client',x:()=>`La fiche s'ouvre à droite.`},
+  {t:'La fiche',el:()=>$('#clients-fiche'),place:'left',x:()=>`En-tête avec contrat et filiale, puis des cartes : <b>contacts</b>, <b>sites</b>, <b>agents affectés</b>, <b>couverture</b>, <b>absences et remplacements</b> sur ± 30 jours.`},
+  {t:'Les contacts',el:()=>cliCard(/^Contacts/),place:'left',x:()=>`Un contact peut être rattaché au client entier ou à un site précis. Les numéros et adresses sont cliquables.`},
+  {t:'Le journal',el:()=>cliCard(/^Journal/),place:'left',x:()=>`Bilans, comptes rendus, appels, réclamations, notes internes. Les pastilles du haut filtrent par type.`},
+  {t:'Lire une entrée',el:()=>$$('#clients-fiche .note-h').find(h=>!h.parentElement.classList.contains('open'))||$('#clients-fiche .note-h'),
+   done:()=>!!$('#clients-fiche .note.open'),auto:()=>($$('#clients-fiche .note-h').find(h=>!h.parentElement.classList.contains('open'))||$('#clients-fiche .note-h'))?.click(),
+   todo:'Cliquez sur une entrée',x:()=>`Un clic la déplie : participants, compte rendu mis en forme, actions décidées avec responsable et échéance. Une case à cocher marque l'action faite.`},
+  {t:'Nouvelle entrée',el:()=>byText('#clients-fiche button',/\+ Entrée/),done:()=>currentPanel==='panel-note',auto:c=>openPanel('panel-note',{cid:c.cid}),todo:'Cliquez sur « + Entrée »',x:()=>`Après un appel ou une réunion, on garde une trace ici.`},
+  {t:'L’objet',el:()=>$('#pn-titre')?.closest('.form-group'),place:'left',done:()=>!!$('#pn-titre')?.value.trim(),auto:()=>{const i=$('#pn-titre');i.value='Point de suivi';},
+   todo:'Saisissez un objet',x:()=>`Un titre court. À droite : le <b>type</b> d'entrée et la <b>date</b>.`},
+  {t:'Le contenu',el:()=>[$('#pn-tools'),$('#pn-cr')].filter(Boolean),place:'left',x:()=>`Une barre de mise en forme, ou directement au clavier : « - » crée une liste, « [] » une tâche, « # » un titre.`},
+  {t:'Participants et actions',el:()=>[$('#pn-part')?.closest('.form-group'),$('.nt-i6')].filter(Boolean),place:'left',x:()=>`Les participants se complètent avec les contacts du client. Chaque <b>action décidée</b> a un libellé, un responsable et une échéance.`},
+  {t:'Enregistrer',enter:c=>{c.nN=_dvCli.notes.length;},el:()=>$('#pn-save'),place:'left',done:c=>_dvCli.notes.length>c.nN,auto:c=>saveNote(c.cid,''),todo:'Cliquez sur « Enregistrer »',x:()=>`L'entrée rejoint le journal du client. En démonstration, rien n'est conservé.`}
  ]},
 {id:'tournees',t:'Tournées logistiques',d:'Sites desservis par un même agent, dans l’ordre.',min:1,
  setup:c=>{
@@ -282,6 +327,19 @@ const CH=[
    done:c=>!!c.tour&&tourneeFilter.includes(c.tour.id),auto:c=>{if(c.tour){selectScope('tournee',c.tour.id);}},
    todo:c=>`Tapez « ${esc(c.tour?c.tour.nom:'')} » puis cliquez la tournée`,x:()=>`Le filtre de l'en-tête accepte aussi les tournées.`},
   {t:'Planning de la tournée',enter:()=>{try{closeScopeMenu();}catch(e){}},el:()=>$('#planning-container'),place:'center',x:()=>`Seuls les sites et agents de la tournée restent affichés, en semaine comme au mois. La croix du filtre remet tout le planning.`}
+ ]},
+{id:'pointage',t:'Retards et heures sup.',d:'Noter un retard ou une heure supplémentaire.',min:1,
+ steps:[
+  {t:'Le suivi du temps',x:()=>`Chaque retard et chaque heure supplémentaire se note par agent, avec le site et la durée.`},
+  {t:'Ouvrir le suivi',el:()=>$('#nav-suivi'),done:()=>currentView==='pointage',auto:()=>showView('pointage'),todo:'Cliquez sur l’icône Retards et H. sup.',x:()=>`Dans le rail, à côté du planning du mois.`},
+  {t:'Les compteurs',el:()=>$('#pt-stats'),x:()=>`Un résumé des événements enregistrés.`},
+  {t:'Les onglets',el:()=>$('#view-pointage .tabs'),x:()=>`<b>Tous</b>, <b>Retards</b> ou <b>Heures sup.</b> pour filtrer la liste.`},
+  {t:'Ajouter',el:()=>byText('#view-pointage .page-heading button',/Ajouter/),done:()=>currentPanel==='panel-pointage',auto:()=>openPanel('panel-pointage'),todo:'Cliquez sur « + Ajouter »',x:()=>`Le formulaire s'ouvre dans le panneau.`},
+  {t:'Qui, quoi, où',el:()=>[grp('ppt-type'),grp('ppt-agent'),grp('ppt-site')].filter(Boolean),place:'left',
+   done:c=>!!$('#ppt-agent')?.value&&!!$('#ppt-duree')?.value,auto:c=>{$('#ppt-agent').value=c.agent.id;$('#ppt-duree').value=20;},
+   todo:'Choisissez un agent et saisissez une durée',x:()=>`Retard ou heure supplémentaire, l'agent concerné et le site. La date vaut aujourd'hui par défaut ; la durée se compte en minutes.`},
+  {t:'Enregistrer',enter:c=>{c.nP=gpt().length;},el:()=>byText('#panel-footer button',/Enregistrer/),place:'left',done:c=>gpt().length>c.nP,auto:()=>savePointage(),todo:'Cliquez sur « Enregistrer »',x:()=>`L'événement est ajouté.`},
+  {t:'Dans la liste',el:()=>$('#pt-list'),place:'center',x:()=>`Chaque ligne se supprime au besoin. Ces données alimentent l'extraction en haut de l'écran.`}
  ]}
 ];
 
@@ -409,7 +467,7 @@ function openMenu(justDone){
       <span style="width:11px;height:11px;border-radius:50%;background:${Y}"></span>
       <span style="font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:${GD}">La Conciergerie Solidaire · Gestion Opé</span>
     </div>
-    <h1 style="font-family:'DK Lemon Yellow Sun',cursive;font-weight:400;font-size:46px;line-height:1;margin:0 0 12px">${justDone?'Chapitre terminé':'Prise en main'}</h1>
+    <h1 style="font-family:'MuseoSans',system-ui,sans-serif;font-weight:900;letter-spacing:-.02em;font-size:44px;line-height:1.02;margin:0 0 12px">${justDone?'Chapitre terminé':'Prise en main'}</h1>
     <p style="margin:0;font-size:15px;line-height:1.55;color:${GD};max-width:40em">${justDone?(nextCh?`Suite conseillée : <b style="color:${K}">${esc(nextCh.t)}</b>.`:'Choisissez un autre chapitre, ou explorez librement.'):`${CH.length} parcours courts sur les données de démonstration. Chaque chapitre repart des données d'origine et rien n'est enregistré : essayez sans crainte. À chaque étape, faites le geste vous-même ou cliquez « Le faire pour moi ».`}</p>
     <div class="tt-grid">${CH.map((c,i)=>`<button class="tt-ch${dn.has(c.id)?' done':''}" data-i="${i}">
       <div style="display:flex;align-items:center;justify-content:space-between"><span class="tt-num">${dn.has(c.id)?'✓':i+1}</span><span style="font-size:11px;color:${GD};font-weight:500">${c.steps.length} étapes · ${c.min} min</span></div>
