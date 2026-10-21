@@ -879,7 +879,9 @@ body.side-panel-open #mois-selbar { left: calc(50% - var(--panel-w) / 2) !import
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
+.panel-footer > .btn { flex: 1 1 0; white-space: nowrap; padding-left: 10px; padding-right: 10px; justify-content: center; }
 
 /* ── VUES SECONDAIRES ────────────────────── */
 .view-page {
@@ -922,7 +924,7 @@ body.side-panel-open #mois-selbar { left: calc(50% - var(--panel-w) / 2) !import
 .btn-icon {
   width: 28px; height: 28px; padding: 0;
   border-radius: var(--radius-sm);
-  background: transparent;
+  background: var(--white);
   border: 1px solid var(--border);
   color: var(--text3);
   cursor: pointer;
@@ -1407,10 +1409,6 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
       <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="6" cy="6.5" r="2.4"/><circle cx="18" cy="17.5" r="2.4"/><path d="M8.4 6.5H15a3 3 0 010 6H9a3 3 0 000 6h6.6"/></svg>
       <span class="tooltip">Tournées</span>
     </button>
-    <button class="nav-btn" onclick="showView('partage')" id="nav-partage">
-      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-4M8.6 13.4l6.8 4"/></svg>
-      <span class="tooltip">Partage aux agents</span>
-    </button>
     <button class="nav-btn" onclick="showView('affect')" id="nav-affect" style="display:none">
       <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="4" y="4" width="7" height="7" rx="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.6"/><rect x="13" y="13" width="7" height="7" rx="1.6"/></svg>
       <span class="tooltip">Affectations</span>
@@ -1649,37 +1647,6 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
           <input type="text" placeholder="Rechercher par agent ou site…" id="search-affect" oninput="renderAffect()">
         </div>
         <div id="affect-list"></div>
-      </div>
-    </div>
-
-    <!-- ── PARTAGE ───────────────────────── -->
-    <div class="view" id="view-partage">
-      <div class="view-page">
-        <div class="page-heading">
-          <div><h1>Partage aux agents</h1><div class="page-heading-sub" id="partage-sub">Un lien de consultation par agent, à envoyer par mail ou à imprimer.</div></div>
-        </div>
-
-        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:12px">
-          <div class="form-group" style="margin:0;min-width:190px">
-            <label class="form-label">Période partagée</label>
-            <select class="form-input" id="part-weeks" onchange="partSetWeeks(this.value)">
-              <option value="2">2 semaines</option>
-              <option value="4" selected>4 semaines</option>
-              <option value="8">8 semaines</option>
-            </select>
-          </div>
-          <div class="form-group" style="margin:0;flex:1;min-width:240px">
-            <label class="form-label">Message joint au lien (facultatif)</label>
-            <input type="text" class="form-input" id="part-msg" placeholder="ex : changement sur le site Darwin à partir de lundi" onchange="partSetMsg(this.value)">
-          </div>
-          <button class="btn btn-secondary" onclick="partCsv()">Exporter la liste (CSV)</button>
-        </div>
-
-        <div class="search-bar">
-          <span class="search-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg></span>
-          <input type="text" placeholder="Rechercher un agent…" id="search-partage" oninput="renderPartage()">
-        </div>
-        <div id="partage-list"></div>
       </div>
     </div>
 
@@ -1992,7 +1959,7 @@ function dvToApp(R){
     return o; });
   const TYPE = { 'Accueil':'accueil','Concierge':'concierge','Chantier':'chantier','Multisite':'multisite','Logistique':'logistique','Factotum':'factotum','Siège':'siege' };
   const agents = R.agent.filter(a => F(a,'lcs_type')!=='Siège' || _DV_TOUJOURS.test(V(a,'lcs_nom'))).map(a => ({ id:id(a.lcs_agentid), nom:[V(a,'lcs_nom'),V(a,'lcs_prenom')].filter(Boolean).join(' '), nomFamille:V(a,'lcs_nom'), prenom:V(a,'lcs_prenom'),
-    types:(F(a,'lcs_types')||'').split(/\s*;\s*/).map(x=>TYPE[x]).filter(Boolean), type:TYPE[F(a,'lcs_type')]||'accueil', email:V(a,'lcs_mailpro')||V(a,'lcs_mailperso'), tel:V(a,'lcs_telperso')||V(a,'lcs_telpro'), telPro:V(a,'lcs_telpro'), telPerso:V(a,'lcs_telperso'), remplacant:!!a.lcs_remplacant,
+    types:(F(a,'lcs_types')||'').split(/\s*;\s*/).map(x=>TYPE[x]).filter(Boolean), type:TYPE[F(a,'lcs_type')]||'accueil', email:V(a,'lcs_mailpro')||V(a,'lcs_mailperso'), emailPro:V(a,'lcs_mailpro'), emailPerso:V(a,'lcs_mailperso'), tel:V(a,'lcs_telperso')||V(a,'lcs_telpro'), telPro:V(a,'lcs_telpro'), telPerso:V(a,'lcs_telperso'), remplacant:!!a.lcs_remplacant,
     respOpe:!!a.lcs_responsableope, inactif:a.statecode===1, notes:V(a,'lcs_notes'), competences:(comp[a.lcs_agentid]||[]).map(c=>id(LK(c,'lcs_site'))).filter(Boolean),
     filiale:LK(a,'lcs_filiale'), contratDebut:(V(a,'lcs_debutcontrat')+'').slice(0,10), contratFin:(V(a,'lcs_fincontrat')+'').slice(0,10), contratHebdo:a.lcs_volumehebdo==null?null:Number(a.lcs_volumehebdo), _dvid:a.lcs_agentid }));
   agents.forEach(a=>{ if(!a.types.length) a.types=[a.type]; a.type=a.types[0]; });
@@ -2179,7 +2146,7 @@ const _DVL = {
     const TY={ accueil:'Accueil', concierge:'Concierge', chantier:'Chantier', multisite:'Multisite', logistique:'Logistique', factotum:'Factotum', siege:'Siège' };
     return { f:{ lcs_nom:a.nomFamille||a.nom||'', lcs_prenom:a.nomFamille ? (a.prenom||'') : undefined, lcs_type:TY[a.type]||'Accueil', lcs_types:agTypes(a).map(t=>TY[t]).filter(Boolean), lcs_remplacant:!!a.remplacant, lcs_responsableope:!!a.respOpe,
         lcs_filiale:(f=>f?'#'+f:undefined)(_agentFiliale(a)),
-        lcs_mailpro:pro ? a.email : '', lcs_mailperso:pro ? undefined : (a.email||''), lcs_telpro:a.telPro!=null ? a.telPro : undefined, lcs_telperso:a.telPerso!=null ? a.telPerso : (a.tel||''), lcs_notes:a.notes||'',
+        lcs_mailpro:a.emailPro!=null ? a.emailPro : (pro ? a.email : ''), lcs_mailperso:a.emailPerso!=null ? a.emailPerso : (pro ? undefined : (a.email||'')), lcs_telpro:a.telPro!=null ? a.telPro : undefined, lcs_telperso:a.telPerso!=null ? a.telPerso : (a.tel||''), lcs_notes:a.notes||'',
         lcs_debutcontrat:a.contratDebut||'', lcs_fincontrat:a.contratFin||'', lcs_volumehebdo:a.contratHebdo==null ? '' : a.contratHebdo },
       state:a.inactif ? 1 : 0,
       ch:[ { ent:'lcs_competence', fk:'lcs_agent', rows:[...new Set(a.competences||[])].map(sid => ({ lcs_libelle:(a.nom||'')+' · '+siteNom(sid), lcs_site:_dvRef('sites',sid), lcs_idsource:'go:'+a.id+':comp:'+sid })) } ] }; },
@@ -4172,6 +4139,7 @@ function buildPanelRemplacer(body,footer,raw){
   }).join('');
   body.innerHTML=`
     <div style="background:var(--red-light);border:1px solid rgba(226,109,99,.32);border-radius:var(--radius);padding:14px;margin-bottom:18px;font-size:13px">
+      <div style="float:right;margin:-4px -4px 4px 10px">${absenceActionsHTML(absId,{day:focusAf?String(focusAf).split('@')[1]:''})}</div>
       <div style="font-weight:600;color:var(--red);margin-bottom:4px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3.6l9 15.4H3z"/><path d="M12 9.6v4.6M12 17.2v.4"/></svg> Attribuer un remplaçant</div>
       <div><strong>Agent :</strong> ${_escH(agentNom(absence.agentId))}</div>
       <div><strong>Période :</strong> ${fmtDate(absence.dateDebut)}${absence.dateFin?' → '+fmtDate(absence.dateFin):''}</div>
@@ -4193,7 +4161,6 @@ function buildPanelRemplacer(body,footer,raw){
     </div>`;
   body.querySelectorAll('.pr-block').forEach(sel=>{ sel.value=_replFor(absence, sel.dataset.af)||''; prCheckBlock(sel); });
   footer.innerHTML=`
-    ${absenceActionsHTML(absId,{day:focusAf?String(focusAf).split('@')[1]:''})}
     <button class="btn btn-secondary" onclick="closePanel()">Annuler</button>
     <button class="btn btn-primary" onclick="confirmerRepl('${absId}')">Enregistrer</button>`;
 }
@@ -4692,8 +4659,12 @@ function buildPanelAgent(body,footer,id){
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Email</label>
-        <input class="form-input" type="email" id="pa2-email" value="${a?.email||''}">
+        <label class="form-label">Mail pro</label>
+        <input class="form-input" type="email" id="pa2-email" value="${_escA(a ? (a.emailPro!=null ? a.emailPro : (/@conciergerie-solidaire\.fr$/i.test(a.email||'') ? a.email : '')) : '')}" placeholder="prenom.nom@conciergerie-solidaire.fr">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mail perso</label>
+        <input class="form-input" type="email" id="pa2-emailperso" value="${_escA(a ? (a.emailPerso!=null ? a.emailPerso : (a.emailPro!=null || /@conciergerie-solidaire\.fr$/i.test(a.email||'') ? '' : (a.email||''))) : '')}">
       </div>
     </div>
     <div class="form-section">Contrat</div>
@@ -4772,7 +4743,7 @@ function saveAgent(){
   if(contratDebut&&contratFin&&contratFin<contratDebut){ toast('La fin de contrat précède le début',false); return; }
   const _ch=parseFloat(String(document.getElementById('pa2-chebdo').value).replace(',','.'));
   const contratHebdo=isFinite(_ch)&&_ch>0?_ch:null;
-  const data={respOpe,contratDebut,contratFin,contratHebdo,nom,nomFamille:nomf,prenom,telPro:document.getElementById('pa2-tel').value.trim(),telPerso:document.getElementById('pa2-telperso').value.trim(),tel:document.getElementById('pa2-telperso').value.trim()||document.getElementById('pa2-tel').value.trim(),email:document.getElementById('pa2-email').value,notes:document.getElementById('pa2-notes').value,type,types,remplacant:types.includes('multisite'),competences};
+  const data={respOpe,contratDebut,contratFin,contratHebdo,nom,nomFamille:nomf,prenom,telPro:document.getElementById('pa2-tel').value.trim(),telPerso:document.getElementById('pa2-telperso').value.trim(),tel:document.getElementById('pa2-telperso').value.trim()||document.getElementById('pa2-tel').value.trim(),emailPro:document.getElementById('pa2-email').value.trim(),emailPerso:document.getElementById('pa2-emailperso').value.trim(),email:document.getElementById('pa2-email').value.trim()||document.getElementById('pa2-emailperso').value.trim(),notes:document.getElementById('pa2-notes').value,type,types,remplacant:types.includes('multisite'),competences};
   if(id){ const i=agents.findIndex(a=>a.id===id); agents[i]={...agents[i],...data}; }
   else agents.push({id:DB.id(),...data});
   sa(agents); closePanel(); toast(id?'Agent modifié':'Agent ajouté'); renderAgents();
@@ -6514,7 +6485,7 @@ function buildPanelCreneau(body,footer,raw){
     const blkRepl=_replFor(absence, blockKey);
     if(blkRepl){
       const repl=ga().find(a=>a.id===blkRepl);
-      statusHtml=`<div style="background:#DCEBF7;border:1px solid #B6D4EC;border-radius:var(--radius);padding:14px;margin-bottom:20px">
+      statusHtml=`<div style="background:#DCEBF7;border:1px solid #B6D4EC;border-radius:var(--radius);padding:14px;margin-bottom:20px"><div style="float:right;margin:-4px -4px 4px 10px">${absenceActionsHTML(absence.id,{day:dateStr})}</div>
         <div style="font-weight:700;color:#134B72;margin-bottom:6px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M7 7h12l-3.2-3.2M17 17H5l3.2 3.2"/></svg> Créneau remplacé</div>
         <div style="font-size:13px">Agent absent : <strong>${_escH(agent.nom)}</strong></div>
         <div style="font-size:13px">Remplaçant : <strong>${_escH(repl?.nom||'—')}</strong></div>
@@ -6522,7 +6493,7 @@ function buildPanelCreneau(body,footer,raw){
         ${repl?.email?`<div style="font-size:12px;color:var(--text2)"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M4 7.5l8 5.5 8-5.5"/></svg> ${repl.email}</div>`:''}
       </div>`;
     } else {
-      statusHtml=`<div style="background:var(--red-light);border:1px solid rgba(226,109,99,.32);border-radius:var(--radius);padding:14px;margin-bottom:20px">
+      statusHtml=`<div style="background:var(--red-light);border:1px solid rgba(226,109,99,.32);border-radius:var(--radius);padding:14px;margin-bottom:20px"><div style="float:right;margin:-4px -4px 4px 10px">${absenceActionsHTML(absence.id,{day:dateStr})}</div>
         <div style="font-weight:700;color:var(--red);margin-bottom:4px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3.6l9 15.4H3z"/><path d="M12 9.6v4.6M12 17.2v.4"/></svg> Agent absent — sans remplaçant</div>
         <div style="font-size:12px;color:var(--text2)">Motif : ${_escH(absence.motif)} · ${_escH(absence.notes||'')}</div>
       </div>`;
@@ -6586,7 +6557,6 @@ function buildPanelCreneau(body,footer,raw){
   // Footer selon statut
   if(absence && !_replFor(absence,blockKey)){
     footer.innerHTML=`
-      ${absenceActionsHTML(absence.id,{day:dateStr})}
       <button class="btn btn-secondary" onclick="closePanel()">Fermer</button>
       <button class="btn btn-danger" onclick="openPanel('panel-remplacer','${absence.id}|${blockKey}')">${_ABSIC.find} Trouver un remplaçant</button>`;
   } else if(!absence){
@@ -6632,7 +6602,6 @@ function buildPanelCreneau(body,footer,raw){
   } else {
     // Créneau déjà remplacé : permettre de retirer ou de changer de remplaçant sans supprimer l'absence
     footer.innerHTML=`
-      ${absenceActionsHTML(absence.id,{day:dateStr})}
       <button class="btn btn-secondary" onclick="retirerRemplacementBloc('${absence.id}','${blockKey}')">${_ABSIC.off} Retirer ce remplaçant</button>
       <button class="btn btn-primary" onclick="openPanel('panel-remplacer','${absence.id}|${blockKey}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M7 7h12l-3.2-3.2M17 17H5l3.2 3.2"/></svg> Changer de remplaçant</button>`;
   }
