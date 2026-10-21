@@ -4886,6 +4886,22 @@ function addSiteFerm(){
   renderSiteFerms();
 }
 
+function clientEdit(id,anchor){ siteEdit(id,anchor,'panel-client'); }
+function siteEdit(id,anchor,panel){
+  openPanel(panel||'panel-site',id);
+  if(!anchor) return;
+  setTimeout(()=>{ const el=document.getElementById(anchor); if(!el) return; let p=el.parentElement; while(p&&p.scrollHeight<=p.clientHeight) p=p.parentElement; if(p) p.scrollTop=el.getBoundingClientRect().top-p.getBoundingClientRect().top+p.scrollTop-8; },80);
+}
+function siteFermToggle(){ const f=document.getElementById('sf-form'); if(f) f.style.display=f.style.display==='none'?'block':'none'; }
+function siteFermAdd(sid){
+  const d=document.getElementById('sf-debut').value, f=document.getElementById('sf-fin').value||d, m=document.getElementById('sf-motif').value.trim();
+  if(!d){ toast('Date de début requise',false); return; }
+  if(f<d){ toast('La date de fin précède le début',false); return; }
+  sferm([...gferm(),{id:DB.id(),siteId:sid,dateDebut:d,dateFin:f,motif:m,notes:''}]);
+  toast('Fermeture ajoutée'); renderSites(); if(currentView==='clients') renderClients();
+}
+function siteFermDel(id){ if(!confirm('Supprimer cette fermeture ?')) return; sferm(gferm().filter(f=>f.id!==id)); toast('Fermeture supprimée'); renderSites(); if(currentView==='clients') renderClients(); }
+
 /* Sites : liste à gauche + fiche à droite (même mise en page que Clients) */
 const _site = { sel:null, tab:'tous' };
 function siteSelect(id){ _site.sel=id; renderSites(); }
@@ -4935,14 +4951,15 @@ function _siteFiche(s,rec){
       ${gaps.length?`<span class="cli-pill" style="${_cliTone('orange')};cursor:pointer" onclick="covOpenRec()">${gaps.length} créneau${gaps.length>1?'x':''} non couvert${gaps.length>1?'s':''}</span>`:''}
       ${closed?`<span class="cli-pill" style="${_cliTone('red')}">Fermé jusqu'au ${_dFr(closed.dateFin||closed.dateDebut)}${closed.motif?' · '+_escH(closed.motif):''}</span>`:''}</div>`:''}`;
 
-  const ouv=_cliCard('Ouverture', '', (s.creneaux||[]).length?(s.creneaux).map(c=>`<div class="cli-row"><div style="flex:1"><div class="cli-row-t">${c.jours.join(', ')}</div><div class="cli-row-s">${c.debut}–${c.fin}</div></div></div>`).join(''):`<div class="cli-empty">Aucun créneau d'ouverture</div>`)
-    .replace(/<\/div>$/, (ferms.length?`<div class="cli-h" style="margin:14px 0 6px">Fermetures</div>`+ferms.map(f=>`<div class="cli-row"><div style="flex:1"><div class="cli-row-t">${_dFr(f.dateDebut)}${f.dateFin&&f.dateFin!==f.dateDebut?' → '+_dFr(f.dateFin):''}</div>${f.motif?`<div class="cli-row-s">${_escH(f.motif)}</div>`:''}</div></div>`).join(''):'')+'</div>');
+  const ouv=_cliCard('Ouverture', `<button class="btn btn-secondary btn-sm" onclick="siteEdit('${s.id}','ps-sec-crn')">Modifier</button>`, (s.creneaux||[]).length?(s.creneaux).map(c=>`<div class="cli-row"><div style="flex:1"><div class="cli-row-t">${c.jours.join(', ')}</div><div class="cli-row-s">${c.debut}–${c.fin}</div></div></div>`).join(''):`<div class="cli-empty">Aucun créneau d'ouverture</div>`)
+    .replace(/<\/div>$/, `<div style="display:flex;align-items:center;gap:8px;margin:14px 0 6px"><div class="cli-h">Fermetures</div><button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="siteFermToggle()">+ Ajouter une fermeture</button></div>
+    <div id="sf-form" style="display:none;border:1.5px dashed var(--border,#ddd);border-radius:12px;padding:12px;margin-bottom:8px"><div class="form-row" style="align-items:flex-end"><div class="form-group"><label class="form-label">Du</label><input class="form-input" type="date" id="sf-debut"></div><div class="form-group"><label class="form-label">Au</label><input class="form-input" type="date" id="sf-fin"></div></div><div class="form-group"><label class="form-label">Motif</label><input class="form-input" type="text" id="sf-motif" placeholder="Ex: Fermeture estivale, jour férié…"></div><div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="siteFermAdd('${s.id}')">Enregistrer la fermeture</button><button class="btn btn-secondary btn-sm" onclick="siteFermToggle()">Annuler</button></div></div>`+(ferms.length?ferms.map(f=>`<div class="cli-row"><div style="flex:1"><div class="cli-row-t">${_dFr(f.dateDebut)}${f.dateFin&&f.dateFin!==f.dateDebut?' → '+_dFr(f.dateFin):''}</div>${f.motif?`<div class="cli-row-s">${_escH(f.motif)}</div>`:''}</div><button class="btn btn-secondary btn-sm" style="color:var(--red)" onclick="siteFermDel('${f.id}')">Supprimer</button></div>`).join(''):'<div class="cli-row-s" style="padding:4px 0">Aucune fermeture à venir</div>')+'</div>');
 
-  const infos=_cliCard('Informations', '', `<dl class="cli-kv">
+  const infos=_cliCard('Informations', `<button class="btn btn-secondary btn-sm" onclick="siteEdit('${s.id}')">Modifier</button>`, `<dl class="cli-kv">
       ${kv('Typologie',_escH(s.typologie||''))}${kv('Salariés (approx.)',s.nbSalaries!=null&&s.nbSalaries!==''?s.nbSalaries:'')}${kv('Semaines de permanence',s.nbSemPerm!=null&&s.nbSemPerm!==''?s.nbSemPerm:'')}
       ${kv('Tournée',t?_escH(t.nom):'')}</dl>`);
 
-  const contact=_cliCard('Contacts', '', ((s.contact||s.tel||s.email)?`<div class="cli-row"><div style="flex:1;min-width:0"><div class="cli-row-t">${_escH(s.contact||'Contact sur site')}</div><div class="cli-row-s" style="display:flex;gap:12px;flex-wrap:wrap">${s.tel?`<a href="tel:${_escA(s.tel)}">${_escH(s.tel)}</a>`:''}${s.email?`<a href="mailto:${_escA(s.email)}">${_escH(s.email)}</a>`:''}</div></div></div>`:'')
+  const contact=_cliCard('Contacts', (cid&&_cliCanEdit())?`<button class="btn btn-secondary btn-sm" onclick="openPanel('panel-contact',{cid:'${cid}',siteG:'${s._dvid||s.id}'})">+ Ajouter un contact</button>`:'', ((s.contact||s.tel||s.email)?`<div class="cli-row"><div style="flex:1;min-width:0"><div class="cli-row-t">${_escH(s.contact||'Contact sur site')}</div><div class="cli-row-s" style="display:flex;gap:12px;flex-wrap:wrap">${s.tel?`<a href="tel:${_escA(s.tel)}">${_escH(s.tel)}</a>`:''}${s.email?`<a href="mailto:${_escA(s.email)}">${_escH(s.email)}</a>`:''}</div></div></div>`:'')
     +cts.filter(x=>[x.prenom,x.nom].filter(Boolean).join(' ')!==s.contact&&(x.nom+' '+x.prenom)!==s.contact&&(x.prenom+' '+x.nom)!==s.contact).map(x=>`<div class="cli-row"><div style="flex:1;min-width:0"><div class="cli-row-t">${_escH([x.prenom,x.nom].filter(Boolean).join(' '))}</div><div class="cli-row-s">${[x.fonction,x.siteG?'':'Contact du client'].filter(Boolean).map(_escH).join(' · ')}</div><div class="cli-row-s" style="display:flex;gap:12px;flex-wrap:wrap">${x.telport?`<a href="tel:${_escA(x.telport)}">${_escH(x.telport)}</a>`:''}${x.telfixe?`<a href="tel:${_escA(x.telfixe)}">${_escH(x.telfixe)}</a>`:''}${x.mail?`<a href="mailto:${_escA(x.mail)}">${_escH(x.mail)}</a>`:''}</div></div></div>`).join('')
     ||((s.contact||s.tel||s.email)?'':`<div class="cli-empty">Aucun contact</div>`));
 
@@ -5280,7 +5297,7 @@ function buildPanelSite(body,footer,id){
       <label class="form-label">Particularités / Notes</label>
       <textarea class="form-input" id="ps-notes" placeholder="Accès, code badge, consignes particulières…">${s?.notes||''}</textarea>
     </div>
-    <div class="form-section">Créneaux d'ouverture</div>
+    <div class="form-section" id="ps-sec-crn">Créneaux d'ouverture</div>
     <div id="ps-crns"></div>
     <div style="margin-top:10px;padding:12px 12px 14px;border:1px dashed var(--border);border-radius:var(--radius-sm)">
       <label class="form-label" style="margin-bottom:6px">Jours</label>
@@ -5301,13 +5318,17 @@ function buildPanelSite(body,footer,id){
     </div>
     <div class="form-section">Périodes de fermeture</div>
     ${id?`<div style="font-size:11px;color:var(--text3);margin:-6px 0 10px;line-height:1.4">Le site est fermé (entier) sur ces plages : ses créneaux disparaissent du planning et ses agents sont libérés pour d'autres postes.</div>
+    <div style="border:1.5px dashed var(--border,#ddd);border-radius:12px;padding:12px;margin-bottom:14px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:10px">Nouvelle fermeture</div>
     <div class="form-row" style="align-items:flex-end">
       <div class="form-group"><label class="form-label">Du</label><input class="form-input" type="date" id="pf-debut"></div>
       <div class="form-group"><label class="form-label">Au</label><input class="form-input" type="date" id="pf-fin"></div>
     </div>
     <div class="form-group"><label class="form-label">Motif</label><input class="form-input" type="text" id="pf-motif" placeholder="Ex: Fermeture estivale, jour férié…"></div>
-    <button class="btn btn-secondary btn-sm" onclick="addSiteFerm()">+ Ajouter une fermeture</button>
-    <div id="ps-ferms" style="margin-top:12px"></div>`
+    <button type="button" class="btn btn-secondary btn-sm" onclick="addSiteFerm()">+ Ajouter à la liste</button>
+    </div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:6px">Fermetures programmées</div>
+    <div id="ps-ferms"></div>`
     :`<div style="font-size:12px;color:var(--text3);padding:4px 0">Enregistrez d'abord le site pour pouvoir programmer des fermetures.</div>`}
     <input type="hidden" id="ps-id" value="${id||''}">`;
   siteFerms = id ? gferm().filter(f=>f.siteId===id).slice().sort((a,b)=>a.dateDebut.localeCompare(b.dateDebut)) : [];
@@ -5582,7 +5603,7 @@ function _cliFicheOps(c){
     : b.etat==='retard'?`<span style="color:var(--red)">${_dFr(b.date)} · en retard</span>`
     : b.etat==='aplanifier'?`<span style="color:var(--orange)">${b.date?'avant le '+_dFr(b.date):'à planifier'}</span>`
     : b.etat==='ok'?_dFr(b.date) : b.etat==='demande'?'À la demande' : '<span class="cli-empty">—</span>';
-  const contrat=_cliCard('Contrat', '', `
+  const contrat=_cliCard('Contrat', ed?`<button class="btn btn-secondary btn-sm" onclick="clientEdit(${cq},'pc-sec-contrat')">Modifier</button>`:'', `
     <dl class="cli-kv">
       <dt>Début de contrat</dt><dd>${c.debut?_dFr(c.debut):'<span class="cli-empty">—</span>'}</dd>
       <dt>Fin de contrat</dt><dd>${c.fin?_dFr(c.fin)+(_cliFin(c)?' <span class="cli-pill" style="'+_cliTone()+';font-size:11px;padding:1px 8px">terminé</span>':''):'<span class="cli-empty">Sans fin</span>'}</dd>
@@ -5646,7 +5667,7 @@ function buildPanelClient(body,footer,cid){
     <div class="form-group"><label class="form-label">Nom du client *</label><input class="form-input" type="text" id="pc-nom" value="${_escA(c?.nom||'')}"></div>
     <div class="form-group"><label class="form-label">Filiale</label><select class="form-input" id="pc-filiale"><option value="">—</option>${_dvCli.filiales.map(f=>`<option value="${f.id}"${f.id===filCur?' selected':''}>${_escH(f.nom)}</option>`).join('')}</select></div>
     <div class="form-group"><label class="form-label">Adresse</label><input class="form-input" type="text" id="pc-adresse" value="${_escA(c?.adresse||'')}"></div>
-    <div class="form-section">Contrat</div>
+    <div class="form-section" id="pc-sec-contrat">Contrat</div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Début</label><input class="form-input" type="date" id="pc-debut" value="${c?.debut||''}"></div>
       <div class="form-group"><label class="form-label">Fin</label><input class="form-input" type="date" id="pc-fin" value="${c?.fin||''}"></div>
@@ -5687,7 +5708,7 @@ function buildPanelContact(body,footer,data){
     <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Client : <strong style="color:var(--text)">${_escH(_dvClientNoms[data.cid]||'')}</strong></div>
     <div class="form-row">${inp('pcc-prenom','Prénom',c?.prenom)}${inp('pcc-nom','Nom *',c?.nom)}</div>
     ${inp('pcc-fonction','Fonction',c?.fonction)}
-    <div class="form-group"><label class="form-label">Site</label><select class="form-input" id="pcc-site"><option value="">— Tous les sites / siège —</option>${sites.map(s=>`<option value="${s._dvid||s.id}"${c&&c.siteG===(s._dvid||s.id)?' selected':''}>${_escH(s.nom)}</option>`).join('')}</select></div>
+    <div class="form-group"><label class="form-label">Site</label><select class="form-input" id="pcc-site"><option value="">— Tous les sites / siège —</option>${sites.map(s=>`<option value="${s._dvid||s.id}"${(c?c.siteG:data.siteG)===(s._dvid||s.id)?' selected':''}>${_escH(s.nom)}</option>`).join('')}</select></div>
     <div class="form-row">${inp('pcc-port','Tél. portable',c?.telport)}${inp('pcc-fixe','Tél. fixe',c?.telfixe)}</div>
     ${inp('pcc-mail','E-mail',c?.mail,'email')}`;
   footer.innerHTML=(c?`<button class="btn btn-danger" style="margin-right:auto" onclick="delContact('${_escA(data.cid)}','${c.id}')">Supprimer</button>`:'')
@@ -5717,7 +5738,7 @@ async function saveContact(cid,id){
   const old=id&&_dvCli.contacts.find(x=>x.id===id), prev=old?{...old}:null;
   if(old) Object.assign(old,o); else _dvCli.contacts.push(o);
   _cliSiteContactSync(prev, old||o); _cliSyncContacts(cid);
-  closePanel(); toast(id?'Contact modifié':'Contact ajouté'); renderClients();
+  closePanel(); toast(id?'Contact modifié':'Contact ajouté'); renderClients(); if(currentView==='sites') renderSites();
 }
 async function delContact(cid,id){
   if(!_cliCanEdit() || !confirm('Supprimer ce contact ?')) return;
