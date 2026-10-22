@@ -1486,6 +1486,7 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
           </div>
         </div>
         <div id="jour-stats" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap"></div>
+        <div id="jour-events"></div>
         <div id="jour-list"></div>
       </div>
     </div>
@@ -1529,6 +1530,33 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
             <tbody id="histo-tbody"></tbody>
           </table>
           <div id="histo-empty" class="empty"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3.2h8v4H8z"/><path d="M8 11h8M8 15h6"/></svg></div><div class="empty-text">Aucun remplacement enregistré</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ÉVÉNEMENTS PONCTUELS ───────────────── -->
+    <div class="view" id="view-evenements">
+      <div class="view-page">
+        <div class="page-heading">
+          <div><h1>Événements</h1><div class="page-heading-sub">Rendez-vous et échéances non rattachés à un site</div></div>
+          <button class="btn btn-primary" onclick="openPanel('panel-evenement')">+ Ajouter</button>
+        </div>
+        <div id="ev-warn" style="display:none" class="card"></div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+          <div class="tabs" style="margin:0">
+            <button class="tab on" onclick="tabEv('avenir',this)">À venir</button>
+            <button class="tab" onclick="tabEv('passes',this)">Passés</button>
+            <button class="tab" onclick="tabEv('tous',this)">Tous</button>
+          </div>
+          <select class="form-input" id="ev-cat" style="width:auto;min-width:170px" onchange="evCat=this.value;renderEvenements()"></select>
+          <div class="search-bar" style="flex:1;min-width:220px;margin:0">
+            <span class="search-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg></span>
+            <input type="text" id="ev-search" placeholder="Rechercher un événement, un agent, un lieu…" oninput="evSearch=this.value;renderEvenements()" autocomplete="off">
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div id="ev-list"></div>
+          <div id="ev-empty" class="empty" style="display:none"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M8.5 15l2.3 2.3 4.7-4.8"/></svg></div><div class="empty-text">Aucun événement</div></div>
         </div>
       </div>
     </div>
@@ -1762,7 +1790,7 @@ const DV_API = DV_URL + '/api/data/v9.2/';
 const DV_READONLY = false;
 const SCOPES = [DV_URL + '/user_impersonation'];
 const FOLDER  = 'GestionOpe';
-const FILES   = ['sites','agents','affec','absences','rempl','pointage','tournees','except','fermetures'];
+const FILES   = ['sites','agents','affec','absences','rempl','pointage','tournees','except','fermetures','evenements'];
 
 /* Dossier d'équipe partagé (SharePoint/Teams). L'app résout ce lien une fois,
    puis lit/écrit tous les JSON dedans — mêmes données pour toute l'équipe.
@@ -1916,6 +1944,8 @@ async function loadAllData(){
   const res = await Promise.all(T.map(t => dvGetAll('lcs_'+t+'s')));
   T.forEach((t,i)=>R[t]=res[i]);
   _dvFilInit(R);
+  R.evenement = await dvGetAll('lcs_evenements').catch(e=>{ console.warn('Table lcs_evenement indisponible (dataverse/table-evenement.js)', e.message); return null; });
+  window._evOk = !!R.evenement;
   const [_fil,_nt,_na] = await Promise.all([ dvGetAll('lcs_filiales').catch(()=>[]),
     dvGetAll('lcs_notes').catch(e=>{ console.warn('Table lcs_note indisponible (dataverse/table-notes.js)', e.message); return null; }),
     dvGetAll('lcs_noteactions').catch(()=>[]) ]);
@@ -1997,7 +2027,9 @@ function dvToApp(R){
   tournees.forEach(x=>avecPlanning.add(x.agentId)); pointage.forEach(x=>avecPlanning.add(x.agentId));
   const agentsVisibles = agents.filter(a => avecPlanning.has(a.id) || _DV_TOUJOURS.test(a.nomFamille));
   console.log('Agents masqués (sans planning) :', agents.length - agentsVisibles.length);
-  return { sites, agents:agentsVisibles, affec, absences, rempl, except, fermetures, tournees, pointage };
+  const evenements = (R.evenement||[]).map(v => ({ id:goId(v.lcs_idsource)||v.lcs_evenementid, titre:(V(v,'lcs_libelle')||'').replace(/ · \d{4}-\d\d-\d\d$/,''), categorie:EV_KEY[F(v,'lcs_categorie')]||'autre', date:(V(v,'lcs_date')+'').slice(0,10),
+    debut:V(v,'lcs_debut'), fin:V(v,'lcs_fin'), agentId:id(LK(v,'lcs_agent')), lieu:V(v,'lcs_lieu'), notes:V(v,'lcs_notes'), _dvid:v.lcs_evenementid }));
+  return { sites, agents:agentsVisibles, affec, absences, rempl, except, fermetures, tournees, pointage, evenements };
 }
 /* Contact « Référent de site » sans site, dont le client n'a qu'un site actif → rattaché automatiquement à ce site.
    Client à plusieurs sites : non rattaché (choix dans la fiche site, liste « Contacts du client »). */
@@ -2078,7 +2110,7 @@ function _clearSaveError(){
    créé → POST, modifié → PATCH des seules colonnes changées, disparu → DELETE (sites/agents : désactivés).
    Sous-listes (créneaux, compétences, étapes, remplaçants d'une absence) : remplacées en bloc si elles changent. */
 const _dvG = {}, _dvSnap = {}, _dvQ = {}, _dvMetaP = {}, _dvClients = {}, _dvClientNoms = {}, _dvMetaCache = {}, _dvClientContacts = {};
-const _DV_ENT = { sites:'lcs_site', agents:'lcs_agent', affec:'lcs_affectation', absences:'lcs_absence', rempl:'lcs_remplacement', except:'lcs_exception', fermetures:'lcs_fermeture', tournees:'lcs_tournee', pointage:'lcs_pointage' };
+const _DV_ENT = { sites:'lcs_site', agents:'lcs_agent', affec:'lcs_affectation', absences:'lcs_absence', rempl:'lcs_remplacement', except:'lcs_exception', fermetures:'lcs_fermeture', tournees:'lcs_tournee', pointage:'lcs_pointage', evenements:'lcs_evenement' };
 const _dvJ = x => JSON.stringify(x, (k,v) => k==='_dvid' ? undefined : v);
 function _dvSnapshot(){ Object.keys(_DV_ENT).forEach(k => { const m={}; (_cache[k]||[]).forEach(x => { if(x && x.id) m[x.id]=_dvJ(x); }); _dvSnap[k]=m; }); }
 async function _dvReq(method, path, body){
@@ -2175,6 +2207,8 @@ const _DVL = {
     ch:[ { ent:'lcs_etapetournee', fk:'lcs_tournee', rows:(t.siteIds||[]).map((s,i) => ({ lcs_libelle:t.nom+' · '+(i+1)+' · '+siteNom(s), lcs_site:_dvRef('sites',s), lcs_ordre:i+1, lcs_idsource:'go:'+t.id+':'+(i+1) })) } ] }),
   pointage: p => ({ f:{ lcs_libelle:agentNom(p.agentId)+' · '+p.date+' · '+p.type, lcs_agent:_dvRef('agents',p.agentId), lcs_site:_dvRef('sites',p.siteId), lcs_date:p.date||'',
       lcs_type:p.type==='retard' ? 'Retard' : 'Heures sup.', lcs_duree:p.duree==null ? '' : p.duree, lcs_notes:p.notes||'' } }),
+  evenements: e => ({ f:{ lcs_libelle:(e.titre||'(sans titre)')+' · '+(e.date||''), lcs_categorie:(EV_CATS[e.categorie]||EV_CATS.autre).l, lcs_date:e.date||'', lcs_debut:e.debut||'', lcs_fin:e.fin||'',
+      lcs_agent:_dvRef('agents',e.agentId), lcs_lieu:e.lieu||'', lcs_notes:e.notes||'' } }),
 };
 async function _dvSiteContact(s, old, g){
   const k = x => x ? [x.contact||'', x.email||'', x.tel||'', x.client||'', x.contactDvid||''].join('|') : '||||';
@@ -2294,6 +2328,7 @@ function _fixRemplSansAbsence(){
 const gpt = () => DB.get('pointage');   const spt = v => DB.set('pointage',v);
 const gt = () => DB.get('tournees');    const st = v => DB.set('tournees',v);
 const gex = () => DB.get('except');     const sex = v => DB.set('except',v);
+const gev = () => DB.get('evenements'); const sev = v => DB.set('evenements',v);
 const gferm = () => DB.get('fermetures'); const sferm = v => DB.set('fermetures',v);
 
 // Fermeture de site : { id, siteId, dateDebut:'YYYY-MM-DD', dateFin:'YYYY-MM-DD', motif, notes }
@@ -2485,7 +2520,7 @@ function showView(v){
     planning:renderPlanning,absences:renderAbsences,
     historique:renderHistorique,pointage:renderPointage,
     agents:renderAgents,sites:renderSites,affect:renderAffect,
-    jour:renderJour,tournees:renderTournees,croise:renderCroise,mois:renderMois,
+    jour:renderJour,tournees:renderTournees,croise:renderCroise,mois:renderMois,evenements:renderEvenements,
     partage:renderPartage,clients:renderClients
   };
   renders[v]?.();
@@ -2595,6 +2630,7 @@ function buildPanel(id,data){
     'panel-tournee': data?'Modifier la tournée':'Nouvelle tournée',
     'panel-affect': data&&data.versionOf?'Modifier à partir du…':data?'Modifier l\'affectation':'Nouvelle affectation',
     'panel-pointage':'Ajouter un événement',
+    'panel-evenement': (data&&!String(data).startsWith('new|'))?'Modifier l\'événement':'Nouvel événement',
     'panel-remplacer':'Attribuer un remplaçant',
     'panel-agent-detail':'Fiche agent',
     'panel-creneau':'Détail du créneau',
@@ -2626,6 +2662,7 @@ function buildPanel(id,data){
     'panel-tournee': buildPanelTournee,
     'panel-affect': buildPanelAffect,
     'panel-pointage': buildPanelPointage,
+    'panel-evenement': buildPanelEvenement,
     'panel-remplacer': buildPanelRemplacer,
     'panel-agent-detail': buildPanelAgentDetail,
     'panel-creneau': buildPanelCreneau,
@@ -2846,7 +2883,7 @@ const _ABSIC=(()=>{ const s='style="width:1em;height:1em;vertical-align:-0.14em;
 /* Unique point de rafraîchissement après toute modification d'absence. */
 function refreshAfterAbsenceChange(){
   if(typeof closeMoisPopup==='function') closeMoisPopup();
-  const map={planning:'renderPlanning',mois:'renderMois',absences:'renderAbsences',croise:'renderCroise',historique:'renderHistorique',pointage:'renderPointage'};
+  const map={planning:'renderPlanning',mois:'renderMois',absences:'renderAbsences',croise:'renderCroise',historique:'renderHistorique',pointage:'renderPointage',evenements:'renderEvenements',jour:'renderJour'};
   const fn=window[map[currentView]]||window.renderPlanning;
   if(typeof fn==='function') fn();
   if(typeof updateAbsenceBadge==='function') updateAbsenceBadge();
@@ -3421,7 +3458,13 @@ function renderPlanning(){
       const replShifts=agentReplacementShifts(agent.id, day.date);
       if(replShifts.length) shifts=shifts.concat(replShifts).sort((a,b)=>_mins(a.debut)-_mins(b.debut));
 
-      if(shifts.length===0) return `<div class="day-cell"><div class="day-empty" title="Ajouter un créneau ce jour" onclick="openPanel('panel-jour','${agent.id}|${dateStr}||')">+</div></div>`;
+      const evBars=gev().filter(e=>e.agentId===agent.id&&e.date===dateStr).sort((a,b)=>(a.debut||'').localeCompare(b.debut||'')).map(e=>{
+        const nm=e.titre.length>15?e.titre.slice(0,15)+'…':e.titre;
+        return `<div class="shift-bar" style="background:var(--purple-light);color:var(--purple)" title="${_escA(e.titre+(e.lieu?' — '+e.lieu:'')+(e.notes?' — '+e.notes:''))}" onclick="openPanel('panel-evenement','${_escA(e.id)}')">
+          <span class="shift-site">${_escH(nm)}</span>
+          <span class="shift-time">${e.debut?e.debut+(e.fin?'–'+e.fin:''):'Journée'}</span>
+        </div>`; }).join('');
+      if(shifts.length===0) return evBars ? `<div class="day-cell">${evBars}<div class="day-add" title="Ajouter un créneau ce jour" onclick="openPanel('panel-jour','${agent.id}|${dateStr}||')">+</div></div>` : `<div class="day-cell"><div class="day-empty" title="Ajouter un créneau ce jour" onclick="openPanel('panel-jour','${agent.id}|${dateStr}||')">+</div></div>`;
 
       shifts.forEach(s=>{ if(!siteFermeLe(s.siteId, day.date)) wkMin+=_shiftMin(s); });
       const conflictIds=new Set();
@@ -3502,7 +3545,7 @@ function renderPlanning(){
       }).join('');
 
       const addBtn = dayAbs ? '' : `<div class="day-add" title="Ajouter un autre créneau ce jour" onclick="openPanel('panel-jour','${agent.id}|${dateStr}||')">+</div>`;
-      return `<div class="day-cell">${bars}${addBtn}</div>`;
+      return `<div class="day-cell">${evBars}${bars}${addBtn}</div>`;
     }).join('');
 
     return `<div class="agent-row" data-agent-name="${_escA(agent.nom)}">
@@ -4412,6 +4455,66 @@ function renderHistorique(){
 /* ═══════════════════════════════════════
    POINTAGE
 ═══════════════════════════════════════ */
+const EV_CATS = { vehicule:{l:'Véhicule',b:'badge-orange'}, medical:{l:'Médical',b:'badge-red'}, formation:{l:'Formation',b:'badge-purple'}, reunion:{l:'Réunion',b:'badge-blue'}, admin:{l:'Administratif',b:'badge-green'}, autre:{l:'Autre',b:'badge-gray'} };
+const EV_KEY = Object.fromEntries(Object.entries(EV_CATS).map(([k,v])=>[v.l,k]));
+let evTab='avenir', evCat='', evSearch='';
+function tabEv(t,btn){ evTab=t; document.querySelectorAll('#view-evenements .tab').forEach(el=>el.classList.remove('on')); btn.classList.add('on'); renderEvenements(); }
+function _evRow(e){
+  const c=EV_CATS[e.categorie]||EV_CATS.autre, h=e.debut?(e.debut+(e.fin?'–'+e.fin:'')):'Journée';
+  return `<div class="pt-item" style="cursor:pointer" onclick="openPanel('panel-evenement','${_escA(e.id)}')">
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap"><span style="font-weight:600">${_escH(e.titre)}</span><span class="badge ${c.b}">${c.l}</span></div>
+      <div style="font-size:12px;color:var(--text3)">${fmtDate(e.date)} · ${h}${e.agentId?' · '+_escH(agentNom(e.agentId)):''}${e.lieu?' · '+_escH(e.lieu):''}${e.notes?' · '+_escH(e.notes):''}</div>
+    </div>
+  </div>`;
+}
+function renderEvenements(){
+  const warn=document.getElementById('ev-warn');
+  if(warn){ warn.style.display=window._evOk===false?'block':'none'; warn.innerHTML='Table Dataverse <b>lcs_evenement</b> absente : exécuter <code>dataverse/table-evenement.js</code> dans la console, puis recharger.'; }
+  const sel=document.getElementById('ev-cat');
+  if(sel && !sel.options.length){ sel.innerHTML='<option value="">Toutes les catégories</option>'+Object.entries(EV_CATS).map(([k,v])=>`<option value="${k}">${v.l}</option>`).join(''); }
+  const today=_ymd(new Date()), q=(evSearch||'').trim().toLowerCase();
+  let l=gev().slice();
+  if(evTab==='avenir') l=l.filter(e=>e.date>=today); else if(evTab==='passes') l=l.filter(e=>e.date<today);
+  if(evCat) l=l.filter(e=>e.categorie===evCat);
+  if(q) l=l.filter(e=>[e.titre,e.lieu,e.notes,e.agentId?agentNom(e.agentId):''].join(' ').toLowerCase().includes(q));
+  l.sort((a,b)=> evTab==='passes' ? b.date.localeCompare(a.date)||(b.debut||'').localeCompare(a.debut||'') : a.date.localeCompare(b.date)||(a.debut||'').localeCompare(b.debut||''));
+  document.getElementById('ev-list').innerHTML=l.map(_evRow).join('');
+  document.getElementById('ev-empty').style.display=l.length?'none':'block';
+}
+function buildPanelEvenement(body,footer,id){
+  const [_p,_pa,_pd]=(id||'').split('|'), _new=_p==='new'; const e=(id&&!_new)?gev().find(x=>x.id===id):null, v=(k,d='')=>_escA(e?(e[k]||''):d);
+  body.innerHTML=`
+    ${ _new&&_pa ? `<div class="tabs" style="margin-bottom:16px"><button class="tab" onclick="openPanel('panel-jour','${_pa}|${_pd}||')">Passage sur site</button><button class="tab on">Autre événement</button></div>` : '' }
+    <div class="form-group"><label class="form-label">Titre *</label><input class="form-input" id="pev-titre" value="${v('titre')}" placeholder="Révision véhicule…"></div>
+    <div class="form-group"><label class="form-label">Date *</label><input class="form-input" type="date" id="pev-date" value="${e?e.date:(_pd||_ymd(new Date()))}"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Début</label><input class="form-input" type="time" id="pev-debut" value="${v('debut')}"></div>
+      <div class="form-group"><label class="form-label">Fin</label><input class="form-input" type="time" id="pev-fin" value="${v('fin')}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Agent concerné</label><select class="form-input" id="pev-agent"></select></div>
+    <div class="form-group"><label class="form-label">Lieu</label><input class="form-input" id="pev-lieu" value="${v('lieu')}"></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="pev-notes">${_escH(e?e.notes||'':'')}</textarea></div>`;
+  fillSel('pev-agent',[{v:'',l:'— Aucun —'},...ga().filter(a=>!a.inactif).map(a=>({v:a.id,l:a.nom}))]);
+  if(e&&e.agentId) document.getElementById('pev-agent').value=e.agentId; else if(_pa) document.getElementById('pev-agent').value=_pa;
+  footer.innerHTML=`${e?`<button class="btn btn-secondary" style="margin-right:auto;color:var(--red)" onclick="delEvenement('${_escA(e.id)}')">Supprimer</button>`:''}
+    <button class="btn btn-secondary" onclick="closePanel()">Annuler</button>
+    <button class="btn btn-primary" onclick="saveEvenement('${e?_escA(e.id):''}')">Enregistrer</button>`;
+}
+function saveEvenement(id){
+  const g=i=>document.getElementById(i).value.trim();
+  const titre=g('pev-titre'), date=g('pev-date');
+  if(!titre||!date){ toast('Titre et date requis',false); return; }
+  const o={ titre, date, debut:g('pev-debut'), fin:g('pev-fin'), agentId:g('pev-agent'), lieu:g('pev-lieu'), notes:g('pev-notes') };
+  const l=gev().slice(), i=id?l.findIndex(x=>x.id===id):-1;
+  if(i>=0) l[i]={...l[i],...o}; else l.push({id:DB.id(),...o});
+  sev(l); closePanel(); toast('Événement enregistré'); refreshAfterAbsenceChange();
+}
+function delEvenement(id){
+  if(!confirm('Supprimer cet événement ?')) return;
+  sev(gev().filter(x=>x.id!==id)); closePanel(); toast('Supprimé'); refreshAfterAbsenceChange();
+}
+
 let ptTab='tous';
 function tabPointage(t,btn){
   ptTab=t;
@@ -6376,12 +6479,13 @@ function buildPanelJour(body, footer, raw){
   document.getElementById('panel-title').textContent = af ? 'Modifier pour ce jour' : (addEx ? 'Créneau ponctuel' : 'Ajouter un créneau ce jour');
 
   body.innerHTML=`
+    ${ isNewAdd ? `<div class="tabs" style="margin-bottom:16px"><button class="tab on">Passage sur site</button><button class="tab" onclick="openPanel('panel-evenement','new|${agentId}|${dateStr}')">Autre événement</button></div>` : '' }
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px">${dateLabel}</div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
       <div style="width:32px;height:32px;border-radius:50%;background:var(--blue);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700">${agent.nom.charAt(0)}</div>
       <strong>${_escH(agent.nom)}</strong>
     </div>
-    <div style="background:var(--blue-light);border:1px solid rgba(90,150,220,.32);border-radius:var(--radius);padding:10px 12px;margin-bottom:18px;font-size:12.5px;color:var(--blue);line-height:1.45">
+    <div style="background:var(--blue-light);border:1px solid rgba(90,150,220,.32);border-radius:var(--radius);padding:10px 12px;margin-bottom:18px;font-size:12.5px;color:var(--text);line-height:1.45">
       <strong>Exception ponctuelle</strong> — ne change que ce jour, le planning récurrent A/B reste intact.
     </div>
     ${ isNewAdd ? `
@@ -6656,7 +6760,7 @@ function absenceDepuisCreneau(agentId, dateStr, siteId){
 /* ═══════════════════════════════════════
    VERSIONING & UTILISATEUR
 ═══════════════════════════════════════ */
-const DATA_KEYS = ['sites','agents','affec','absences','rempl','pointage','tournees','except','fermetures'];
+const DATA_KEYS = ['sites','agents','affec','absences','rempl','pointage','tournees','except','fermetures','evenements'];
 let _loadedVersion = 0;     // version du fichier qu'on a chargé
 let _loadedMeta = null;     // meta du fichier chargé
 let _pendingImportData = null; // données en attente si conflit
@@ -7409,6 +7513,9 @@ function renderJour(){
   const idx=(d.getDay()+6)%7, label=JOURS[idx], isA=isWeekA(d);
   const dateStr=_ymd(d), weekKey=getWeekKey(getMonday(d));
   document.getElementById('jour-date-label').textContent=_cap(d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))+` · Semaine ${isA?'A':'B'}`;
+
+  const evJ=gev().filter(e=>e.date===dateStr).sort((a,b)=>(a.debut||'').localeCompare(b.debut||''));
+  document.getElementById('jour-events').innerHTML=evJ.length?`<div class="card" style="padding:0;overflow:hidden;margin-bottom:14px"><div style="padding:9px 14px;background:var(--surf2);font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Événements ponctuels</div>${evJ.map(e=>_evRow(e)).join('')}</div>`:'';
 
   const selG=document.getElementById('jour-groupe');
   if(selG){ const tournees=gt().slice().sort((a,b)=>a.nom.localeCompare(b.nom));
