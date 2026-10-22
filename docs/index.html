@@ -3458,12 +3458,19 @@ function renderPlanning(){
       const replShifts=agentReplacementShifts(agent.id, day.date);
       if(replShifts.length) shifts=shifts.concat(replShifts).sort((a,b)=>_mins(a.debut)-_mins(b.debut));
 
-      const evBars=gev().filter(e=>e.agentId===agent.id&&e.date===dateStr).sort((a,b)=>(a.debut||'').localeCompare(b.debut||'')).map(e=>{
+      const evList=gev().filter(e=>e.agentId===agent.id&&e.date===dateStr).sort((a,b)=>(a.debut||'').localeCompare(b.debut||''));
+      const evT=evList.filter(e=>e.debut&&e.fin&&_mins(e.fin)>_mins(e.debut));
+      evT.forEach(e=>{ wkMin+=_shiftMin(e); });
+      const evConf=new Set();
+      for(let i=0;i<evT.length;i++)for(let j=i+1;j<evT.length;j++) if(_mins(evT[i].debut)<_mins(evT[j].fin)&&_mins(evT[j].debut)<_mins(evT[i].fin)){ evConf.add(evT[i].id); evConf.add(evT[j].id); }
+      const mkEv=(cf)=>evList.map(e=>{
         const nm=e.titre.length>15?e.titre.slice(0,15)+'…':e.titre;
-        return `<div class="shift-bar" style="background:var(--purple-light);color:var(--purple)" title="${_escA(e.titre+(e.lieu?' — '+e.lieu:'')+(e.notes?' — '+e.notes:''))}" onclick="openPanel('panel-evenement','${_escA(e.id)}')">
+        const c=cf.has(e.id);
+        return `<div class="shift-bar" style="background:var(--purple-light);color:var(--purple)${c?';box-shadow:inset 0 0 0 1.5px var(--red)':''}" title="${c?'Chevauchement horaire ce jour — ':''}${_escA(e.titre+(e.lieu?' — '+e.lieu:'')+(e.notes?' — '+e.notes:''))}" onclick="openPanel('panel-evenement','${_escA(e.id)}')">
           <span class="shift-site">${_escH(nm)}</span>
-          <span class="shift-time">${e.debut?e.debut+(e.fin?'–'+e.fin:''):'Journée'}</span>
+          <span class="shift-time">${c?'⚠ ':''}${e.debut?e.debut+(e.fin?'–'+e.fin:''):'Journée'}</span>
         </div>`; }).join('');
+      const evBars=mkEv(evConf);
       if(shifts.length===0) return evBars ? `<div class="day-cell">${evBars}<div class="day-add" title="Ajouter un créneau ce jour" onclick="openPanel('panel-jour','${agent.id}|${dateStr}||')">+</div></div>` : `<div class="day-cell"><div class="day-empty" title="Ajouter un créneau ce jour" onclick="openPanel('panel-jour','${agent.id}|${dateStr}||')">+</div></div>`;
 
       shifts.forEach(s=>{ if(!siteFermeLe(s.siteId, day.date)) wkMin+=_shiftMin(s); });
@@ -3473,6 +3480,10 @@ function renderPlanning(){
         if(!_openSh(shifts[i])||!_openSh(shifts[j])) continue; // un créneau sur site fermé ne crée pas de conflit
         if(_mins(shifts[i].debut)<_mins(shifts[j].fin) && _mins(shifts[j].debut)<_mins(shifts[i].fin)){ conflictIds.add(shifts[i].id); conflictIds.add(shifts[j].id); }
       }
+
+      const evCf=new Set(evConf);
+      evT.forEach(e=>shifts.forEach(s=>{ if(_openSh(s)&&_mins(e.debut)<_mins(s.fin)&&_mins(s.debut)<_mins(e.fin)){ conflictIds.add(s.id); evCf.add(e.id); } }));
+      const evBars2=mkEv(evCf);
 
       // Absence ce jour ?
       const dayAbs=absences.find(ab=>{
@@ -3545,7 +3556,7 @@ function renderPlanning(){
       }).join('');
 
       const addBtn = dayAbs ? '' : `<div class="day-add" title="Ajouter un autre créneau ce jour" onclick="openPanel('panel-jour','${agent.id}|${dateStr}||')">+</div>`;
-      return `<div class="day-cell">${evBars}${bars}${addBtn}</div>`;
+      return `<div class="day-cell">${evBars2}${bars}${addBtn}</div>`;
     }).join('');
 
     return `<div class="agent-row" data-agent-name="${_escA(agent.nom)}">
