@@ -5046,7 +5046,7 @@ function renderSites(){
 function _siteFiche(s,rec){
   const today=new Date(); today.setHours(0,0,0,0); const ts=_ymd(today), sid=`'${s.id}'`;
   const t=siteTournee(s.id), cid=s.client?_dvClients[s.client.trim().toLowerCase()]:'';
-  const afs=gaf().filter(af=>af.siteId===s.id&&_affInRange(af,today)), gaps=rec[s.id]||[];
+  const afs=gaf().filter(af=>af.siteId===s.id&&!(af.dateFin&&af.dateFin<ts)), gaps=rec[s.id]||[];
   const wk=[]; for(let i=0;i<7;i++) covGapsOnDate(_addDays(today,i)).filter(g=>g.siteId===s.id&&g.degrade).forEach(g=>wk.push(g));
   const ferms=gferm().filter(f=>f.siteId===s.id&&(f.dateFin||f.dateDebut)>=ts).sort((a,b)=>a.dateDebut.localeCompare(b.dateDebut));
   const closed=ferms.find(f=>f.dateDebut<=ts);
@@ -5084,7 +5084,7 @@ function _siteFiche(s,rec){
   const notes=s.notes?_cliCard('Particularités', '', `<div style="font-size:13px;line-height:1.5;white-space:pre-wrap">${_escH(s.notes)}</div>`,true):'';
 
   const ags=_cliCard(`Agents affectés <span style="color:var(--text3)">(${Object.keys(byAg).length})</span>`, `<button class="btn btn-secondary btn-sm" onclick="openPanel('panel-affect',{siteId:${sid}})">+ Affecter</button>`,
-    Object.keys(byAg).length?Object.entries(byAg).sort((x,y)=>agentNom(x[0]).localeCompare(agentNom(y[0]),'fr')).map(([aid,l])=>`<div class="cli-row clk" onclick="openPanel('panel-agent-detail','${aid}')"><div style="flex:1;min-width:0"><div class="cli-row-t">${_escH(agentNom(aid))}</div>${l.map(af=>`<div class="cli-row-s">${af.jours.join(', ')} · ${af.debut}–${af.fin}</div>`).join('')}</div></div>`).join('')
+    Object.keys(byAg).length?Object.entries(byAg).sort((x,y)=>agentNom(x[0]).localeCompare(agentNom(y[0]),'fr')).map(([aid,l])=>`<div class="cli-row clk" onclick="openPanel('panel-agent-detail','${aid}')"><div style="flex:1;min-width:0"><div class="cli-row-t">${_escH(agentNom(aid))}</div>${l.map(af=>`<div class="cli-row-s">${af.jours.join(', ')} · ${af.debut}–${af.fin}${af.dateDebut&&af.dateDebut>ts?` · à partir du ${_dFr(af.dateDebut)}`:''}</div>`).join('')}</div></div>`).join('')
     :`<div class="cli-empty">Aucun agent affecté</div>`);
 
   const cov=_cliCard('Couverture', '', `
@@ -5707,7 +5707,7 @@ function _cliFicheOps(c){
   const fil=(_dvCli.filiales.find(f=>f.id===c.filiale)||{}).nom||'';
   const al=_cliAlertes(c), b=_cliBilan(c);
   const contacts=_dvCli.contacts.filter(x=>x.clientId===c.id).sort((x,y)=>(x.nom+x.prenom).localeCompare(y.nom+y.prenom,'fr'));
-  const afs=gaf().filter(af=>sids.has(af.siteId)&&_affInRange(af,today));
+  const afs=gaf().filter(af=>sids.has(af.siteId)&&!(af.dateFin&&af.dateFin<_ymd(today)));
   const rec=covGapsRecurrents().filter(g=>sids.has(g.siteId));
   const wk=[]; if(sites.length) for(let i=0;i<7;i++) covGapsOnDate(_addDays(today,i)).filter(g=>sids.has(g.siteId)&&g.degrade).forEach(g=>wk.push(g));
   const agIds=new Set(afs.map(a=>a.agentId)), d0=_ymd(_addDays(today,-30)), d1=_ymd(_addDays(today,30));
@@ -5759,7 +5759,7 @@ function _cliFicheOps(c){
   const ags=_cliCard(`Agents affectés <span style="color:var(--text3)">(${Object.keys(byAg).length})</span>`, '',
     Object.keys(byAg).length?Object.entries(byAg).sort((x,y)=>agentNom(x[0]).localeCompare(agentNom(y[0]),'fr')).map(([aid,l])=>`<div class="cli-row clk" onclick="openPanel('panel-agent-detail','${aid}')">
       <div style="flex:1;min-width:0"><div class="cli-row-t">${_escH(agentNom(aid))}</div>
-      ${l.map(af=>`<div class="cli-row-s">${sites.length>1?_escH(siteNom(af.siteId))+' · ':''}${af.jours.join(', ')} · ${af.debut}–${af.fin}</div>`).join('')}</div></div>`).join('')
+      ${l.map(af=>`<div class="cli-row-s">${sites.length>1?_escH(siteNom(af.siteId))+' · ':''}${af.jours.join(', ')} · ${af.debut}–${af.fin}${af.dateDebut&&af.dateDebut>_ymd(today)?' · à partir du '+_dFr(af.dateDebut):''}</div>`).join('')}</div></div>`).join('')
     : `<div class="cli-empty">Aucune affectation en cours</div>`);
 
   const cov=_cliCard('Couverture', '', `
