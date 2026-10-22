@@ -489,6 +489,9 @@ body {
 }
 .nav-btn:hover { background: rgba(255,255,255,.09); color: #E4E2D8; }
 .nav-btn.active { background: var(--blue); color: #000; }
+.nav-alert{ position:absolute; top:-3px; right:-3px; width:16px; height:16px; border-radius:50%; background:#fff; display:none; align-items:center; justify-content:center; box-shadow:0 0 0 1.5px #111; pointer-events:none; }
+.nav-alert.on{ display:flex; }
+.nav-alert svg{ width:11px; height:11px; fill:none; stroke:#C0392B; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
 .nav-btn .tooltip {
   position: absolute;
   left: calc(100% + 10px);
@@ -1398,10 +1401,12 @@ svg{ stroke-linecap:round; stroke-linejoin:round; }
       <span class="tooltip">Agents</span>
     </button>
     <button class="nav-btn" onclick="showView('clients')" id="nav-clients">
+      <span class="nav-alert" id="nav-alert-clients"><svg viewBox="0 0 24 24"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v5M12 18v.5"/></svg></span>
       <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2M3 12.5h18"/></svg>
       <span class="tooltip">Clients</span>
     </button>
     <button class="nav-btn" onclick="showView('sites')" id="nav-sites">
+      <span class="nav-alert" id="nav-alert-sites"><svg viewBox="0 0 24 24"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v5M12 18v.5"/></svg></span>
       <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>
       <span class="tooltip">Sites</span>
     </button>
@@ -2496,7 +2501,7 @@ function fillSel(id,items,ph=''){
 let currentView='planning';
 
 function showView(v){
-  currentView=v;
+  currentView=v; setTimeout(updateNavAlertes,0);
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
   document.getElementById('view-'+v)?.classList.add('active');
@@ -3331,7 +3336,17 @@ function applyScopeFilter(agents){
 }
 function refreshCurrentView(){ if(currentView==='mois') renderMois(); else renderPlanning(); }
 
+function updateNavAlertes(){
+  try{
+    const set=(id,on,t)=>{ const e=document.getElementById('nav-alert-'+id); if(e){ e.classList.toggle('on',!!on); e.title=on?t:''; } };
+    const nSites=covGapsRecurrents().length;
+    set('sites',nSites>0,nSites+' créneau'+(nSites>1?'x':'')+' d\'ouverture non couvert'+(nSites>1?'s':''));
+    const nCli=(_dvCli.clients||[]).filter(c=>_cliAlertes(c).length).length;
+    set('clients',nCli>0,nCli+' client'+(nCli>1?'s':'')+' à traiter');
+  }catch(e){}
+}
 function updateAlertBand(){
+  setTimeout(updateNavAlertes,0);
   const urgent=gab().filter(_absenceUrgent);
   ['', '-mois'].forEach(suf=>{
     const band=document.getElementById('alert-band'+suf);
@@ -5227,6 +5242,7 @@ function covGapsRecurrents(){
     const k=_siteContrat(s); let ref=today;
     if(k.debut && _ymd(today)<k.debut) ref=new Date(k.debut+'T12:00:00');
     if(k.fin && _ymd(ref)>k.fin) return;
+    const depuis=ref===today?'':_ymd(ref);
     (s.creneaux||[]).forEach(c=>{
       if(!c.debut||!c.fin) return;
       (c.jours||[]).forEach(jour=>{
@@ -5241,15 +5257,36 @@ function covGapsRecurrents(){
           const k=s.id+'|'+jour+'|'+c.debut+'-'+c.fin+'|'+JSON.stringify(holes);
           const prev=map.get(k);
           if(prev){ prev.parite='toutes'; return; }
-          map.set(k,{ siteId:s.id, jour, debut:c.debut, fin:c.fin, holes, parite:par,
+          map.set(k,{ siteId:s.id, jour, debut:c.debut, fin:c.fin, holes, parite:par, depuis, slots:[[c.debut,c.fin]],
             manque:holes.reduce((a,[x,y])=>a+y-x,0), total:slot[1]-slot[0],
             totalHole: holes.length===1 && holes[0][0]===slot[0] && holes[0][1]===slot[1] });
         });
       });
     });
   });
-  return [...map.values()].sort((a,b)=>
+  const _union=iv=>{ const o=[]; iv.slice().sort((a,b)=>a[0]-b[0]).forEach(([x,y])=>{ const l=o[o.length-1]; if(l&&x<=l[1]) l[1]=Math.max(l[1],y); else o.push([x,y]); }); return o; };
+  const mg=new Map();
+  [...map.values()].forEach(g=>{
+    const k=g.siteId+'|'+g.jour+'|'+g.parite, p=mg.get(k);
+    if(!p){ mg.set(k,{...g, holes:g.holes.map(x=>x.slice()), slots:g.slots.slice(), _op:[[_mins(g.debut),_mins(g.fin)]]}); return; }
+    p.holes=_union(p.holes.concat(g.holes)); p.slots.push(...g.slots); p._op.push([_mins(g.debut),_mins(g.fin)]);
+  });
+  return [...mg.values()].map(g=>{
+    const op=_union(g._op); delete g._op;
+    g.debut=_hm(op[0][0]); g.fin=_hm(op[op.length-1][1]);
+    g.total=op.reduce((a,[x,y])=>a+y-x,0); g.manque=g.holes.reduce((a,[x,y])=>a+y-x,0);
+    g.totalHole=g.manque>=g.total; return g;
+  }).sort((a,b)=>
     siteNom(a.siteId).localeCompare(siteNom(b.siteId))||JOURS.indexOf(a.jour)-JOURS.indexOf(b.jour)||_mins(a.debut)-_mins(b.debut));
+}
+function covIgnoreSlots(siteId,jour,slots){
+  const sites=gs(); const i=sites.findIndex(s=>s.id===siteId); if(i<0) return;
+  const list=(sites[i].covIgnore||[]).slice();
+  String(slots).split(',').forEach(sl=>{ const [d,f]=sl.split('-'); const key=_covKey(jour,d,f); if(!list.includes(key)) list.push(key); });
+  sites[i]={...sites[i],covIgnore:list}; ss(sites);
+  toast('Créneau ignoré');
+  if(currentPanel==='panel-couverture') buildPanel('panel-couverture',currentPanelData);
+  refreshCurrentView();
 }
 
 let covTab='jour';
@@ -5268,17 +5305,24 @@ function _covRowHtml(g,mode){
   return `<div class="cov-row">
     <span class="cov-dot" style="background:${dot}"></span>
     <div style="flex:1;min-width:0">
-      <div style="font-weight:600;font-size:13px">${_escH(siteNom(g.siteId))}</div>
-      <div style="font-size:12px;color:var(--text2);margin-top:2px">${_cap(when)} · ouverture ${g.debut}–${g.fin}</div>
+      ${mode==='jour'?`<div style="font-weight:600;font-size:13px">${_escH(siteNom(g.siteId))}</div>`:''}
+      <div style="${mode==='jour'?'font-size:12px;color:var(--text2);margin-top:2px':'font-weight:600;font-size:13px'}">${_cap(when)}${mode==='jour'?' · ouverture ':'<span style="font-weight:400;color:var(--text2)"> · ouverture '}${g.debut}–${g.fin}${mode==='jour'?'':'</span>'}</div>
       <div style="font-size:12px;color:${rouge?'var(--red)':'#8A6410'};font-weight:600;margin-top:3px">${_holesLabel(g.holes)} — ${grav}</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
       ${act}
-      <button class="btn btn-sm btn-secondary" style="font-size:11px" onclick="covToggleIgnore('${g.siteId}','${g.jour}','${g.debut}','${g.fin}')" title="Ne plus alerter sur ce créneau">C'est normal</button>
+      <button class="btn btn-sm btn-secondary" style="font-size:11px" onclick="${mode==='jour'?`covToggleIgnore('${g.siteId}','${g.jour}','${g.debut}','${g.fin}')`:`covIgnoreSlots('${g.siteId}','${g.jour}','${(g.slots||[[g.debut,g.fin]]).map(x=>x.join('-')).join(',')}')`}" title="Ne plus alerter sur ce créneau">Ignorer</button>
     </div>
   </div>`;
 }
 
+function _covRecGroups(list){
+  const by=new Map(); list.forEach(g=>{ (by.get(g.siteId)||by.set(g.siteId,[]).get(g.siteId)).push(g); });
+  return [...by.entries()].map(([sid,rows])=>{
+    const d=rows[0].depuis;
+    return `<div style="margin-bottom:18px"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;padding-bottom:6px;border-bottom:1px solid var(--border)"><span style="font-weight:800;font-size:14px">${_escH(siteNom(sid))}</span><span style="font-size:12px;color:var(--text2)">${d?'à couvrir à partir du '+_dFr(d):'à couvrir dès maintenant'}</span></div>${rows.map(g=>_covRowHtml(g,'rec')).join('')}</div>`;
+  }).join('');
+}
 function buildPanelCouverture(body,footer){
   const week=covGapsWeek();
   const rec=covGapsRecurrents();
@@ -5296,9 +5340,9 @@ function buildPanelCouverture(body,footer){
       <div style="margin-top:6px">Seuls les plannings des <strong>agents d'accueil</strong> (et des multisites qui les remplacent) sont comparés aux horaires d'ouverture. Les passages logistique, factotum et chantier ne comptent pas comme couverture.</div>
     </div>
     ${list.length
-      ? list.map(g=>_covRowHtml(g,covTab)).join('')
+      ? (covTab==='jour' ? list.map(g=>_covRowHtml(g,covTab)).join('') : _covRecGroups(list))
       : `<div class="empty" style="padding:36px 12px"><div class="empty-text">${covTab==='jour'?'Tous les créneaux d\'ouverture sont couverts cette semaine':'Aucun trou récurrent'}</div></div>`}
-    ${ignored?`<div style="font-size:11px;color:var(--text3);margin-top:14px;padding-top:10px;border-top:1px solid var(--border)">${ignored} créneau${ignored>1?'x':''} marqué${ignored>1?'s':''} « normal » — modifiable depuis la fiche du site.</div>`:''}`;
+    ${ignored?`<div style="font-size:11px;color:var(--text3);margin-top:14px;padding-top:10px;border-top:1px solid var(--border)">${ignored} créneau${ignored>1?'x':''} ignoré${ignored>1?'s':''} — modifiable depuis la fiche du site.</div>`:''}`;
   footer.innerHTML=`<button class="btn btn-secondary" onclick="closePanel()">Fermer</button>`;
 }
 
