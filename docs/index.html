@@ -2613,6 +2613,8 @@ function openPanel(panelId, data=null){
   document.body.classList.add('side-panel-open');
   const sc=document.getElementById('panel-scrim'); if(sc) sc.classList.add('show');
   buildPanel(panelId,data);
+  const _pb=document.getElementById('panel-body'); if(_pb) _pb.scrollTop=0; panel.scrollTop=0;
+  requestAnimationFrame(()=>{ if(_pb) _pb.scrollTop=0; });
 }
 
 function closePanel(){
@@ -4005,8 +4007,10 @@ function _affActiveOn(af,date,ignoreFutureEnd){
     // Fin de contrat pas encore atteinte : la couverture théorique la garde, pour que le trou ressorte en alerte sur les semaines concernées.
     const c=_contratOf(af.agentId);
     const lim=new Date(); lim.setDate(lim.getDate()+_CONTRAT_ALERTE_J);
-    const futureEnd=c&&c.contratFin&&c.contratFin>=_ymd(new Date())&&_ymd(date)<=_ymd(lim)&&!(c.contratDebut&&_ymd(date)<c.contratDebut);
-    if(!(ignoreFutureEnd&&futureEnd)) return false;
+    const td=_ymd(new Date()), ds=_ymd(date);
+    const futureEnd=c&&c.contratFin&&c.contratFin>=td&&ds<=_ymd(lim)&&!(c.contratDebut&&ds<c.contratDebut);
+    const futureStart=c&&c.contratDebut&&c.contratDebut>td&&ds<c.contratDebut&&!(c.contratFin&&ds>c.contratFin);
+    if(!(ignoreFutureEnd&&(futureEnd||futureStart))) return false;
   }
   const isA=isWeekA(date);
   if(af.semaine==='A'&&!isA) return false;
@@ -5201,7 +5205,7 @@ function covGapsContrats(){
   const t0=new Date(); t0.setHours(0,0,0,0);
   const lim=new Date(t0); lim.setDate(lim.getDate()+_CONTRAT_ALERTE_J);
   const t0s=_ymd(t0), lims=_ymd(lim);
-  if(!ga().some(a=>!a.inactif&&a.contratFin&&a.contratFin>=t0s&&a.contratFin<lims)) return [];
+  if(!ga().some(a=>!a.inactif&&((a.contratFin&&a.contratFin>=t0s&&a.contratFin<lims)||(a.contratDebut&&a.contratDebut>t0s&&a.contratDebut<=lims)))) return [];
   const out=[];
   for(let d=new Date(t0); d<=lim; d.setDate(d.getDate()+1)){
     const wd=d.getDay(); if(wd===0||wd===6) continue;
@@ -5247,7 +5251,7 @@ function covSetTab(t){ covTab=t; buildPanel('panel-couverture',currentPanelData)
 function _covRowHtml(g,mode){
   const rouge=g.totalHole;
   const dot=rouge?'var(--red)':'#B8860B';
-  const grav=(rouge?'Personne sur le créneau':`Manque ${_fmtDur(g.manque)} sur ${_fmtDur(g.total)}`)+(g.contrat?' · fin de contrat':'');
+  const grav=(rouge?'Personne sur le créneau':`Manque ${_fmtDur(g.manque)} sur ${_fmtDur(g.total)}`)+(g.contrat?' · début/fin de contrat':'');
   const when = mode==='jour'
     ? new Date(g.dateStr+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'})
     : g.jour + (g.parite==='toutes'?'':(g.parite==='A'?' · semaines impaires':' · semaines paires'));
@@ -6364,7 +6368,7 @@ function buildPanelAffect(body,footer,data){
     <input type="hidden" id="paf-id" value="${isEdit?data:''}">`;
 
   fillSel('paf-agent',ga().filter(a=>!a.inactif).map(a=>({v:a.id,l:a.nom})),'Choisir un agent');
-  fillSel('paf-site',gs().map(s=>({v:s.id,l:s.nom})),'Choisir un site');
+  fillSel('paf-site',gs().slice().sort((a,b)=>(a.nom||'').localeCompare(b.nom||'','fr',{sensitivity:'base'})).map(s=>({v:s.id,l:s.nom})),'Choisir un site');
   if(af){ document.getElementById('paf-agent').value=af.agentId; document.getElementById('paf-site').value=af.siteId; }
   else if(preAgent) document.getElementById('paf-agent').value=preAgent;
   if(!af && preSite) document.getElementById('paf-site').value=preSite;
@@ -6699,15 +6703,18 @@ function buildPanelCreneau(body,footer,raw){
     // Chercher binôme : même affectation (site + créneau commun) et type "accueil" des deux côtés
     // (l'échange de créneau ne concerne que les postes fixes accueil, pas les multisites/logistique/etc.)
     const isAccueil=(id)=>{ const t=agTypes(ga().find(a=>a.id===id)); return t.includes('accueil')||t.includes('concierge'); };
-    const binome=isAccueil(agent.id) ? gaf().filter(b=>b.siteId===af.siteId && b.id!==af.id && b.agentId!==agent.id && b.jours.some(j=>af.jours.includes(j)) && isAccueil(b.agentId)) : [];
+    const _dd=new Date(dateStr+'T12:00:00'), _jr=JOURS[(_dd.getDay()+6)%7];
+    const _mat=x=>(_mins(x.debut)+_mins(x.fin))/2<780;
+    const binome=isAccueil(agent.id) ? gaf().filter(b=>b.id!==af.id && b.agentId!==agent.id && b.siteId===af.siteId && isAccueil(b.agentId) && _affActiveOn(b,_dd) && _mat(b)!==_mat(af))
+      .sort((x,y)=>agentNom(x.agentId).localeCompare(agentNom(y.agentId),'fr')) : [];
     const swapIc='<svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M7 7h12l-3.2-3.2M17 17H5l3.2 3.2"/></svg>';
 
     let permHTML='';
     if(binome.length>0){
-      const binomeOptions=binome.map(b=>`<option value="${b.id}">${_escH(agentNom(b.agentId))} (${b.debut}–${b.fin})</option>`).join('');
+      const binomeOptions=binome.map(b=>`<option value="${b.id}">${_escH(agentNom(b.agentId))} · ${_mat(b)?'matin':'après-midi'} ${b.debut}–${b.fin}</option>`).join('');
       permHTML=`
         <div class="form-section">Échange de créneau</div>
-        <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Échanger ce créneau avec un autre agent du site — crée une exception ponctuelle pour chacun (modifiable ou annulable ensuite via « Exception ponctuelle » ci-dessous).</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Échange avec un agent d'accueil du site : vous prenez son créneau ${_mat(af)?'de l\'après-midi':'du matin'} et il prend le vôtre (${af.debut}–${af.fin}). Crée une exception ponctuelle pour chacun (modifiable ou annulable ensuite via « Exception ponctuelle » ci-dessous).</div>
         <div class="form-group">
           <label class="form-label">Échanger avec</label>
           <select class="form-input" id="perm-binome">${binomeOptions}</select>
@@ -6723,6 +6730,7 @@ function buildPanelCreneau(body,footer,raw){
         <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:8px;border-color:var(--purple);color:var(--purple)" onclick="saveSwap('${af.id}',document.getElementById('perm-binome').value,document.querySelector('#perm-scope-seg .seg-btn.active').dataset.scope,'${dateStr}')">${swapIc} Échanger</button>`;
     }
 
+    if(!binome.length) permHTML=`<div class="form-section">Échange de créneau</div><div style="font-size:12px;color:var(--text2);margin-bottom:14px">${!isAccueil(agent.id)?'Réservé aux agents d\'accueil (type de '+_escH(agent.nom)+' : '+agTypes(agent).map(agentTypeLabel).join(', ')+').':'Aucun autre agent d\'accueil de '+_escH(site.nom)+' n\'a de créneau '+(_mat(af)?'de l\'après-midi':'du matin')+' ce jour-là.'}</div>`;
     // Injecter dans le body avant le footer
     const existingPerm=body.querySelector('#perm-section');
     if(!existingPerm){
