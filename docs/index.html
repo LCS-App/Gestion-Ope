@@ -5166,10 +5166,14 @@ function _siteBaseIntervals(siteId,date,strict){
   return gaf().filter(af=>af.siteId===siteId && couvre(af) && _affActiveOn(af,date,!strict)).map(af=>[_mins(af.debut),_mins(af.fin)]);
 }
 
+/* Contrat client : le site n'a d'obligation d'ouverture que pendant le contrat de son client */
+function _siteContrat(s){ const cid=s&&s.client?_dvClients[s.client.trim().toLowerCase()]:null; const c=cid?(_dvCli.clients||[]).find(x=>x.id===cid):null; return c?{debut:c.debut||'',fin:c.fin||''}:{debut:'',fin:''}; }
+function _siteContratActif(s,date){ const k=_siteContrat(s), ds=_ymd(date); return !(k.debut&&ds<k.debut) && !(k.fin&&ds>k.fin); }
+
 function covGapsOnDate(date){
   const jour=JOURS[(date.getDay()+6)%7]; const out=[];
   gs().forEach(s=>{
-    if(siteFermeLe(s.id,date)) return;
+    if(siteFermeLe(s.id,date) || !_siteContratActif(s,date)) return;
     (s.creneaux||[]).forEach(c=>{
       if(!c.debut||!c.fin) return;
       if(!(c.jours||[]).includes(jour) || covIgnored(s,jour,c)) return;
@@ -5220,6 +5224,9 @@ function covGapsRecurrents(){
   const couvre=_afCouvreFn();
   const map=new Map();
   gs().forEach(s=>{
+    const k=_siteContrat(s); let ref=today;
+    if(k.debut && _ymd(today)<k.debut) ref=new Date(k.debut+'T12:00:00');
+    if(k.fin && _ymd(ref)>k.fin) return;
     (s.creneaux||[]).forEach(c=>{
       if(!c.debut||!c.fin) return;
       (c.jours||[]).forEach(jour=>{
@@ -5227,7 +5234,7 @@ function covGapsRecurrents(){
         const slot=[_mins(c.debut),_mins(c.fin)];
         ['A','B'].forEach(par=>{
           const cov=gaf().filter(af=>af.siteId===s.id && couvre(af) && (af.jours||[]).includes(jour)
-              && (af.semaine==='toutes'||af.semaine===par) && _affInRange(af,today) && _contratInRange(af.agentId,today))
+              && (af.semaine==='toutes'||af.semaine===par) && _affInRange(af,ref) && _contratInRange(af.agentId,ref))
             .map(af=>[_mins(af.debut),_mins(af.fin)]);
           const holes=_slotHoles(slot,cov);
           if(!holes.length) return;
