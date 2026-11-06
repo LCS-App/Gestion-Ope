@@ -199,6 +199,7 @@ function renderPlanning(){
   const rows=document.getElementById('planning-rows');
   if(agents.length===0){
     rows.innerHTML=`<div class="empty" style="padding:60px 20px"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></div><div class="empty-text">Aucune affectation trouvée</div><div class="empty-sub">Ajoutez des agents et créez des affectations</div></div>`;
+    const pmb=document.getElementById('pm-body'); if(pmb) pmb.innerHTML='<div class="pm-empty">Aucune affectation trouvée</div>';
     return;
   }
 
@@ -300,7 +301,7 @@ function renderPlanning(){
           const absIcon=absNeeds
             ? '<svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3.6l9 15.4H3z"/><path d="M12 9.6v4.6M12 17.2v.4"/></svg>'
             : '<svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12h7"/></svg>';
-          return `<div class="shift-bar shift-bar-absent" data-absence-id="${dayAbs.id}"${absStyle} title="${_escA(nom)}" onclick="openPanel('panel-creneau','${afRef}|${agent.id}|${dateStr}|${dayAbs.id}')">
+          return `<div class="shift-bar shift-bar-absent" data-absence-id="${dayAbs.id}" data-h="${s.debut}–${s.fin}" data-open="${absNeeds?1:0}"${absStyle} title="${_escA(nom)}" onclick="openPanel('panel-creneau','${afRef}|${agent.id}|${dateStr}|${dayAbs.id}')">
             <span class="shift-site">${_escH(short)}</span>
             <span class="shift-time">${absIcon} Absent</span>
           </div>`;
@@ -336,7 +337,69 @@ function renderPlanning(){
   }).join('');
 
   filterPlanRows(planSearch, true);
+  _pmDays=days.map(d=>({ini:d.full.slice(0,1),lbl:d.full.slice(0,3),num:d.date.getDate(),today:d.date.getTime()===today.getTime()}));
+  _renderPlanningMobile();
   updateAbsenceBadge();
+}
+
+/* Vue mobile condensée (≤700px) : reconstruite à partir des lignes desktop (mêmes calculs, mêmes clics). */
+let _pmDays=[], _pmQ='', _pmOpen=null, _pmAlertOpen=true;
+const _PM_K={
+  open:{bg:'#F8DCD7',fg:'#7A2019',bd:'#D5584A'}, absent:{bg:'#ECECEA',fg:'#6B6D68',bd:'#9A9C97'},
+  absRepl:{bg:'#FBE38C',fg:'#5A4A10',bd:'#E9C41F'}, remplace:{bg:'#DCEBF7',fg:'#134B72',bd:'#3B84C4'},
+  except:{bg:'#FFF1AE',fg:'#5B4B00',bd:'#E9C41F'}, ferme:{bg:'#ECECEA',fg:'#6B6D68',bd:'#9A9C97'},
+  perm:{bg:'#D3EDEA',fg:'#0E4F48',bd:'#1F8A7E'}, present:{bg:'#DDEFE4',fg:'#1E5738',bd:'#3E9A69'},
+  event:{bg:'rgba(107,79,176,.14)',fg:'#6B4FB0',bd:'#6B4FB0'}
+};
+const _PM_ORDER=['open','absent','absRepl','remplace','except','ferme','perm','present','event'];
+function _pmKind(b){
+  const c=b.classList;
+  if(c.contains('shift-bar-ferme')) return 'ferme';
+  if(c.contains('shift-bar-absent')) return b.dataset.open==='1'?'open':'absent';
+  if(c.contains('shift-bar-remplace')) return /FBE38C/i.test(b.getAttribute('style')||'')||/251, 227, 140/.test(b.style.background)?'absRepl':'remplace';
+  if(c.contains('shift-except')) return 'except';
+  if(c.contains('shift-nat-perm')) return 'perm';
+  if(c.contains('shift-bar-present')) return 'present';
+  return 'event';
+}
+function _pmTime(b){
+  const m=(b.dataset.h||(b.querySelector('.shift-time')||b).textContent).match(/(\d{1,2}):(\d\d)/);
+  return m?(+m[1])+'h'+(m[2]==='00'?'':m[2]):'';
+}
+function _pmToggle(i){ _pmOpen=_pmOpen===i?null:i; _renderPlanningMobile(); }
+function _pmToggleAlert(){ _pmAlertOpen=!_pmAlertOpen; _renderPlanningMobile(); }
+function _renderPlanningMobile(){
+  const body=document.getElementById('pm-body'); if(!body) return;
+  const q=(_pmQ||'').trim().toLowerCase();
+  const rows=[...document.querySelectorAll('#planning-rows .agent-row')].filter(r=>r.style.display!=='none');
+  const alerts=[]; let html='';
+  rows.forEach((r,ri)=>{
+    const label=r.querySelector('.agent-label');
+    const cells=[...r.querySelectorAll('.day-cell')];
+    const hay=(r.textContent+' '+[...r.querySelectorAll('.shift-bar')].map(b=>b.title).join(' ')).toLowerCase();
+    if(q && !hay.includes(q)) return;
+    const nom=(r.querySelector('.agent-name')||{}).textContent||'';
+    const agentClick=(label&&label.getAttribute('onclick'))||'';
+    const mini=cells.map((c,di)=>{
+      const bars=[...c.querySelectorAll('.shift-bar')];
+      bars.forEach(b=>{ if(_pmKind(b)==='open') alerts.push({nom,di,h:b.dataset.h||'',site:b.title||'',click:b.getAttribute('onclick')||''}); });
+      if(!bars.length) return '<div class="pm-cell"><b>–</b></div>';
+      const kinds=bars.map(_pmKind), k=_PM_ORDER.find(x=>kinds.includes(x)), C=_PM_K[k];
+      const t=k==='ferme'&&bars.length===1?'Fermé':_pmTime(bars[0]);
+      const sub=k==='open'?'!':(bars.length>1?'+'+(bars.length-1):'');
+      return `<div class="pm-cell" style="background:${C.bg};color:${C.fg};border-left-color:${C.bd}"><b>${t}</b><i>${sub}</i></div>`;
+    }).join('');
+    const open=_pmOpen===ri;
+    const det=open?`<div class="pm-det">${cells.map((c,di)=>{
+        const bars=[...c.querySelectorAll('.shift-bar')]; if(!bars.length) return '';
+        return `<div class="pm-det-d"><span>${_pmDays[di]?_pmDays[di].lbl:''}</span><div class="pm-det-bars">${bars.map(b=>b.outerHTML).join('')}</div></div>`;
+      }).join('')}${agentClick?`<button class="pm-det-link" onclick="${_escA(agentClick)}">Fiche agent</button>`:''}</div>`:'';
+    html+=`<div class="pm-row"><div class="pm-grid pm-line" onclick="_pmToggle(${ri})"><div class="pm-name">${label?label.innerHTML:''}</div>${mini}</div>${det}</div>`;
+  });
+  const alertHtml=alerts.length?`<div class="pm-alert"><div class="pm-alert-h" onclick="_pmToggleAlert()"><span class="pm-alert-t">À couvrir</span><span class="pm-pill">${alerts.length}</span><span class="pm-chev">${_pmAlertOpen?'▴':'▾'}</span></div>${_pmAlertOpen?alerts.map(a=>`<div class="pm-alert-it"><div class="pm-d"><span>${_pmDays[a.di]?_pmDays[a.di].lbl:''}</span><b>${_pmDays[a.di]?_pmDays[a.di].num:''}</b></div><div class="pm-it-m"><div class="pm-it-n">${_escH(a.nom)}</div><div class="pm-it-s">${_escH(a.h)}${a.site?' · '+_escH(a.site):''}</div></div>${a.click?`<button class="pm-btn" onclick="${_escA(a.click)}">Remplacer</button>`:''}</div>`).join(''):''}</div>`:'';
+  const head=`<div class="pm-grid pm-head"><div></div>${_pmDays.map(d=>`<div class="pm-hd${d.today?' today':''}"><span>${d.ini}</span><b>${d.num}</b></div>`).join('')}</div>`;
+  const legend=`<div class="pm-legend">${[['present','En poste'],['perm','Permanence'],['remplace','Remplacement'],['absRepl','Absent remplacé'],['open','À couvrir'],['except','Ajusté']].map(([k,l])=>`<span><i style="background:${_PM_K[k].bd}"></i>${l}</span>`).join('')}</div>`;
+  body.innerHTML=alertHtml+head+(html||'<div class="pm-empty">Aucun agent ne correspond</div>')+legend;
 }
 
 /* Total semaine + alerte dépassement du volume contractuel (absences maladie comptées) */
