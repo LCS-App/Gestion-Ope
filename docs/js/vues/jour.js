@@ -21,7 +21,7 @@ function renderJour(){
     selG.value=jourGroupe;
   }
 
-  let affs=gaf().filter(a=>a.jours.includes(label) && _affInRange(a,d) && !(a.semaine==='A'&&!isA) && !(a.semaine==='B'&&isA));
+  let affs=gaf().filter(a=>a.jours.includes(label) && _affInRange(a,d) && _contratInRange(a.agentId,d) && !(a.semaine==='A'&&!isA) && !(a.semaine==='B'&&isA));
   if(jourGroupe){ const t=gt().find(x=>x.id===jourGroupe); const set=new Set(t?(t.siteIds||[]):[]); affs=affs.filter(a=>set.has(a.siteId)); }
   const q=(jourSearch||'').trim().toLowerCase();
   if(q) affs=affs.filter(a=> siteNom(a.siteId).toLowerCase().includes(q) || agentNom(a.agentId).toLowerCase().includes(q));

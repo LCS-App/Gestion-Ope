@@ -96,7 +96,7 @@ function _agentMonthDay(agentId, d){
   const idx=(d.getDay()+6)%7;
   if(idx>4) return {weekend:true, mins:0, status:'weekend'};
   const label=JOURS[idx], isA=isWeekA(d), dateStr=_ymd(d);
-  const dayAffecs=gaf().filter(af=>af.agentId===agentId && af.jours.includes(label) && _affInRange(af,d) && !(af.semaine==='A'&&!isA) && !(af.semaine==='B'&&isA));
+  const dayAffecs=gaf().filter(af=>af.agentId===agentId && af.jours.includes(label) && _affInRange(af,d) && _contratInRange(af.agentId,d) && !(af.semaine==='A'&&!isA) && !(af.semaine==='B'&&isA));
   const own=effectiveShifts(agentId, dateStr, dayAffecs);
   const repl=agentReplacementShifts(agentId, d);
   const ab=gab().find(a=>a.agentId===agentId && _absCoversDate(a,d));

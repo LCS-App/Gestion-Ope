@@ -212,6 +212,7 @@ function renderPlanning(){
       const dayAffecs=agentAffecs.filter(af=>{
         if(!af.jours.includes(day.label)) return false;
         if(!_affInRange(af,day.date)) return false;
+        if(!_contratInRange(af.agentId,day.date)) return false;
         if(af.semaine==='A'&&!isA) return false;
         if(af.semaine==='B'&&isA) return false;
         return true;

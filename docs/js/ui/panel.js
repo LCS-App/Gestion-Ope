@@ -31,7 +31,7 @@ function renderAgentWeek(agentId){
   const days=[...Array(7)].map((_,i)=>_addDays(mon,i));
   const cols=days.map(d=>{
     const idx=(d.getDay()+6)%7, label=JOURS[idx], isA=isWeekA(d), ds=_ymd(d);
-    const dayAf=gaf().filter(af=>af.agentId===agentId&&(af.jours||[]).includes(label)&&_affInRange(af,d)&&!(af.semaine==='A'&&!isA)&&!(af.semaine==='B'&&isA));
+    const dayAf=gaf().filter(af=>af.agentId===agentId&&(af.jours||[]).includes(label)&&_affInRange(af,d)&&_contratInRange(af.agentId,d)&&!(af.semaine==='A'&&!isA)&&!(af.semaine==='B'&&isA));
     const ab=abs.find(a=>_absCoversDate(a,d));
     const sh=[];
     effectiveShifts(agentId,ds,dayAf).filter(s=>!(ghost&&ghost.skip&&s.afId===ghost.skip)).forEach(s=>sh.push({s,k:siteFermeLe(s.siteId,d)?'ferme':(ab?'abs':'own')}));
