@@ -420,6 +420,26 @@ body {
   .header-actions { padding-left: 8px; }
 }
 
+/* ── MOBILE (≤700px) : en-tête compact + menu en barre basse ── */
+@media (max-width:700px){
+  body{ --nav-w:0px; }
+  .header{ flex-wrap:nowrap; height:52px; min-height:0; padding:0 8px; gap:6px; }
+  .header-brand,.header-filters,#user-info,#sync-status{ display:none!important; }
+  .header-week{ flex:1; min-width:0; padding:0; gap:6px; border:none; }
+  .week-picker-trigger{ min-width:0; flex:1; }
+  .week-label{ font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .week-nav-btn{ width:34px; height:34px; flex-shrink:0; }
+  .header-actions{ padding-left:0; gap:4px; display:flex; }
+  .header-actions button[onclick="openExport()"]{ display:none; }
+  .header-actions button{ height:34px!important; padding:0 9px!important; }
+  .app-body{ flex-direction:column; }
+  .nav-rail, body.nav-open .nav-rail{ order:2; width:100%; flex-direction:row; align-items:center; justify-content:flex-start; padding:6px 8px calc(6px + env(safe-area-inset-bottom)); gap:4px; overflow-x:auto; overflow-y:hidden; }
+  .nav-toggle,.nav-sep{ display:none!important; }
+  .nav-btn, body.nav-open .nav-btn{ width:44px; height:44px; flex:0 0 44px; padding:0; justify-content:center; gap:0; font-size:19px; }
+  .nav-btn .tooltip, body.nav-open .nav-btn .tooltip{ display:none; }
+  .nav-alert{ top:2px; right:2px; }
+}
+
 /* ── LAYOUT ──────────────────────────────── */
 .app-body {
   display: flex;
