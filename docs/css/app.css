@@ -439,11 +439,11 @@ body {
   .main-content,.view{ min-height:0; }
   .header-actions button{ height:34px!important; padding:0 9px!important; }
   .app-body{ flex-direction:column; }
-  .nav-rail, body.nav-open .nav-rail{ position:relative; order:9; flex:0 0 auto; z-index:60; height:auto; width:100%; flex-direction:row; align-items:center; justify-content:flex-start; padding:6px 8px calc(6px + env(safe-area-inset-bottom)); gap:4px; overflow-x:auto; overflow-y:hidden; }
-  .nav-toggle,.nav-sep{ display:none!important; }
-  .nav-btn, body.nav-open .nav-btn{ width:44px; height:44px; flex:0 0 44px; padding:0; justify-content:center; gap:0; font-size:19px; }
-  .nav-btn .tooltip, body.nav-open .nav-btn .tooltip{ display:none; }
-  .nav-alert{ top:2px; right:2px; }
+  body .nav-rail, body.nav-open .nav-rail{ position:relative; order:9; flex:0 0 auto; z-index:60; height:auto; width:100%; flex-direction:row; align-items:center; justify-content:flex-start; padding:6px 8px calc(6px + env(safe-area-inset-bottom)); gap:4px; overflow-x:auto; overflow-y:hidden; }
+  body .nav-toggle, body .nav-sep{ display:none!important; }
+  body .nav-btn, body.nav-open .nav-btn{ width:44px; height:44px; flex:0 0 44px; padding:0; justify-content:center; gap:0; font-size:19px; }
+  body .nav-btn .tooltip, body.nav-open .nav-btn .tooltip{ display:none; }
+  body .nav-alert{ top:2px; right:2px; }
   body.side-panel-open .nav-rail{ display:none; }
   .side-panel{ will-change:auto; transition:transform .24s cubic-bezier(.4,0,.2,1), visibility 0s linear .24s; }
   .side-panel.open{ transition:transform .24s cubic-bezier(.4,0,.2,1), visibility 0s; }
