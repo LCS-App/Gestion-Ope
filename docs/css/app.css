@@ -446,6 +446,10 @@ body {
   .nav-btn .tooltip, body.nav-open .nav-btn .tooltip{ display:none; }
   .nav-alert{ top:2px; right:2px; }
   body.side-panel-open .nav-rail{ display:none; }
+  .side-panel{ will-change:auto; transition:transform .24s cubic-bezier(.4,0,.2,1), visibility 0s linear .24s; }
+  .side-panel.open{ transition:transform .24s cubic-bezier(.4,0,.2,1), visibility 0s; }
+  .side-panel:not(.open){ visibility:hidden; }
+  .planning-container{ position:relative; min-height:0; height:100%; }
   .side-panel{ padding-bottom:env(safe-area-inset-bottom); }
 }
 
