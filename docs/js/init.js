@@ -1,4 +1,12 @@
 // Démarrage (DOMContentLoaded)
+// Hauteur réelle de l'écran (Firefox iOS / Chrome iOS : 100dvh peu fiable avec leurs barres)
+(function(){
+  function setAppH(){ var h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight; document.documentElement.style.setProperty('--app-h', Math.round(h)+'px'); if(window.scrollY) window.scrollTo(0,0); }
+  setAppH();
+  window.addEventListener('resize', setAppH);
+  window.addEventListener('orientationchange', function(){ setTimeout(setAppH,250); });
+  if(window.visualViewport) window.visualViewport.addEventListener('resize', setAppH);
+})();
 /* ═══════════════════════════════════════
    INIT
 ═══════════════════════════════════════ */
