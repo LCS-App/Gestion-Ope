@@ -432,7 +432,7 @@ body {
   .header-actions{ padding-left:0; gap:4px; display:flex; }
   .header-actions button[onclick="openExport()"]{ display:none!important; }
   html{ height:100%; overflow:hidden; }
-  body{ position:fixed; top:0; left:0; right:0; height:100vh; height:100dvh; height:var(--app-h,100dvh); }
+  body{ position:fixed; top:0; left:0; right:0; bottom:0; height:auto; }
   .week-picker-trigger{ overflow:hidden; margin:0!important; padding:2px 2px!important; }
   .week-picker-trigger svg, .header-week button[onclick="goCurrentWeek()"]{ display:none!important; }
   .app-body{ min-height:0; }
