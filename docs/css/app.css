@@ -437,7 +437,6 @@ body {
   .week-picker-trigger svg, .header-week button[onclick="goCurrentWeek()"]{ display:none!important; }
   .app-body{ min-height:0; }
   .main-content,.view{ min-height:0; }
-  .planning-container{ -webkit-overflow-scrolling:touch; }
   .header-actions button{ height:34px!important; padding:0 9px!important; }
   .app-body{ flex-direction:column; }
   .nav-rail, body.nav-open .nav-rail{ position:relative; order:9; flex:0 0 auto; z-index:60; height:auto; width:100%; flex-direction:row; align-items:center; justify-content:flex-start; padding:6px 8px calc(6px + env(safe-area-inset-bottom)); gap:4px; overflow-x:auto; overflow-y:hidden; }
@@ -449,7 +448,7 @@ body {
   .side-panel{ will-change:auto; transition:transform .24s cubic-bezier(.4,0,.2,1), visibility 0s linear .24s; }
   .side-panel.open{ transition:transform .24s cubic-bezier(.4,0,.2,1), visibility 0s; }
   .side-panel:not(.open){ visibility:hidden; }
-  .planning-container{ position:relative; min-height:0; height:100%; }
+  .planning-container{ overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; }
   .side-panel{ padding-bottom:env(safe-area-inset-bottom); }
 }
 
