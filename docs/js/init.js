@@ -27,16 +27,3 @@ window.addEventListener('DOMContentLoaded', function(){
   });
 });
 
-// Diagnostic mobile : ajouter ?diag=1 à l'adresse
-(function(){
-  if(!/[?&]diag=1/.test(location.search)) return;
-  var d=document.createElement('div');
-  d.style.cssText='position:fixed;left:6px;right:6px;top:60px;z-index:99999;background:#000;color:#0f0;font:11px/1.35 monospace;padding:6px;border-radius:6px;white-space:pre-wrap;pointer-events:none';
-  document.body.appendChild(d);
-  var p=document.createElement('div'); p.style.cssText='position:fixed;left:0;top:0;padding-bottom:env(safe-area-inset-bottom);visibility:hidden'; document.body.appendChild(p);
-  function r(el){ if(!el) return 'null'; var b=el.getBoundingClientRect(); return Math.round(b.top)+'→'+Math.round(b.bottom)+' (h'+Math.round(b.height)+')'; }
-  function u(){ var vv=window.visualViewport;
-    d.textContent='innerH '+innerHeight+' | vvH '+(vv?Math.round(vv.height):'-')+' | clientH '+document.documentElement.clientHeight+' | screenH '+screen.height+' | safeBottom '+getComputedStyle(p).paddingBottom+'\n'+
-    'body '+r(document.body)+'\napp-body '+r(document.querySelector('.app-body'))+'\nmain '+r(document.querySelector('.main-content'))+'\nview '+r(document.querySelector('.view.active'))+'\nplanning '+r(document.getElementById('planning-container'))+'\nnav '+r(document.querySelector('.nav-rail')); }
-  u(); setInterval(u,700);
-})();
