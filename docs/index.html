@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20261117a">
+<link rel="stylesheet" href="css/app.css?v=20261117b">
 </head>
 <body>
 
@@ -66,6 +66,7 @@
   </div>
 
   <div class="header-actions">
+    <button class="btn btn-primary btn-sm" id="add-menu-btn" onclick="openAddMenu(event)" style="margin-right:10px;height:32px">+ Ajouter <span style="font-size:10px;margin-left:4px">▾</span></button>
     <span id="sync-status" style="font-size:11px;color:var(--text3);opacity:0;transition:opacity .3s;margin-right:6px"></span>
     <span id="user-info" style="font-size:12px;color:var(--text2);margin-right:8px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
     <button onclick="openExport()" title="Extraire des données (plannings, absences, heures sup.)" style="height:32px;padding:0 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--white);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;margin-right:6px">
@@ -157,9 +158,9 @@
       <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="6" cy="6.5" r="2.4"/><circle cx="18" cy="17.5" r="2.4"/><path d="M8.4 6.5H15a3 3 0 010 6H9a3 3 0 000 6h6.6"/></svg>
       <span class="tooltip">Tournées</span>
     </button>
-    <button class="nav-btn" onclick="showView('affect')" id="nav-affect" style="display:none">
+    <button class="nav-btn" onclick="showView('affect')" id="nav-affect">
       <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="4" y="4" width="7" height="7" rx="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.6"/><rect x="13" y="13" width="7" height="7" rx="1.6"/></svg>
-      <span class="tooltip">Affectations</span>
+      <span class="tooltip">Affectations (règles récurrentes)</span>
     </button>
   </nav>
 
@@ -419,12 +420,19 @@
     <div class="view" id="view-affect">
       <div class="view-page">
         <div class="page-heading">
-          <div><h1>Affectations</h1><div class="page-heading-sub">Affectations agent → site avec horaires</div></div>
+          <div><h1>Affectations</h1><div class="page-heading-sub">Règles récurrentes : agent → site, jours et horaires</div></div>
           <button class="btn btn-primary" onclick="openPanel('panel-affect',null)">+ Nouvelle affectation</button>
         </div>
-        <div class="search-bar">
-          <span class="search-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg></span>
-          <input type="text" placeholder="Rechercher par agent ou site…" id="search-affect" oninput="renderAffect()">
+        <div id="affect-help" class="card" style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;font-size:13px;line-height:1.5">
+          <div style="flex:1">Le <b>planning</b> affiche le résultat de ces règles. Modifiez ici ce qui se répète chaque semaine. Pour un seul jour, ouvrez le planning puis « + » dans la cellule → Créneau ponctuel.</div>
+          <button class="btn btn-secondary btn-sm" onclick="closeAffectHelp()">Compris</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+          <div class="search-bar" style="flex:1;min-width:220px;margin:0">
+            <span class="search-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg></span>
+            <input type="text" placeholder="Rechercher par agent ou site…" id="search-affect" oninput="renderAffect()">
+          </div>
+          <button class="tab" id="affect-empty-chip" onclick="toggleAffectEmpty()">Sans affectation</button>
         </div>
         <div id="affect-list"></div>
       </div>
@@ -450,38 +458,39 @@
 <div id="toast"></div>
 
 <!-- Scripts : ordre de chargement significatif (globaux partagés) -->
-<script src="js/core/auth-storage.js?v=20261117a"></script>
-<script src="js/core/dataverse.js?v=20261117a"></script>
-<script src="js/core/store.js?v=20261117a"></script>
-<script src="js/core/seed.js?v=20261117a"></script>
-<script src="js/core/utils.js?v=20261117a"></script>
-<script src="js/ui/navigation.js?v=20261117a"></script>
-<script src="js/ui/panel.js?v=20261117a"></script>
-<script src="js/ui/semaine.js?v=20261117a"></script>
-<script src="js/metier/absences-socle.js?v=20261117a"></script>
-<script src="js/vues/croise.js?v=20261117a"></script>
-<script src="js/vues/planning.js?v=20261117a"></script>
-<script src="js/panels/absence.js?v=20261117a"></script>
-<script src="js/panels/remplacer.js?v=20261117a"></script>
-<script src="js/vues/absences.js?v=20261117a"></script>
-<script src="js/vues/historique.js?v=20261117a"></script>
-<script src="js/vues/evenements-pointage.js?v=20261117a"></script>
-<script src="js/vues/agents.js?v=20261117a"></script>
-<script src="js/vues/sites.js?v=20261117a"></script>
-<script src="js/metier/couverture.js?v=20261117a"></script>
-<script src="js/vues/clients.js?v=20261117a"></script>
-<script src="js/vues/journal-client.js?v=20261117a"></script>
-<script src="js/vues/tournees.js?v=20261117a"></script>
-<script src="js/vues/affectations.js?v=20261117a"></script>
-<script src="js/metier/exceptions.js?v=20261117a"></script>
-<script src="js/panels/creneau.js?v=20261117a"></script>
-<script src="js/outils/versioning.js?v=20261117a"></script>
-<script src="js/outils/import-export.js?v=20261117a"></script>
-<script src="js/outils/partage.js?v=20261117a"></script>
-<script src="js/outils/extraction.js?v=20261117a"></script>
-<script src="js/vues/jour.js?v=20261117a"></script>
-<script src="js/vues/mois.js?v=20261117a"></script>
-<script src="js/init.js?v=20261117a"></script>
+<script src="js/core/auth-storage.js?v=20261117b"></script>
+<script src="js/core/dataverse.js?v=20261117b"></script>
+<script src="js/core/store.js?v=20261117b"></script>
+<script src="js/core/seed.js?v=20261117b"></script>
+<script src="js/core/utils.js?v=20261117b"></script>
+<script src="js/ui/navigation.js?v=20261117b"></script>
+<script src="js/ui/panel.js?v=20261117b"></script>
+<script src="js/ui/semaine.js?v=20261117b"></script>
+<script src="js/metier/absences-socle.js?v=20261117b"></script>
+<script src="js/vues/croise.js?v=20261117b"></script>
+<script src="js/vues/planning.js?v=20261117b"></script>
+<script src="js/panels/absence.js?v=20261117b"></script>
+<script src="js/panels/remplacer.js?v=20261117b"></script>
+<script src="js/vues/absences.js?v=20261117b"></script>
+<script src="js/vues/historique.js?v=20261117b"></script>
+<script src="js/vues/evenements-pointage.js?v=20261117b"></script>
+<script src="js/vues/agents.js?v=20261117b"></script>
+<script src="js/vues/sites.js?v=20261117b"></script>
+<script src="js/metier/couverture.js?v=20261117b"></script>
+<script src="js/vues/clients.js?v=20261117b"></script>
+<script src="js/vues/journal-client.js?v=20261117b"></script>
+<script src="js/vues/tournees.js?v=20261117b"></script>
+<script src="js/vues/affectations.js?v=20261117b"></script>
+<script src="js/ui/ajouter-menu.js?v=20261117b"></script>
+<script src="js/metier/exceptions.js?v=20261117b"></script>
+<script src="js/panels/creneau.js?v=20261117b"></script>
+<script src="js/outils/versioning.js?v=20261117b"></script>
+<script src="js/outils/import-export.js?v=20261117b"></script>
+<script src="js/outils/partage.js?v=20261117b"></script>
+<script src="js/outils/extraction.js?v=20261117b"></script>
+<script src="js/vues/jour.js?v=20261117b"></script>
+<script src="js/vues/mois.js?v=20261117b"></script>
+<script src="js/init.js?v=20261117b"></script>
 
 <!-- ══ MODAL EXTRACTION ════════════════════════════════════════ -->
 <div id="export-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; align-items:center; justify-content:center;" onclick="if(event.target===this) closeExport()">
