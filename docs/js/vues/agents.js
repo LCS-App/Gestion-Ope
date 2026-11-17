@@ -312,7 +312,7 @@ function buildPanelAgentDetail(body,footer,id){
     ${a.notes?`<div style="font-size:13px;color:var(--text2);margin-bottom:16px">${_escH(a.notes)}</div>`:''}
     <div class="form-section">Absences</div>
     ${_agentAbsencesHTML(id)}
-    <div class="form-section">Affectations</div>
+    <div class="form-section" style="display:flex;align-items:center;gap:8px">Affectations<button class="btn btn-primary btn-sm" style="margin-left:auto;text-transform:none;letter-spacing:0" onclick="addAffectFromAgent('${id}')">+ Affectation</button></div>
     ${afs.filter(af=>!_affIsPast(af)).length?afs.filter(af=>!_affIsPast(af)).map(af=>`<div class="affect-row">
       <div class="affect-dot"></div>
       <div class="affect-info">
@@ -327,7 +327,6 @@ function buildPanelAgentDetail(body,footer,id){
       <button class="btn-icon red" title="Supprimer l'affectation" onclick="delAffectFromAgent('${af.id}','${id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4.5 7h15M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg></button>
     </div>`).join(''):`<div style="font-size:13px;color:var(--text3)">Aucune affectation en cours</div>`}
     ${_affHistHTML(afs.filter(_affIsPast), af=>`editAffectFromAgent('${af.id}','${id}')`, af=>`delAffectFromAgent('${af.id}','${id}')`)}
-    <button class="btn btn-secondary btn-sm" style="margin-top:10px;width:100%" onclick="addAffectFromAgent('${id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 5v14M5 12h14"/></svg> Ajouter une affectation</button>
     </div><div class="ag-week" id="ag-week"></div></div>`;
   renderAgentWeek(id);
   footer.innerHTML=`<button class="btn btn-secondary" onclick="absenceDepuisSelection('${id}',_ymd(new Date()))"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M14.5 14l-4 4M10.5 14l4 4"/></svg> Déclarer absent</button><button class="btn btn-secondary" onclick="openPanel('panel-agent','${id}')"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg> Modifier</button>`;

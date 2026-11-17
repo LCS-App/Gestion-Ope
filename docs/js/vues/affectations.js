@@ -2,11 +2,18 @@
 /* ═══════════════════════════════════════
    AFFECTATIONS
 ═══════════════════════════════════════ */
+let _affOnlyEmpty=false;
+function toggleAffectEmpty(){ _affOnlyEmpty=!_affOnlyEmpty; renderAffect(); }
+function closeAffectHelp(){ try{localStorage.setItem('affectHelpOff','1');}catch(e){} document.getElementById('affect-help').style.display='none'; }
 function renderAffect(){
   _affectReturnAgent=null;
   const q=(document.getElementById('search-affect')?.value||'').toLowerCase();
   let agents=ga().filter(a=>!a.inactif);
   const afs=gaf();
+  const _emp=agents.filter(x=>!afs.some(af=>af.agentId===x.id&&!_affIsPast(af))).length;
+  const _chip=document.getElementById('affect-empty-chip'); if(_chip){ _chip.textContent='Sans affectation ('+_emp+')'; _chip.classList.toggle('on',_affOnlyEmpty); }
+  if(_affOnlyEmpty) agents=agents.filter(x=>!afs.some(af=>af.agentId===x.id&&!_affIsPast(af)));
+  const _help=document.getElementById('affect-help'); if(_help) _help.style.display=localStorage.getItem('affectHelpOff')?'none':'flex';
   if(q){
     const matched=agents.filter(a=>{
       if(a.nom.toLowerCase().includes(q)) return true;
@@ -23,7 +30,7 @@ function renderAffect(){
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:${agAll.length?'12px':'0'}">
         <div style="width:32px;height:32px;border-radius:50%;background:var(--blue);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">${a.nom.charAt(0)}</div>
         <div style="flex:1;font-weight:700">${_escH(a.nom)}</div>
-        <button class="btn btn-secondary btn-sm" onclick="openPanel('panel-affect',{agentId:'${a.id}'})">+ Créneau</button>
+        <span style="font-size:12px;color:${agAfs.length?'var(--text3)':'var(--orange)'};font-weight:600">${agAfs.length?agAfs.length+' affectation'+(agAfs.length>1?'s':''):'Aucune affectation'}</span><button class="btn ${agAfs.length?'btn-secondary':'btn-primary'} btn-sm" onclick="openPanel('panel-affect',{agentId:'${a.id}'})">+ Affectation</button>
       </div>
       ${agAfs.map(af=>`<div class="affect-row">
         <div class="affect-dot"></div>
@@ -71,6 +78,7 @@ function buildPanelAffect(body,footer,data){
   const preJour=typeof data==='object'&&data?.jour?data.jour:'';
   const preSite=typeof data==='object'&&data?.siteId?data.siteId:'';
   const preDebut=typeof data==='object'&&data?.debut?data.debut:'';
+  const preDateDeb=typeof data==='object'&&data?.dateDebut?data.dateDebut:'';
   const preFin=typeof data==='object'&&data?.fin?data.fin:'';
   const JOURS_LABELS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
 
@@ -115,7 +123,7 @@ function buildPanelAffect(body,footer,data){
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">${verOf?'À partir du * (1er jour travaillé)':'Date de début *'}</label>
-        <input class="form-input" type="date" id="paf-datedebut" value="${verOf?'':af?.dateDebut||''}">
+        <input class="form-input" type="date" id="paf-datedebut" value="${verOf?'':af?.dateDebut||preDateDeb||''}">
       </div>
       <div class="form-group">
         <label class="form-label">Date de fin</label>
@@ -154,7 +162,7 @@ let _affectReturnAgent=null;
 function editAffectFromAgent(afId, agentId){ _affectReturnAgent=agentId; openPanel('panel-affect', afId); }
 function addAffectFromAgent(agentId){ _affectReturnAgent=agentId; openPanel('panel-affect', {agentId}); }
 let _affectFromGrid=false;
-function addAffectFromGrid(agentId, jour){ _affectFromGrid=true; _affectReturnAgent=null; openPanel('panel-affect', {agentId, jour}); }
+function addAffectFromGrid(agentId, jour, dateDebut){ _affectFromGrid=true; _affectReturnAgent=null; openPanel('panel-affect', {agentId, jour, dateDebut}); }
 function cancelAffect(){ const r=_affectReturnAgent; _affectReturnAgent=null; if(r) openPanel('panel-agent-detail', r); else closePanel(); }
 function delAffectFromAgent(afId, agentId){
   if(!confirm('Supprimer cette affectation ?')) return;
