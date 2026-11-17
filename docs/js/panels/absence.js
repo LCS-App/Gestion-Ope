@@ -48,6 +48,7 @@ function buildPanelAbsence(body,footer){
       <div class="form-group">
         <label class="form-label">Remplaçant</label>
         <input class="form-input" type="text" id="pa-rempl-search" placeholder="Rechercher un remplaçant…" autocomplete="off" oninput="_filterSelectOptions('pa-rempl',this.value)" style="margin-bottom:6px">
+        <select class="form-input" id="pa-rday" onchange="refreshPaRempl()" style="display:none;margin-bottom:6px"></select>
         <select class="form-input" id="pa-rempl" onchange="paCheckConflict()"></select>
         <div id="pa-conflict-note" style="display:none;background:var(--red-light);border:1px solid rgba(226,109,99,.32);border-radius:var(--radius-sm);padding:10px 12px;margin-top:10px;font-size:12.5px;color:var(--red);line-height:1.45"></div>
       </div>
@@ -85,7 +86,16 @@ function refreshPaRempl(){
   const debut=document.getElementById('pa-debut')?.value||'';
   const fin=document.getElementById('pa-fin')?.value||'';
   const af=agentId?gaf().find(a=>a.agentId===agentId):null;
-  const cands=_replOptions({agentId, dateDebut:debut, dateFin:fin||null, siteId:af?.siteId||null});
+  const dsel=document.getElementById('pa-rday');
+  if(dsel){
+    const prevDay=dsel.value;
+    const days=(agentId&&debut)?[...new Set(_absenceBlocks({agentId,dateDebut:debut,dateFin:fin||null}).map(b=>_isoDate(b.date)))]:[];
+    dsel.innerHTML='<option value="">Remplacement : toute la période</option>'+days.map(iso=>`<option value="${iso}">Seulement ${_escH(_cap(new Date(iso+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})))}</option>`).join('');
+    dsel.style.display=days.length>1?'block':'none';
+    dsel.value=days.includes(prevDay)?prevDay:'';
+  }
+  const onlyDay=(dsel&&dsel.style.display!=='none'&&dsel.value)||null;
+  const cands=_replOptions({agentId, dateDebut:debut, dateFin:fin||null, siteId:af?.siteId||null, onlyDay});
   window._paConf={}; cands.forEach(c=>{ if(c.conf) window._paConf[c.v]=c.conf; });
   const free=cands.find(c=>!c.conf && c.comp) || cands.find(c=>!c.conf);
   window._paFree=free?{v:free.v,nom:free.nom,comp:free.comp}:null;
@@ -125,8 +135,15 @@ function saveAbsence(){
     siteId:af?.siteId||null,
     notes:document.getElementById('pa-notes').value
   };
+  const dsel=document.getElementById('pa-rday');
+  const onlyDay=(replId&&dsel&&dsel.style.display!=='none'&&dsel.value)||null;
+  if(onlyDay){
+    fields.remplacants={};
+    _absenceBlocks(fields).filter(b=>_isoDate(b.date)===onlyDay).forEach(b=>{ fields.remplacants[b.key]=replId; });
+    fields.remplacantId=null;
+  } else fields.remplacants=undefined;
   if(replId){
-    const conf=replacerConflict(replId,{...fields,id:editAbsId||'new'});
+    const conf=replacerConflict(replId,{...fields,id:editAbsId||'new',onlyDay});
     if(conf && !confirm(`⚠ ${agentNom(replId)} est déjà occupé le ${_confShort(conf)}\n(${_confWhere(conf)}).\n\nConfirmer quand même ce remplacement ?`)) return;
   }
   if(editAbsId){
@@ -138,7 +155,7 @@ function saveAbsence(){
   }
   if(replId){
     const r=gr();
-    r.push({id:DB.id(),agentAbsentId:agentId,remplacantId:replId,siteId:af?.siteId||'',date:debut,statut:'confirme',createdAt:new Date().toISOString()});
+    r.push({id:DB.id(),agentAbsentId:agentId,remplacantId:replId,siteId:af?.siteId||'',date:onlyDay||debut,statut:'confirme',createdAt:new Date().toISOString()});
     sr(r);
   }
   sab(abs);
