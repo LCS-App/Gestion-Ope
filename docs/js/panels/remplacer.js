@@ -124,6 +124,7 @@ function _agentCoveredShifts(candId, exceptAbsId){
 function replacerConflict(candId,absence,onlyKey){
   let shifts=_absenceShifts(absence);
   if(onlyKey) shifts=shifts.filter(s=>_blockKey(s.afId,s.date)===onlyKey); // contrôle limité au bloc sélectionné
+  if(absence.onlyDay) shifts=shifts.filter(s=>_isoDate(s.date)===absence.onlyDay); // contrôle limité à la journée ciblée
   if(!shifts.length) return null; // aucun créneau connu → indétectable, on laisse passer
   const candAffs=gaf().filter(a=>a.agentId===candId);
   const otherShiftLists=onlyKey ? [_agentCoveredShifts(candId, absence.id)]
