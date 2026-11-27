@@ -90,8 +90,15 @@ function dvToApp(R){
     const ab = R.absence.find(a=>a.lcs_absenceid===abs);
     rempl.push({ id:goId(src)||r.lcs_remplacementid, agentAbsentId:ab?id(LK(ab,'lcs_agent')):'', remplacantId:id(LK(r,'lcs_remplacant')), siteId:id(LK(r,'lcs_site')),
       afId:id(LK(r,'lcs_affectation'))||null, date:(V(r,'lcs_date')+'').slice(0,10), statut:F(r,'lcs_statut')==='Proposé'?'propose':'confirme', notes:V(r,'lcs_notes'), _dvid:r.lcs_remplacementid }); });
-  const absences = R.absence.map(a => { const o={ id:id(a.lcs_absenceid), agentId:id(LK(a,'lcs_agent')), dateDebut:(V(a,'lcs_datedebut')+'').slice(0,10), dateFin:(V(a,'lcs_datefin')+'').slice(0,10),
-      motif:MOT[F(a,'lcs_motif')]||'absence', needsReplacement:!!a.lcs_aremplacer, siteId:id(LK(a,'lcs_site')), remplacantId:id(LK(a,'lcs_remplacant')), ignored:!!a.lcs_ignoree, notes:V(a,'lcs_notes'), _dvid:a.lcs_absenceid };
+  const absences = R.absence.map(a => {
+    /* Une absence est soit « à remplacer », soit « sans besoin de remplacement ».
+       Ancien statut « ignorée » (colonne lcs_ignoree) → lu comme « sans besoin de remplacement » ; la colonne n'est plus utilisée. */
+    const legacyIgn=!!a.lcs_ignoree;
+    const o={ id:id(a.lcs_absenceid), agentId:id(LK(a,'lcs_agent')), dateDebut:(V(a,'lcs_datedebut')+'').slice(0,10), dateFin:(V(a,'lcs_datefin')+'').slice(0,10),
+      motif:MOT[F(a,'lcs_motif')]||'absence', needsReplacement:!!a.lcs_aremplacer && !legacyIgn, siteId:id(LK(a,'lcs_site')), remplacantId:id(LK(a,'lcs_remplacant')), notes:V(a,'lcs_notes'), _dvid:a.lcs_absenceid };
+    if(legacyIgn) o._ignLegacy=true; // marqueur : lcs_ignoree encore à true en base, remis à false à la prochaine écriture
+    /* Jours « sans besoin de remplacement » au milieu d'une plage (colonne lcs_jourssansremplacement : dates ISO séparées par des virgules) */
+    const js=String(V(a,'lcs_jourssansremplacement')||'').split(/[\s,;]+/).filter(d=>/^\d{4}-\d\d-\d\d$/.test(d)); if(js.length) o.joursSansRemplacement=js;
     const rs=remplAbs[a.lcs_absenceid]||[];
     if(rs.length){ const g={}; rs.forEach(r=>{ const af=id(LK(r,'lcs_affectation')); (g[af]=g[af]||[]).push(r); }); o.remplacants={};
       Object.entries(g).forEach(([af,list])=>{ const rem=new Set(list.map(r=>LK(r,'lcs_remplacant')));
@@ -279,7 +286,11 @@ const _DVL = {
     return { f:{ lcs_libelle:agentNom(a.agentId)+' · '+a.dateDebut+' → '+a.dateFin, lcs_agent:_dvRef('agents',a.agentId), lcs_datedebut:a.dateDebut||'', lcs_datefin:a.dateFin||'',
         /* « Absence » est écrit dans l'option Dataverse « Autre » ; « Maladie » n'est plus jamais écrit */
         lcs_motif:{conges:'Congés payés',formation:'Formation'}[a.motif]||'Autre', lcs_aremplacer:!!a.needsReplacement, lcs_site:_dvRef('sites',a.siteId),
-        lcs_remplacant:_dvRef('agents',a.remplacantId), lcs_ignoree:!!a.ignored, lcs_notes:a.notes||'' },
+        lcs_remplacant:_dvRef('agents',a.remplacantId),
+        /* lcs_ignoree n'est plus utilisée : toujours false (l'ancien « ignoré » est devenu aremplacer=false) */
+        lcs_ignoree:false, lcs_notes:a.notes||'',
+        /* Jours « sans remplacement » : écrits seulement si la colonne existe (dataverse/colonne-jours-sans-remplacement.js) */
+        lcs_jourssansremplacement:_dvHasCol('lcs_absence','lcs_jourssansremplacement') ? (a.joursSansRemplacement||[]).join(',') : undefined },
       ch:[ { ent:'lcs_remplacement', fk:'lcs_absence', match:/^go:[^:|]+:[^:|]+:\d{4}-\d\d-\d\d$/, rows } ] }; },
   rempl: r => { const ab=gab().find(a => a.agentId===r.agentAbsentId && a.dateDebut<=r.date && r.date<=(a.dateFin||a.dateDebut));
     return { f:{ lcs_libelle:agentNom(r.remplacantId)+' remplace '+agentNom(r.agentAbsentId)+' · '+r.date, lcs_absence:ab ? _dvRef('absences',ab.id) : '', lcs_affectation:_dvRef('affec',r.afId),
@@ -320,6 +331,8 @@ async function _dvChildren(c, pg, fresh){
 }
 async function _dvUpsert(k, x, old){
   const ent=_DV_ENT[k], m=await _dvMeta(ent), nw=_DVL[k](x), od=old ? _DVL[k](old) : null, key=k+':'+x.id;
+  /* Absence lue avec l'ancien statut « ignorée » : la base contient encore lcs_ignoree=true → on le compare à false pour forcer sa remise à zéro */
+  if(od && k==='absences' && old._ignLegacy) od.f.lcs_ignoree=true;
   let g=_dvG[key], fresh=false;
   if(!g){
     const body = await _dvBody(ent, nw.f, true); body.lcs_idsource = 'go:'+x.id;
@@ -346,7 +359,7 @@ async function _dvSyncNow(k, list){
   const snap=_dvSnap[k]; if(!snap || !_DVL[k]) return 0;
   const now={}; (list||[]).forEach(x => { if(x && x.id) now[x.id]=x; });
   let n=0;
-  for(const [id,x] of Object.entries(now)){ const j=_dvJ(x); if(snap[id]===j) continue; await _dvUpsert(k, x, snap[id] ? JSON.parse(snap[id]) : null); snap[id]=j; n++; }
+  for(const [id,x] of Object.entries(now)){ const j=_dvJ(x); if(snap[id]===j) continue; await _dvUpsert(k, x, snap[id] ? JSON.parse(snap[id]) : null); if(x._ignLegacy) delete x._ignLegacy; snap[id]=_dvJ(x); n++; }
   for(const id of Object.keys(snap)) if(!now[id]){ await _dvRemove(k, JSON.parse(snap[id])); delete snap[id]; n++; }
   return n;
 }

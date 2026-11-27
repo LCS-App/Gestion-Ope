@@ -208,7 +208,7 @@ function _cliFicheOps(c){
 
   const abv=_cliCard('Absences & remplacements', '<span style="font-size:11px;color:var(--text3)">± 30 jours</span>',
     abs.length?abs.map(a=>{ const r=[...new Set([a.remplacantId,...Object.values(a.remplacants||{})].filter(Boolean))];
-      const st=r.length?{t:'Remplacé · '+r.map(agentNom).join(', '),k:'green'}:a.needsReplacement&&!a.ignored?{t:'Non remplacé',k:'red'}:{t:'Sans remplacement',k:''};
+      const st=r.length?{t:'Remplacé · '+r.map(agentNom).join(', '),k:'green'}:a.needsReplacement?{t:'Non remplacé',k:'red'}:{t:'Sans remplacement',k:''};
       return `<div class="cli-row clk" onclick="openPanel('panel-remplacer','${a.id}')">
         <div style="flex:1;min-width:0"><div class="cli-row-t">${_escH(agentNom(a.agentId))}</div>
         <div class="cli-row-s">${_dFr(a.dateDebut)}${a.dateFin&&a.dateFin!==a.dateDebut?' → '+_dFr(a.dateFin):''} · ${_CLI_MOT[a.motif]||'Autre'}</div></div>

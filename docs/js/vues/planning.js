@@ -65,7 +65,6 @@ function applyScopeFilter(agents){
   const inRange=ds=>!!ds && ds>=rStart && ds<=rEnd;
   // + remplaçants qui couvrent un créneau sur l'un des sites filtrés — uniquement sur la période affichée
   gab().forEach(ab=>{
-    if(ab.ignored) return;
     _absenceShifts(ab).forEach(s=>{
       if(!siteSet.has(s.siteId)) return;
       if(!inRange(_isoDate(s.date))) return;
@@ -163,7 +162,8 @@ function renderPlanning(){
       <div class="legend-row"><span class="legend-swatch" style="background:#D3EDEA"></span>Permanence volante (accueil)</div>
       <div class="legend-row"><span class="legend-swatch" style="background:#DCEBF7"></span>Remplacement</div>
       <div class="legend-row"><span class="legend-swatch" style="background:#FFF1AE"></span>Absent — remplacé par…</div>
-      <div class="legend-row"><span class="legend-swatch" style="background:#F8DCD7"></span>Absence</div>
+      <div class="legend-row"><span class="legend-swatch" style="background:#F8DCD7"></span>Absence à remplacer</div>
+      <div class="legend-row"><span class="legend-swatch" style="background:#ECECEA"></span>Absence — sans besoin de remplacement</div>
       <div class="legend-row"><span class="legend-swatch" style="background:repeating-linear-gradient(135deg,#ECECEA,#ECECEA 4px,#E3E3E1 4px,#E3E3E1 8px)"></span>Site fermé</div>
       <div class="legend-row"><span class="legend-swatch" style="background:var(--purple);color:#fff;display:inline-flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span>Semaine impaire</div>
       <div class="legend-row"><span class="legend-swatch" style="background:var(--yellow);color:#fff;display:inline-flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span>Semaine paire</div>
@@ -296,12 +296,13 @@ function renderPlanning(){
               <span class="shift-time"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M7 7h12l-3.2-3.2M17 17H5l3.2 3.2"/></svg> ${agentNom(blkRepl).split(' ')[0]} · ${s.debut}–${s.fin}</span>
             </div>`;
           }
-          const absNeeds=dayAbs.needsReplacement;
+          // À remplacer seulement si l'absence l'exige ET que ce jour n'est pas déclaré « sans remplacement »
+          const absNeeds=_absNeedsOn(dayAbs, dateStr);
           const absStyle=absNeeds?'':' style="background:#ECECEA;color:#6B6D68"';
           const absIcon=absNeeds
             ? '<svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3.6l9 15.4H3z"/><path d="M12 9.6v4.6M12 17.2v.4"/></svg>'
             : '<svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12h7"/></svg>';
-          return `<div class="shift-bar shift-bar-absent" data-absence-id="${dayAbs.id}" data-h="${s.debut}–${s.fin}" data-open="${absNeeds?1:0}"${absStyle} title="${_escA(nom)}" onclick="openPanel('panel-creneau','${afRef}|${agent.id}|${dateStr}|${dayAbs.id}')">
+          return `<div class="shift-bar shift-bar-absent" data-absence-id="${dayAbs.id}" data-h="${s.debut}–${s.fin}" data-open="${absNeeds?1:0}"${absStyle} title="${_escA(nom)}${absNeeds?'':' — sans besoin de remplacement'}" onclick="openPanel('panel-creneau','${afRef}|${agent.id}|${dateStr}|${dayAbs.id}')">
             <span class="shift-site">${_escH(short)}</span>
             <span class="shift-time">${absIcon} Absent</span>
           </div>`;

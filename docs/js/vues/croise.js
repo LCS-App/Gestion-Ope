@@ -45,8 +45,9 @@ function croiseGaps(scope){
   }
   const gaps=[];
   gab().forEach(ab=>{
-    if(!ab.needsReplacement||ab.ignored) return;
+    if(!ab.needsReplacement) return;
     _absenceShifts(ab).forEach(s=>{
+      if(!_absNeedsOn(ab,_isoDate(s.date))) return; // jour déclaré « sans remplacement »
       if((d0 && s.date<d0) || (d4 && s.date>d4)) return;
       if(siteFermeLe(s.siteId,s.date)) return;
       const blockKey=_blockKey(s.afId,s.date);

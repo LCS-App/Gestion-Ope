@@ -103,8 +103,18 @@ function _absenceBlocks(ab){
   out.sort((a,b)=> a.date-b.date || _mins(a.debut)-_mins(b.debut));
   return out;
 }
-function _absenceCovered(ab){ const b=_absenceBlocks(ab); return b.length>0 && b.every(x=>_replFor(ab,x.key)); }
-function _absenceUrgent(ab){ return ab.needsReplacement && !ab.ignored && !_absenceCovered(ab); }
+/* Modèle : une absence est soit « à remplacer » (needsReplacement), soit « sans besoin de remplacement ».
+   Au milieu d'une plage à remplacer, certains jours peuvent être déclarés sans remplacement :
+   ab.joursSansRemplacement = ['YYYY-MM-DD', …] (l'absence, elle, reste enregistrée). */
+function _absDaySansRempl(ab, iso){ return !!(ab && Array.isArray(ab.joursSansRemplacement) && ab.joursSansRemplacement.includes(iso)); }
+/* Ce jour précis est-il à couvrir ? (absence à remplacer ET jour non déclaré sans remplacement) */
+function _absNeedsOn(ab, iso){ return !!(ab && ab.needsReplacement && !_absDaySansRempl(ab,iso)); }
+/* Blocs réellement à couvrir : on écarte ceux des jours déclarés « sans remplacement ». */
+function _absenceBlocksACouvrir(ab){ return _absenceBlocks(ab).filter(b=>!_absDaySansRempl(ab,_isoDate(b.date))); }
+/* Tous les jours de l'absence sont déclarés sans remplacement. */
+function _absenceToutSansRempl(ab){ const b=_absenceBlocks(ab); return b.length>0 && b.every(x=>_absDaySansRempl(ab,_isoDate(x.date))); }
+function _absenceCovered(ab){ const b=_absenceBlocksACouvrir(ab); return b.length>0 && b.every(x=>_replFor(ab,x.key)); }
+function _absenceUrgent(ab){ return ab.needsReplacement && !_absenceToutSansRempl(ab) && !_absenceCovered(ab); }
 function _absenceAnyRepl(ab){ return _absenceBlocks(ab).some(x=>_replFor(ab,x.key)); }
 function _absenceReplNames(ab){
   const names=[], seen=new Set();
@@ -125,6 +135,7 @@ function replacerConflict(candId,absence,onlyKey){
   let shifts=_absenceShifts(absence);
   if(onlyKey) shifts=shifts.filter(s=>_blockKey(s.afId,s.date)===onlyKey); // contrôle limité au bloc sélectionné
   if(absence.onlyDay) shifts=shifts.filter(s=>_isoDate(s.date)===absence.onlyDay); // contrôle limité à la journée ciblée
+  if(Array.isArray(absence.joursSansRemplacement) && absence.joursSansRemplacement.length) shifts=shifts.filter(s=>!absence.joursSansRemplacement.includes(_isoDate(s.date))); // jours sans remplacement : rien à couvrir
   if(!shifts.length) return null; // aucun créneau connu → indétectable, on laisse passer
   const candAffs=gaf().filter(a=>a.agentId===candId);
   const otherShiftLists=onlyKey ? [_agentCoveredShifts(candId, absence.id)]
@@ -207,6 +218,7 @@ function buildPanelRemplacer(body,footer,raw){
   blocks.forEach(b=>{ const k=_isoDate(b.date); if(!byDay.has(k)) byDay.set(k,[]); byDay.get(k).push(b); });
   const dayGroups=[...byDay.entries()].map(([iso,bs])=>{
     const label=_cap(bs[0].date.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}));
+    const ign=multiJours && _absDaySansRempl(absence,iso);
     const rows=bs.map(b=>`
       <div class="pr-block-row" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px${focusAf===b.key?';box-shadow:inset 0 0 0 2px var(--blue)':''}">
         <div style="font-size:12.5px;font-weight:700;margin-bottom:7px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2"/></svg> ${_escH(siteNom(b.siteId))} · ${b.debut}–${b.fin}</div>
@@ -214,10 +226,13 @@ function buildPanelRemplacer(body,footer,raw){
         <div class="pr-block-note" style="display:none;margin-top:6px;font-size:11.5px;color:var(--red);line-height:1.4"></div>
       </div>`).join('');
     return `
-      <div class="pr-day-group" style="margin-bottom:16px;padding:12px;background:var(--bg);border-radius:var(--radius)">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+      <div class="pr-day-group" data-day="${iso}" style="margin-bottom:16px;padding:12px;background:var(--bg);border-radius:var(--radius)">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap">
           <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2)">${_escH(label)}</div>
-          ${bs.length>1?`<select class="form-input" style="width:auto;max-width:58%;font-size:11.5px;padding:5px 8px" onchange="prApplyDay('${iso}',this.value)"><option value="">Même remplaçant ce jour…</option>${cands.map(c=>`<option value="${c.v}">${_escH(c.nom)}</option>`).join('')}</select>`:''}
+          <div style="display:flex;align-items:center;gap:10px;max-width:100%">
+            ${multiJours?`<label style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--text2);cursor:pointer;white-space:nowrap" title="Ce jour n'a pas besoin d'être couvert (l'absence reste enregistrée)"><input type="checkbox" class="pr-day-ign" data-day="${iso}"${ign?' checked':''} onchange="prToggleDaySansRempl('${iso}',this.checked)"> Sans remplacement</label>`:''}
+            ${bs.length>1?`<select class="form-input" style="width:auto;max-width:58%;font-size:11.5px;padding:5px 8px" onchange="prApplyDay('${iso}',this.value)"><option value="">Même remplaçant ce jour…</option>${cands.map(c=>`<option value="${c.v}">${_escH(c.nom)}</option>`).join('')}</select>`:''}
+          </div>
         </div>
         ${rows}
       </div>`;
@@ -233,7 +248,7 @@ function buildPanelRemplacer(body,footer,raw){
     ${multiJours?`<div class="form-group">
       <label class="form-label">Même remplaçant sur toute la période</label>
       <select class="form-input" id="pr-allday" onchange="prApplyAllDay(this.value)">${opts}</select>
-      <div style="font-size:11px;color:var(--text3);margin-top:4px">Applique à tous les blocs, tous jours confondus. Ajustez ensuite jour par jour ou bloc par bloc si besoin.</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">Applique à tous les blocs, tous jours confondus (sauf les jours « sans remplacement »). Ajustez ensuite jour par jour ou bloc par bloc si besoin.</div>
     </div>`:''}
     <div class="form-group">
       <input class="form-input" type="text" id="pr-search" placeholder="Rechercher un remplaçant…" autocomplete="off" oninput="_filterSelectOptions(document.querySelectorAll('#side-panel .pr-block, #pr-allday'),this.value)">
@@ -245,18 +260,24 @@ function buildPanelRemplacer(body,footer,raw){
       <textarea class="form-input" id="pr-notes" placeholder="Informations pratiques, consignes…">${_escH(absence.replNotes||'')}</textarea>
     </div>`;
   body.querySelectorAll('.pr-block').forEach(sel=>{ sel.value=_replFor(absence, sel.dataset.af)||''; prCheckBlock(sel); });
+  body.querySelectorAll('.pr-day-ign:checked').forEach(c=>prToggleDaySansRempl(c.dataset.day,true));
   footer.innerHTML=`
     <button class="btn btn-secondary" onclick="closePanel()">Annuler</button>
     <button class="btn btn-primary" onclick="confirmerRepl('${absId}')">Enregistrer</button>`;
 }
-function ignorerAbsence(absId){ toggleIgnorerAbsence(absId); }
 function _filterSelectOptions(sel,q){
   q=q.trim().toLowerCase();
   const els=typeof sel==='string'?[document.getElementById(sel)].filter(Boolean):[...sel];
   els.forEach(el=>{ [...el.options].forEach(o=>{ if(!o.value) return; o.hidden=!!q && !o.textContent.toLowerCase().includes(q); }); });
 }
-function prApplyAllDay(v){ document.querySelectorAll('#side-panel .pr-block').forEach(sel=>{ sel.value=v; prCheckBlock(sel); }); }
-function prApplyDay(iso,v){ document.querySelectorAll(`#side-panel .pr-block[data-day="${iso}"]`).forEach(sel=>{ sel.value=v; prCheckBlock(sel); }); }
+function prApplyAllDay(v){ document.querySelectorAll('#side-panel .pr-block').forEach(sel=>{ if(sel.disabled) return; sel.value=v; prCheckBlock(sel); }); }
+function prApplyDay(iso,v){ document.querySelectorAll(`#side-panel .pr-block[data-day="${iso}"]`).forEach(sel=>{ if(sel.disabled) return; sel.value=v; prCheckBlock(sel); }); }
+/* Jour « sans remplacement » : on vide et on grise les blocs du jour (rien à couvrir ce jour-là). */
+function prToggleDaySansRempl(iso,on){
+  const g=document.querySelector(`#side-panel .pr-day-group[data-day="${iso}"]`); if(!g) return;
+  g.style.opacity=on?'.55':'';
+  g.querySelectorAll('select').forEach(sel=>{ if(on) sel.value=''; sel.disabled=!!on; if(sel.classList.contains('pr-block')) prCheckBlock(sel); });
+}
 function prCheckBlock(sel){
   const row=sel.closest('.pr-block-row'); const note=row?row.querySelector('.pr-block-note'):null; if(!note) return;
   const c=((window._prBlockConf||{})[sel.dataset.af]||{})[sel.value];
@@ -272,6 +293,22 @@ function confirmerRepl(absId){
   const _bc=s=>((window._prBlockConf||{})[s.dataset.af]||{})[s.value];
   const confRow=rows.find(s=>s.value && _bc(s));
   if(confRow){ const c=_bc(confRow); if(!confirm(`⚠ ${agentNom(confRow.value)} est déjà occupé le ${_confShort(c)}\n(${_confWhere(c)}).\n\nEnregistrer quand même ?`)) return; }
+  // Jours « sans remplacement » (cases du panneau, présentes seulement sur une absence multi-jours)
+  const dayBoxes=[...document.querySelectorAll('#side-panel .pr-day-ign')];
+  if(dayBoxes.length){
+    const ign=dayBoxes.filter(c=>c.checked).map(c=>c.dataset.day).sort();
+    if(ign.length) absence.joursSansRemplacement=ign; else delete absence.joursSansRemplacement;
+  }
+  // Tous les jours déclarés sans remplacement → l'absence entière devient « sans besoin de remplacement »
+  if(dayBoxes.length && dayBoxes.every(c=>c.checked)){
+    sr(_absPurgeRempl(gr(), absence));
+    absence.needsReplacement=false; absence.remplacantId=null; delete absence.remplacants; delete absence.joursSansRemplacement;
+    sab(abs);
+    closePanel();
+    toast('Absence déclarée sans besoin de remplacement');
+    refreshAfterAbsenceChange();
+    return;
+  }
   absence.remplacants=absence.remplacants||{};
   let r=gr().filter(x=>!(x.agentAbsentId===absence.agentId && x.date===absence.dateDebut));
   const blocks=_absenceBlocks(absence);
@@ -283,12 +320,13 @@ function confirmerRepl(absId){
       r.push({id:DB.id(),agentAbsentId:absence.agentId,remplacantId:v,siteId:(b&&b.siteId)||absence.siteId||'',afId:(b&&b.afId)||af,date:absence.dateDebut,notes,statut:'confirme',createdAt:new Date().toISOString()});
     }
   });
-  const vals=rows.map(s=>s.value||null);
+  const vals=rows.filter(s=>!s.disabled).map(s=>s.value||null);
   if(vals.length && vals.every(v=>v && v===vals[0])) absence.remplacantId=vals[0];
   absence.replNotes=notes;
   sab(abs); sr(r);
   closePanel();
-  toast(vals.some(v=>v)?'Remplacement enregistré ✓':'Blocs remis à couvrir');
+  const nIgn=(absence.joursSansRemplacement||[]).length;
+  toast(vals.some(v=>v)?'Remplacement enregistré ✓':(nIgn?'Enregistré — '+nIgn+' jour'+(nIgn>1?'s':'')+' sans remplacement':'Blocs remis à couvrir'));
   refreshAfterAbsenceChange();
 }
 function retirerRemplacementBloc(absId, afId){

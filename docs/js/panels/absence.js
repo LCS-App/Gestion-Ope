@@ -5,8 +5,10 @@
 let absNeedsRepl=true;
 
 let editAbsId=null;
+/* Jours de la plage cochés « sans besoin de remplacement » (saisie en cours). _paSansSrc = absence dont on a chargé les jours. */
+let _paSans=new Set(), _paSansSrc;
 function buildPanelAbsence(body,footer){
-  editAbsId=null;
+  editAbsId=null; _paSans=new Set(); _paSansSrc=undefined;
   const agents=ga().filter(a=>!a.inactif).map(a=>({v:a.id,l:a.nom}));
   const today=new Date().toISOString().split('T')[0];
   body.innerHTML=`
@@ -39,6 +41,11 @@ function buildPanelAbsence(body,footer){
       </div>
     </div>
     <div id="pa-repl-section">
+      <div class="form-group" id="pa-days-section" style="display:none">
+        <label class="form-label">Jours sans besoin de remplacement</label>
+        <div id="pa-days" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.4">Cochez les jours de la plage qui n'ont pas à être couverts. L'absence reste enregistrée sur toute la période.</div>
+      </div>
       <div class="form-group">
         <label class="form-label">Créneaux concernés</label>
         <div id="pa-creneaux" style="font-size:12px;color:var(--text3)">Sélectionnez un agent</div>
@@ -77,23 +84,59 @@ function buildPanelAbsence(body,footer){
     <button class="btn btn-primary" onclick="saveAbsence()">Enregistrer</button>`;
 }
 
+/* Jours de la plage où l'agent a un poste (c'est là que « sans remplacement » a un sens). */
+function _paRangeDays(){
+  const agentId=document.getElementById('pa-agent')?.value||'';
+  const debut=document.getElementById('pa-debut')?.value||'';
+  const fin=document.getElementById('pa-fin')?.value||'';
+  if(!agentId||!debut||!fin||fin<=debut) return [];
+  return [...new Set(_absenceBlocks({agentId,dateDebut:debut,dateFin:fin}).map(b=>_isoDate(b.date)))];
+}
+function refreshPaDays(){
+  const sec=document.getElementById('pa-days-section'), box=document.getElementById('pa-days'); if(!sec||!box) return;
+  // En modification : on reprend les jours déjà enregistrés sur l'absence (une seule fois)
+  if(_paSansSrc!==(editAbsId||null)){
+    _paSansSrc=editAbsId||null;
+    const ab=editAbsId?gab().find(a=>a.id===editAbsId):null;
+    _paSans=new Set((ab&&ab.joursSansRemplacement)||[]);
+  }
+  const days=_paRangeDays();
+  sec.style.display=days.length>1?'block':'none';
+  box.innerHTML=days.map(iso=>{
+    const lbl=_cap(new Date(iso+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'}));
+    return `<button type="button" class="jour-pill${_paSans.has(iso)?' on':''}" onclick="paToggleDay('${iso}')">${_escH(lbl)}</button>`;
+  }).join('');
+}
+function paToggleDay(iso){
+  if(_paSans.has(iso)) _paSans.delete(iso); else _paSans.add(iso);
+  refreshPaRempl();
+}
+/* Jours sans remplacement pour la saisie en cours (dans la plage, et seulement si un remplacement est demandé) */
+function _paSansDays(){
+  if(!absNeedsRepl) return [];
+  const days=new Set(_paRangeDays());
+  return [..._paSans].filter(d=>days.has(d)).sort();
+}
+
 function refreshPaRempl(){
   const sel=document.getElementById('pa-rempl'); if(!sel) return;
+  refreshPaDays();
   const prev=sel.value;
   const agentId=document.getElementById('pa-agent')?.value||'';
   const debut=document.getElementById('pa-debut')?.value||'';
   const fin=document.getElementById('pa-fin')?.value||'';
   const af=agentId?gaf().find(a=>a.agentId===agentId):null;
+  const sans=_paSansDays();
   const dsel=document.getElementById('pa-rday');
   if(dsel){
     const prevDay=dsel.value;
-    const days=(agentId&&debut)?[...new Set(_absenceBlocks({agentId,dateDebut:debut,dateFin:fin||null}).map(b=>_isoDate(b.date)))]:[];
+    const days=(agentId&&debut)?[...new Set(_absenceBlocks({agentId,dateDebut:debut,dateFin:fin||null}).map(b=>_isoDate(b.date)))].filter(iso=>!sans.includes(iso)):[];
     dsel.innerHTML='<option value="">Remplacement : toute la période</option>'+days.map(iso=>`<option value="${iso}">Seulement ${_escH(_cap(new Date(iso+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})))}</option>`).join('');
     dsel.style.display=days.length>1?'block':'none';
     dsel.value=days.includes(prevDay)?prevDay:'';
   }
   const onlyDay=(dsel&&dsel.style.display!=='none'&&dsel.value)||null;
-  const cands=_replOptions({agentId, dateDebut:debut, dateFin:fin||null, siteId:af?.siteId||null, onlyDay});
+  const cands=_replOptions({agentId, dateDebut:debut, dateFin:fin||null, siteId:af?.siteId||null, onlyDay, joursSansRemplacement:sans});
   window._paConf={}; cands.forEach(c=>{ if(c.conf) window._paConf[c.v]=c.conf; });
   const free=cands.find(c=>!c.conf && c.comp) || cands.find(c=>!c.conf);
   window._paFree=free?{v:free.v,nom:free.nom,comp:free.comp}:null;
@@ -124,36 +167,48 @@ function saveAbsence(){
   const af=gaf().find(a=>a.agentId===agentId);
   const abs=gab();
   const replId=document.getElementById('pa-rempl')?.value||null;
+  let sans=_paSansDays();
+  let needs=absNeedsRepl;
+  // Tous les jours de la plage cochés « sans remplacement » → l'absence entière est sans besoin de remplacement
+  const rangeDays=_paRangeDays();
+  if(needs && sans.length && sans.length===rangeDays.length){ needs=false; sans=[]; }
+  const rempl=needs?replId:null;
   const fields={
     agentId, dateDebut:debut,
     dateFin:document.getElementById('pa-fin').value||null,
     motif:document.getElementById('pa-motif').value,
-    needsReplacement:absNeedsRepl,
-    remplacantId:replId||null,
+    needsReplacement:needs,
+    remplacantId:rempl||null,
     siteId:af?.siteId||null,
-    notes:document.getElementById('pa-notes').value
+    notes:document.getElementById('pa-notes').value,
+    joursSansRemplacement:sans.length?sans:undefined
   };
   const dsel=document.getElementById('pa-rday');
-  const onlyDay=(replId&&dsel&&dsel.style.display!=='none'&&dsel.value)||null;
+  const onlyDay=(rempl&&dsel&&dsel.style.display!=='none'&&dsel.value)||null;
   if(onlyDay){
     fields.remplacants={};
-    _absenceBlocks(fields).filter(b=>_isoDate(b.date)===onlyDay).forEach(b=>{ fields.remplacants[b.key]=replId; });
+    _absenceBlocks(fields).filter(b=>_isoDate(b.date)===onlyDay).forEach(b=>{ fields.remplacants[b.key]=rempl; });
+    fields.remplacantId=null;
+  } else if(rempl && sans.length){
+    // Remplaçant sur toute la plage, sauf les jours « sans remplacement » : on passe en mode par bloc
+    fields.remplacants={};
+    _absenceBlocksACouvrir(fields).forEach(b=>{ fields.remplacants[b.key]=rempl; });
     fields.remplacantId=null;
   } else fields.remplacants=undefined;
-  if(replId){
-    const conf=replacerConflict(replId,{...fields,id:editAbsId||'new',onlyDay});
-    if(conf && !confirm(`⚠ ${agentNom(replId)} est déjà occupé le ${_confShort(conf)}\n(${_confWhere(conf)}).\n\nConfirmer quand même ce remplacement ?`)) return;
+  if(rempl){
+    const conf=replacerConflict(rempl,{...fields,id:editAbsId||'new',onlyDay});
+    if(conf && !confirm(`⚠ ${agentNom(rempl)} est déjà occupé le ${_confShort(conf)}\n(${_confWhere(conf)}).\n\nConfirmer quand même ce remplacement ?`)) return;
   }
   if(editAbsId){
     const i=abs.findIndex(x=>x.id===editAbsId);
-    if(i>=0) abs[i]={...abs[i],...fields};
+    if(i>=0){ abs[i]={...abs[i],...fields}; delete abs[i].ignored; }
     sr(gr().filter(x=>x.agentAbsentId!==agentId));
   } else {
     abs.push({ id:DB.id(), ...fields, createdAt:new Date().toISOString() });
   }
-  if(replId){
+  if(rempl){
     const r=gr();
-    r.push({id:DB.id(),agentAbsentId:agentId,remplacantId:replId,siteId:af?.siteId||'',date:onlyDay||debut,statut:'confirme',createdAt:new Date().toISOString()});
+    r.push({id:DB.id(),agentAbsentId:agentId,remplacantId:rempl,siteId:af?.siteId||'',date:onlyDay||debut,statut:'confirme',createdAt:new Date().toISOString()});
     sr(r);
   }
   sab(abs);

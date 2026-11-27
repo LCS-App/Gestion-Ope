@@ -25,7 +25,7 @@ function _ensureAbsForRempl(list){
   const seen=new Set();
   orph.forEach(r=>{ const k=r.agentAbsentId+'|'+r.date; if(seen.has(k)) return; seen.add(k);
     abs.push({ id:DB.id(), agentId:r.agentAbsentId, dateDebut:r.date, dateFin:r.date, motif:'autre', needsReplacement:true, siteId:r.siteId||'',
-      remplacantId:r.remplacantId||'', ignored:false, notes:'Créée automatiquement pour rattacher un remplacement', createdAt:new Date().toISOString() }); });
+      remplacantId:r.remplacantId||'', notes:'Créée automatiquement pour rattacher un remplacement', createdAt:new Date().toISOString() }); });
   sab(abs);
   return orph;
 }

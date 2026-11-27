@@ -268,10 +268,10 @@ function _agentAbsencesHTML(agentId){
   if(!list.length) return `<div style="font-size:13px;color:var(--text3);margin-bottom:6px">Aucune absence enregistrée</div>`;
   const rows=list.map(ab=>{
     const d=_absDesc(ab);
-    const etat=ab.ignored?`<span class="badge badge-gray">Ignorée</span>`
+    const etat=!ab.needsReplacement?`<span class="badge badge-gray">Sans remplacement</span>`
       :_absenceCovered(ab)?`<span class="badge badge-green">Remplacée</span>`
       :_absenceAnyRepl(ab)?`<span class="badge" style="background:var(--orange-light);color:#B0722A">Partielle</span>`
-      :(ab.needsReplacement?`<span class="badge badge-red">Sans remplaçant</span>`:`<span class="badge badge-gray">Sans remplacement</span>`);
+      :`<span class="badge badge-red">Sans remplaçant</span>`;
     const q=[d.periode,ab.motif||'',ab.notes||''].join(' ').toLowerCase();
     return `<div class="affect-row agent-abs-row" data-q="${_escA(q)}">
       <div class="affect-dot" style="background:var(--red)"></div>

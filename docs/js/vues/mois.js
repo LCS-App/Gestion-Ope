@@ -222,8 +222,10 @@ function renderMois(){
         const isToday=_sameDay(d,today);
         const siteShort = c.sites&&c.sites.length ? _escH((c.sites[0].length>9?c.sites[0].slice(0,8)+'…':c.sites[0])+(c.sites.length>1?' +'+(c.sites.length-1):'')) : '';
         const replFor=[...new Set((c.repl||[]).map(s=>s.forAgent).filter(Boolean))].map(id=>agentNom(id));
+        // Cette journée est-elle à remplacer ? (absence à remplacer ET jour non déclaré « sans remplacement »)
+        const dayNeeds = !!(c.ab && _absNeedsOn(c.ab, c.dateStr));
         let title;
-        if(c.status==='absent') title=`Absent (${c.ab&&c.ab.remplacantId?'remplacé par '+agentNom(c.ab.remplacantId):'sans remplaçant'})`;
+        if(c.status==='absent') title=`Absent (${c.ab&&c.ab.remplacantId?'remplacé par '+agentNom(c.ab.remplacantId):(dayNeeds?'sans remplaçant':'sans besoin de remplacement')})`;
         else if(c.status==='remplacement') title=`Remplacement${replFor.length?' · remplace '+replFor.join(', '):''}${c.sites&&c.sites.length?' · '+c.sites.join(', '):''}`;
         else title = c.sites&&c.sites.length ? c.sites.join(', ') : 'Repos';
         const clickableNormal = c.status!=='repos';
@@ -240,7 +242,7 @@ function renderMois(){
         // Couverture : un seul remplaçant pour la journée, ou fallback si aucun bloc détecté
         const singleReplId = absBlocks ? (absBlocks[0].remplacantId) : (c.ab && c.ab.remplacantId);
         const absCovered = c.status==='absent' && !multiBlock && !!singleReplId;
-        const absNeeds = c.status==='absent' && !multiBlock && c.ab && c.ab.needsReplacement && !absCovered;
+        const absNeeds = c.status==='absent' && !multiBlock && dayNeeds && !absCovered;
         const absBadge = absCovered ? `<span title="Remplacé par ${_escA(agentNom(singleReplId))}" style="position:absolute;top:2px;right:2px;height:15px;min-width:15px;padding:0 3px;border-radius:8px;background:#000;color:#fff;font-size:8.5px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1">${_escH(_initials(agentNom(singleReplId)))}</span>` : '';
         const alertBadge = absNeeds ? `<span title="Absence à remplacer" style="position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#B4271B;color:#fff;font-size:9.5px;font-weight:900;display:flex;align-items:center;justify-content:center;line-height:1">!</span>` : '';
         const replBadge = (c.status==='remplacement' && replFor.length) ? `<span title="Remplace ${_escA(replFor.join(', '))}" style="position:absolute;top:2px;right:2px;height:15px;min-width:15px;padding:0 3px;border-radius:8px;background:var(--blue-mid);color:#fff;font-size:8.5px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1">${_escH(replFor.length===1?_initials(replFor[0]):_initials(replFor[0])+'+')}</span>` : '';
@@ -252,11 +254,11 @@ function renderMois(){
         if(multiBlock){
           multiInner = absBlocks.map(b=>{
             const bCovered=!!b.remplacantId;
-            const bNeeds=c.ab && c.ab.needsReplacement && !bCovered;
+            const bNeeds=dayNeeds && !bCovered;
             const bBg = bCovered?'#FBE38C':(bNeeds?'#F6C9C1':'#ECECEA');
             const bFg = bCovered?'#5A4A10':(bNeeds?'#6E1B14':'#6B6D68');
             const bBadge = bCovered ? `<span style="height:13px;min-width:13px;padding:0 2px;border-radius:7px;background:#000;color:#fff;font-size:7.5px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1">${_escH(_initials(agentNom(b.remplacantId)))}</span>` : (bNeeds?`<span style="width:11px;height:11px;border-radius:50%;background:#B4271B;color:#fff;font-size:8px;font-weight:900;display:flex;align-items:center;justify-content:center;line-height:1">!</span>`:'');
-            const bTitle=bCovered?`${b.debut}–${b.fin} · remplacé par ${agentNom(b.remplacantId)}`:`${b.debut}–${b.fin} · sans remplaçant`;
+            const bTitle=bCovered?`${b.debut}–${b.fin} · remplacé par ${agentNom(b.remplacantId)}`:`${b.debut}–${b.fin} · ${bNeeds?'sans remplaçant':'sans besoin de remplacement'}`;
             return `<div title="${_escA(bTitle)}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:3px;background:${bBg};color:${bFg};width:100%">
               <span style="font-size:9.5px;font-weight:700">Abs</span>${bBadge}
             </div>`;

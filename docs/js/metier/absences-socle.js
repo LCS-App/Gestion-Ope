@@ -3,6 +3,8 @@
    SOCLE COMMUN — ACTIONS SUR UNE ABSENCE
    Toutes les vues (planning, mois, liste, croisement, fiche agent, panneaux)
    passent par ces fonctions : même jeu d'actions, mêmes garde-fous, même refresh.
+   Une absence est soit « à remplacer » (needsReplacement), soit « sans besoin de remplacement ».
+   Il n'y a plus de notion d'absence « ignorée » : on déclare simplement sans remplacement.
 ═══════════════════════════════════════ */
 const _ABSIC=(()=>{ const s='style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"'; return {
   edit:`<svg viewBox="0 0 24 24" ${s}><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg>`,
@@ -61,27 +63,32 @@ function absenceActionsHTML(absId, opts){
   return `<div class="abs-actions" style="display:flex;gap:6px;align-items:center;flex-shrink:0">
     ${o.blockKey&&repl?b('',`Retirer le remplaçant (${_escA(agentNom(repl).split(' ')[0])})`,`retirerRemplacementBloc('${absId}','${o.blockKey}')`,_ABSIC.off):''}
     ${b('',"Modifier l'absence",`editAbsence('${absId}')`,_ABSIC.edit)}
-    ${ab.ignored
-      ? b('',"Réactiver l'absence (à nouveau à couvrir)",`toggleIgnorerAbsence('${absId}')`,_ABSIC.res)
-      : b('',"Ignorer l'absence (ne plus proposer à couvrir)",`toggleIgnorerAbsence('${absId}')`,_ABSIC.ign)}
+    ${ab.needsReplacement
+      ? b('',"Déclarer sans besoin de remplacement",`toggleSansRemplacement('${absId}')`,_ABSIC.ign)
+      : b('',"Remettre à remplacer",`toggleSansRemplacement('${absId}')`,_ABSIC.res)}
     ${b('red',"Supprimer l'absence",`delAbsence('${absId}'${dayArg})`,_ABSIC.del)}
   </div>`;
 }
 
-/* Ignorer / réactiver — réversible partout. */
-function toggleIgnorerAbsence(absId){
+/* Sans besoin de remplacement ⇄ à remplacer — réversible partout. */
+function toggleSansRemplacement(absId){
   const abs=gab(); const ab=abs.find(a=>a.id===absId); if(!ab) return;
-  if(!ab.ignored){
-    if(!confirm(`Ignorer l'absence de ${agentNom(ab.agentId)} — ${_absDesc(ab).periode} ?\n\nElle ne sera plus proposée à couvrir, mais reste visible dans la liste des absences.`)) return;
-    ab.ignored=true;
+  delete ab.ignored; // ancien statut « ignorée » : n'existe plus
+  if(ab.needsReplacement){
+    const d=_absDesc(ab);
+    if(!confirm(`Déclarer l'absence de ${d.nom} — ${d.periode} sans besoin de remplacement ?${d.repl?`\n\n${d.repl} remplacement${d.repl>1?'s':''} déjà attribué${d.repl>1?'s':''} ser${d.repl>1?'ont':'a'} retiré${d.repl>1?'s':''}.`:''}`)) return;
+    sr(_absPurgeRempl(gr(), ab));
+    ab.needsReplacement=false; ab.remplacantId=null; delete ab.remplacants; delete ab.joursSansRemplacement;
   } else {
-    delete ab.ignored;
+    ab.needsReplacement=true;
   }
   sab(abs);
   if(document.getElementById('side-panel')?.classList.contains('open')) closePanel();
-  toast(ab.ignored?'Absence ignorée':'Absence réactivée — à nouveau à couvrir');
+  toast(ab.needsReplacement?'Absence à remplacer':'Absence déclarée sans besoin de remplacement');
   refreshAfterAbsenceChange();
 }
+/* Anciens points d'entrée (compatibilité) */
+function toggleIgnorerAbsence(absId){ toggleSansRemplacement(absId); }
 
 function closeAbsAsk(){ const p=document.getElementById('abs-ask'); if(p) p.remove(); }
 
@@ -97,6 +104,8 @@ function absRetirerJour(absId, dayIso){
   const parts=[];
   if(dayIso>start){ const p=JSON.parse(JSON.stringify(ab)); p.dateFin=_absShiftDay(dayIso,-1); parts.push(p); }
   if(dayIso<end){ const p=JSON.parse(JSON.stringify(ab)); p.id=DB.id(); p.dateDebut=_absShiftDay(dayIso,1); p.dateFin=end; parts.push(p); }
+  // Les jours « sans remplacement » suivent leur portion de période
+  parts.forEach(p=>{ if(p.joursSansRemplacement){ const k=p.joursSansRemplacement.filter(d=>d>=p.dateDebut&&d<=(p.dateFin||p.dateDebut)); if(k.length) p.joursSansRemplacement=k; else delete p.joursSansRemplacement; } });
   abs.splice(i,1,...parts);
   sab(abs);
   parts.forEach(p=>{ rows=rows.concat(_absRemplRows(p)); });

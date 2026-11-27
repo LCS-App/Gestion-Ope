@@ -66,27 +66,29 @@ function absenceImpactSites(a){
 function renderAbsences(){
   let abs=gab().sort((a,b)=>new Date(b.dateDebut)-new Date(a.dateDebut));
   if(absTab==='urgent') abs=abs.filter(_absenceUrgent);
-  if(absTab==='covered') abs=abs.filter(a=>_absenceCovered(a)&&!a.ignored);
+  if(absTab==='covered') abs=abs.filter(a=>a.needsReplacement&&_absenceCovered(a));
   const el=document.getElementById('absences-list');
   if(!abs.length){
     el.innerHTML=`<div class="empty"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="8.5"/><path d="M8.3 12.3l2.4 2.4 4.9-5"/></svg></div><div class="empty-text">Aucune absence à afficher</div></div>`;
     return;
   }
   el.innerHTML=abs.map(a=>{
-    const _cov=_absenceCovered(a), _some=_absenceAnyRepl(a), _names=_absenceReplNames(a).map(_escH).join(', ');
+    const sans=!a.needsReplacement;
+    const _cov=!sans&&_absenceCovered(a), _some=!sans&&_absenceAnyRepl(a), _names=_absenceReplNames(a).map(_escH).join(', ');
+    const nSans=(a.joursSansRemplacement||[]).filter(d=>d>=a.dateDebut&&d<=(a.dateFin||a.dateDebut)).length;
     const urgent=_absenceUrgent(a);
-    const cls=a.ignored?'':urgent?'urgent':_cov?'covered':'';
-    const badge=a.ignored
-      ?`<span class="badge badge-gray">Absence ignorée</span>`
+    const cls=sans?'':urgent?'urgent':_cov?'covered':'';
+    const badge=sans
+      ?`<span class="badge badge-gray">Sans remplacement</span>`
       :_cov
       ?`<span class="badge badge-green">Remplacé · ${_names}</span>`
         :_some
         ?`<span class="badge" style="background:var(--orange-light);color:#B0722A">Partiel · ${_names}</span>`
-        :(a.needsReplacement?`<span class="badge badge-red">Sans remplaçant</span>`:`<span class="badge badge-gray">Sans remplacement</span>`);
+        :`<span class="badge badge-red">Sans remplaçant</span>`;
     const bldIc='<svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>';
     const impact=absenceImpactSites(a);
     const tour=gt().find(t=>t.agentId===a.agentId && (t.siteIds||[]).length);
-    const multi=impact.length>1;
+    const multi=impact.length>1 && !sans;
     let inlineLoc='';
     if(!multi && impact.length){ inlineLoc=` · ${bldIc} ${_escH(siteNom(impact[0]))}`; }
     let impactBlock='';
@@ -110,7 +112,7 @@ function renderAbsences(){
           <span class="badge badge-gray">${_escH(a.motif)}</span>
         </div>
         <div style="font-size:12px;color:var(--text2)">
-          <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg> ${fmtDate(a.dateDebut)}${a.dateFin?' → '+fmtDate(a.dateFin):''}${inlineLoc}${a.notes?' · '+a.notes:''}
+          <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg> ${fmtDate(a.dateDebut)}${a.dateFin?' → '+fmtDate(a.dateFin):''}${nSans&&!sans?` · <span title="${_escA((a.joursSansRemplacement||[]).map(_dFr).join(', '))}">${nSans} jour${nSans>1?'s':''} sans remplacement</span>`:''}${inlineLoc}${a.notes?' · '+a.notes:''}
         </div>
         ${impactBlock}
       </div>

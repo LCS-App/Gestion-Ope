@@ -31,7 +31,7 @@ function renderJour(){
   const siteIds=Object.keys(groups).sort((x,y)=>siteNom(x).localeCompare(siteNom(y)));
 
   const absCount=affs.filter(a=>absByAgent[a.agentId]).length;
-  const sansRempl=affs.filter(a=>{ const ab=absByAgent[a.agentId]; return ab&&ab.needsReplacement&&!ab.remplacantId; }).length;
+  const sansRempl=affs.filter(a=>{ const ab=absByAgent[a.agentId]; return ab&&_absNeedsOn(ab,_isoDate(d))&&!ab.remplacantId; }).length;
   const st_=(val,color,label)=>`<div class="card" style="flex:1;min-width:120px;display:flex;align-items:center;gap:10px;padding:10px 14px"><div style="font-size:22px;font-weight:800;color:${color};line-height:1">${val}</div><div style="font-size:11px;color:var(--text2);line-height:1.2">${label}</div></div>`;
   document.getElementById('jour-stats').innerHTML=
     st_(siteIds.length,'var(--blue)','Sites actifs')+
