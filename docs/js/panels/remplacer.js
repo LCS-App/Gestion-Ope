@@ -83,6 +83,7 @@ function _absenceShifts(absence){
 /* ── Remplacement par bloc (les blocs = affectations de l'agent, ex. matin / après-midi) ── */
 function _replFor(ab, key){
   if(!ab) return null;
+  { const m=/@(\d{4}-\d\d-\d\d)$/.exec(String(key)); if(m && _absDaySansRempl(ab,m[1])) return null; } // jour « sans remplacement » : un remplaçant déjà saisi est ignoré
   if(ab.remplacants){
     if(Object.prototype.hasOwnProperty.call(ab.remplacants, key)) return ab.remplacants[key]||null; // override explicite (null = à couvrir)
     const afId=String(key).split('@')[0]; // compat anciennes données clé=afId seul (toute la période)
