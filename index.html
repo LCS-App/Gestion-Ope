@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion Opé</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23FCD727'/%3E%3Cg fill='none' stroke='%23111' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='6' width='14' height='20' rx='1.6'/%3E%3Cpath d='M13 10h2M17 10h2M13 14h2M17 14h2M13 18h2M17 18h2'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css?v=20261127b">
+</head>
+<body>
+
+<!-- Badge mode démo (fixe, hors header pour ne rien chevaucher) -->
+<div id="demo-banner" style="display:none;position:fixed;bottom:14px;right:14px;z-index:9000;font-size:11px;font-weight:700;color:var(--blue);background:var(--blue-light);border:1px solid var(--blue);padding:5px 12px;border-radius:20px;box-shadow:var(--shadow-lg);pointer-events:none">Mode démo · aperçu — modifications non enregistrées</div>
+
+<!-- ══ HEADER ══════════════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-brand">
+    <div class="brand-mark"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg></div>
+    <span class="brand-title">Gestion Opé</span>
+  </div>
+
+  <div class="header-week" id="header-week-section">
+    <button class="week-nav-btn" onclick="changeWeek(-1)"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <div class="week-picker-trigger" onclick="event.stopPropagation();openWeekDatePicker()" style="display:flex;align-items:center;gap:8px;cursor:pointer;border-radius:6px;padding:2px 6px;margin:-2px -6px;position:relative" title="Choisir une semaine">
+      <div>
+        <div class="week-label" id="week-label-header">—</div>
+      </div>
+      <svg viewBox="0 0 24 24" style="width:13px;height:13px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;opacity:.55"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
+    </div>
+    <button class="week-nav-btn" onclick="changeWeek(1)"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="week-nav-btn" onclick="goCurrentWeek()" title="Aujourd'hui" style="font-size:11px;padding:0 6px;width:auto">Auj.</button>
+  </div>
+
+  <div class="header-week" id="header-mois-section" style="display:none">
+    <button class="week-nav-btn" onclick="changeMois(-1)" title="Mois précédent"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="week-label" id="mois-label-header">—</div>
+    </div>
+    <button class="week-nav-btn" onclick="changeMois(1)" title="Mois suivant"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="week-nav-btn" onclick="goMoisToday()" title="Mois actuel" style="font-size:11px;padding:0 6px;width:auto">Ce mois</button>
+  </div>
+
+  <div class="header-filters" id="header-filters">
+    <div class="scope-filter" id="scope-filter">
+      <div class="scope-field" id="scope-btn" onclick="scopeFieldClick(event)">
+        <svg class="scope-funnel" viewBox="0 0 24 24" style="width:15px;height:15px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M3 5h18l-7 8.2V20l-4 1.5v-8.3z"/></svg>
+        <div id="scope-chips" style="display:contents"></div>
+        <input type="text" id="scope-search-input" class="scope-inline-input" placeholder="Tout le planning — filtrer tournée, site, agent…" autocomplete="off" oninput="onScopeInput(this.value)" onkeydown="onScopeKey(event)" onfocus="openScopeMenu()">
+      </div>
+      <button class="scope-clear" id="scope-clear" title="Effacer le filtre" onclick="clearScopeFilter(event)" style="display:none">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <div class="scope-menu" id="scope-menu">
+        <div class="scope-list" id="scope-list"></div>
+        <button class="scope-done" onclick="closeScopeMenu()">Terminé</button>
+      </div>
+    </div>
+    <div id="filters-planning" style="display:flex;align-items:center">
+    </div>
+    <div id="filters-mois" style="display:none;align-items:center;gap:12px" data-comment-anchor="mois-filters">
+      <span id="mois-count-label" style="font-size:11px;color:var(--text3);white-space:nowrap"></span>
+    </div>
+  </div>
+
+  <div class="header-actions">
+    <span id="sync-status" style="font-size:11px;color:var(--text3);opacity:0;transition:opacity .3s;margin-right:6px"></span>
+    <span id="user-info" style="font-size:12px;color:var(--text2);margin-right:8px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+    <button onclick="openExport()" title="Extraire des données (plannings, absences, heures sup.)" style="height:32px;padding:0 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--white);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;margin-right:6px">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 15V4M8.5 7.5L12 4l3.5 3.5"/><path d="M5 13v6a1 1 0 001 1h12a1 1 0 001-1v-6"/></svg> Extraire
+    </button>
+    <button onclick="logout()" title="Se déconnecter" style="height:32px;padding:0 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--white);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ══ BODY ════════════════════════════════════════════════════ -->
+<!-- ══ ÉCRAN LOGIN (overlay plein écran jusqu'au login) ══ -->
+<div id="login-screen" style="position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;">
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:48px 52px;text-align:center;max-width:420px;width:90%;box-shadow:var(--shadow-lg);">
+    <div style="width:52px;height:52px;background:var(--blue);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:#000"><svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg></div>
+    <div style="font-size:22px;font-weight:800;margin-bottom:6px;color:var(--text)">Gestion Opé</div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:32px">Connectez-vous avec votre compte Microsoft<br>pour accéder à vos données.</div>
+    <button onclick="login()" style="width:100%;height:46px;background:var(--blue);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+      <svg width="18" height="18" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>
+      Se connecter avec Microsoft
+    </button>
+    <div id="login-error" style="color:var(--red);font-size:12px;margin-top:12px;min-height:16px"></div>
+  </div>
+  <div style="font-size:11px;color:var(--text3);margin-top:20px">Données partagées · dossier d'équipe SharePoint LCS33</div>
+</div>
+
+<!-- ══ ÉCRAN ACCÈS REFUSÉ ══ -->
+<div id="access-denied-screen" style="display:none;position:fixed;inset:0;background:var(--bg);align-items:center;justify-content:center;z-index:9999;flex-direction:column;">
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:48px 52px;text-align:center;max-width:440px;width:90%;box-shadow:var(--shadow-lg);">
+    <div style="width:52px;height:52px;background:var(--red);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:#fff"><svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="9"/><path d="M8 8l8 8"/></svg></div>
+    <div style="font-size:22px;font-weight:800;margin-bottom:8px;color:var(--text)">Accès refusé</div>
+    <div style="font-size:14px;color:var(--text2);line-height:1.55;margin-bottom:8px">Votre compte n'a pas les droits nécessaires sur <strong>Dataverse</strong> pour lire les données.</div>
+    <div style="font-size:13px;color:var(--text3);line-height:1.5;margin-bottom:28px">Demandez à un administrateur de vous attribuer un rôle de sécurité Dataverse, puis reconnectez-vous.</div>
+    <div id="who-denied" style="font-size:12px;color:var(--text3);margin-bottom:16px"></div>
+    <button onclick="logout()" style="width:100%;height:44px;background:var(--white);color:var(--text);border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">Se déconnecter</button>
+  </div>
+</div>
+
+<div class="app-body">
+
+  <!-- NAV RAIL -->
+  <nav class="nav-rail">
+    <button class="nav-toggle" onclick="toggleNav()" title="Réduire / déplier le menu">
+      <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <button class="nav-btn active" onclick="showView('planning')" id="nav-planning">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>
+      <span class="tooltip">Planning semaine</span>
+    </button>
+    <button class="nav-btn" onclick="showView('mois')" id="nav-mois">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M7.5 13h2M11 13h2M14.5 13h2M7.5 16.5h2M11 16.5h2"/></svg>
+      <span class="tooltip">Planning du mois</span>
+    </button>
+    <button class="nav-btn" onclick="showView('jour')" id="nav-jour" style="display:none">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle cx="12" cy="15.5" r="2.4"/></svg>
+      <span class="tooltip">Vue du jour</span>
+    </button>
+    <button class="nav-btn" onclick="showView('pointage')" id="nav-suivi">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8.5V12.5l3 1.8M9.5 3h5"/></svg>
+      <span class="tooltip">Pointage & retards</span>
+    </button>
+    <button class="nav-btn" onclick="showView('croise')" id="nav-croise">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 7h9M4 17h9"/><path d="M15 4l5 3.5-5 3.5"/><path d="M9 13.5L4 17l5 3.5"/><path d="M20 7.5h-4.5a4 4 0 00-4 4v1a4 4 0 01-4 4H4"/></svg>
+      <span class="tooltip">Planning croisé</span>
+    </button>
+    <button class="nav-btn" onclick="showView('historique')" id="nav-historique">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M5.5 3v3.5H9"/><path d="M12 8v4.2l3 1.8"/></svg>
+      <span class="tooltip">Historique</span>
+    </button>
+
+    <div class="nav-sep"></div>
+
+    <button class="nav-btn" onclick="showView('agents')" id="nav-agents">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg>
+      <span class="tooltip">Agents</span>
+    </button>
+    <button class="nav-btn" onclick="showView('clients')" id="nav-clients">
+      <span class="nav-alert" id="nav-alert-clients"><svg viewBox="0 0 24 24"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v5M12 18v.5"/></svg></span>
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2M3 12.5h18"/></svg>
+      <span class="tooltip">Clients</span>
+    </button>
+    <button class="nav-btn" onclick="showView('sites')" id="nav-sites">
+      <span class="nav-alert" id="nav-alert-sites"><svg viewBox="0 0 24 24"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v5M12 18v.5"/></svg></span>
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="3" width="14" height="18" rx="1.6"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>
+      <span class="tooltip">Sites</span>
+    </button>
+    <button class="nav-btn" onclick="showView('tournees')" id="nav-tournees">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="6" cy="6.5" r="2.4"/><circle cx="18" cy="17.5" r="2.4"/><path d="M8.4 6.5H15a3 3 0 010 6H9a3 3 0 000 6h6.6"/></svg>
+      <span class="tooltip">Tournées</span>
+    </button>
+    <button class="nav-btn" onclick="showView('affect')" id="nav-affect" style="display:none">
+      <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="4" y="4" width="7" height="7" rx="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.6"/><rect x="13" y="13" width="7" height="7" rx="1.6"/></svg>
+      <span class="tooltip">Affectations (règles récurrentes)</span>
+    </button>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <!-- ── VUE PLANNING ─────────────────── -->
+    <div class="view active" id="view-planning">
+      <div class="alert-band" id="alert-band">
+        <span><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3.6l9 15.4H3z"/><path d="M12 9.6v4.6M12 17.2v.4"/></svg></span>
+        <span id="alert-band-text"></span>
+        <span class="alert-band-count" id="alert-band-count"></span>
+        <button class="btn btn-sm" style="background:var(--red);color:#0F100F;margin-left:4px" onclick="goAbsencesToFill()">Absences à combler</button>
+      </div>
+      <div class="alert-band cov" id="cov-band">
+        <span><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8.5v4M12 16h.01"/></svg></span>
+        <span id="cov-band-text"></span>
+        <span class="alert-band-count" id="cov-band-count"></span>
+        <button class="btn btn-sm" style="background:#B8860B;color:#fff;margin-left:4px" onclick="covOpenBand()">Voir les créneaux</button>
+      </div>
+      <div class="planning-container" id="planning-container">
+        <div class="planning-header-row" id="planning-header"></div>
+        <div id="planning-rows"></div>
+        <div id="planning-mobile">
+          <input type="text" class="pm-search" id="pm-search" placeholder="Filtrer agent, site, tournée…" autocomplete="off" oninput="_pmQ=this.value;_renderPlanningMobile()">
+          <div id="pm-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VUE PLANNING CROISÉ (aide à la décision) ─────────────────── -->
+    <div class="view" id="view-mois">
+      <div class="alert-band" id="alert-band-mois">
+        <span><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3.6l9 15.4H3z"/><path d="M12 9.6v4.6M12 17.2v.4"/></svg></span>
+        <span id="alert-band-mois-text"></span>
+        <span class="alert-band-count" id="alert-band-mois-count"></span>
+        <button class="btn btn-sm" style="background:var(--red);color:#0F100F;margin-left:4px" onclick="goAbsencesToFill()">Absences à combler</button>
+      </div>
+      <div class="alert-band cov" id="cov-band-mois">
+        <span><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8.5v4M12 16h.01"/></svg></span>
+        <span id="cov-band-mois-text"></span>
+        <span class="alert-band-count" id="cov-band-mois-count"></span>
+        <button class="btn btn-sm" style="background:#B8860B;color:#fff;margin-left:4px" onclick="covOpenBand()">Voir les créneaux</button>
+      </div>
+      <div class="view-page" style="max-width:1500px;display:flex;flex-direction:column;overflow:hidden">
+        <div id="mois-grid" style="flex:1;min-height:0;overflow:auto"></div>
+      </div>
+    </div>
+
+    <div class="view" id="view-croise">
+      <div class="view-page" style="max-width:1400px">
+        <div class="croise-seg" style="display:flex;gap:8px;margin-bottom:18px">
+          <button class="croise-seg-btn" data-cseg="postes" onclick="croiseGo('postes')">Postes à couvrir</button>
+          <button class="croise-seg-btn" data-cseg="calendrier" onclick="croiseGo('calendrier')">Calendrier croisé</button>
+        </div>
+        <div id="croise-body"></div>
+      </div>
+    </div>
+
+    <!-- ── VUE DU JOUR ───────────────────── -->
+    <div class="view" id="view-jour">
+      <div class="view-page">
+        <div class="page-heading">
+          <div><h1>Vue du jour</h1><div class="page-heading-sub" id="jour-date-label"></div></div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="week-nav-btn" onclick="changeJourDay(-1)" title="Jour précédent"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M15 6l-6 6 6 6"/></svg></button>
+            <button class="btn btn-secondary btn-sm" onclick="goJourToday()">Aujourd'hui</button>
+            <button class="week-nav-btn" onclick="changeJourDay(1)" title="Jour suivant"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"/></svg></button>
+          </div>
+        </div>
+        <div id="jour-filters" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+          <select class="form-input" id="jour-groupe" style="width:auto;min-width:190px" onchange="jourGroupe=this.value;renderJour()"></select>
+          <div class="search-bar" style="flex:1;min-width:220px;margin:0">
+            <span class="search-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg></span>
+            <input type="text" id="jour-search" placeholder="Rechercher un site ou un agent…" oninput="jourSearch=this.value;renderJour()" autocomplete="off">
+          </div>
+        </div>
+        <div id="jour-stats" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap"></div>
+        <div id="jour-events"></div>
+        <div id="jour-list"></div>
+      </div>
+    </div>
+
+    <!-- ── ABSENCES ──────────────────────── -->
+    <div class="view" id="view-absences">
+      <div class="view-page">
+        <div class="suivi-seg">
+          <button class="suivi-seg-btn" data-seg="pointage" onclick="showView('pointage')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8.5V12.5l3 1.8M9.5 3h5"/></svg> Retards &amp; H. Sup.</button>
+        </div>
+        <div class="page-heading">
+          <div>
+            <h1>Absences</h1>
+            <div class="page-heading-sub">Déclaration et suivi des absences</div>
+          </div>
+          <button class="btn btn-primary" onclick="openPanel('panel-absence')">+ Déclarer une absence</button>
+        </div>
+        <div class="tabs">
+          <button class="tab on" onclick="tabAbsences('tous',this)">Toutes</button>
+          <button class="tab" onclick="tabAbsences('urgent',this)">Sans remplaçant</button>
+          <button class="tab" onclick="tabAbsences('covered',this)">Remplacées</button>
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+          <input class="form-input" type="search" id="abs-search" placeholder="Rechercher une absence — agent, motif, site…" autocomplete="off" oninput="filterAbsList(this.value)">
+        </div>
+        <div id="absences-list"></div>
+      </div>
+    </div>
+
+    <!-- ── HISTORIQUE ────────────────────── -->
+    <div class="view" id="view-historique">
+      <div class="view-page">
+        <div class="page-heading">
+          <div><h1>Historique des remplacements</h1></div>
+        </div>
+        <div class="card" style="overflow:hidden;padding:0">
+          <table class="data-table">
+            <thead><tr>
+              <th>Date</th><th>Site</th><th>Absent</th><th>Remplaçant</th><th>Statut</th>
+            </tr></thead>
+            <tbody id="histo-tbody"></tbody>
+          </table>
+          <div id="histo-empty" class="empty"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3.2h8v4H8z"/><path d="M8 11h8M8 15h6"/></svg></div><div class="empty-text">Aucun remplacement enregistré</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ÉVÉNEMENTS PONCTUELS ───────────────── -->
+    <div class="view" id="view-evenements">
+      <div class="view-page">
+        <div class="page-heading">
+          <div><h1>Événements</h1><div class="page-heading-sub">Rendez-vous et échéances non rattachés à un site</div></div>
+          <button class="btn btn-primary" onclick="openPanel('panel-evenement')">+ Ajouter</button>
+        </div>
+        <div id="ev-warn" style="display:none" class="card"></div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+          <div class="tabs" style="margin:0">
+            <button class="tab on" onclick="tabEv('avenir',this)">À venir</button>
+            <button class="tab" onclick="tabEv('passes',this)">Passés</button>
+            <button class="tab" onclick="tabEv('tous',this)">Tous</button>
+          </div>
+          <select class="form-input" id="ev-cat" style="width:auto;min-width:170px" onchange="evCat=this.value;renderEvenements()"></select>
+          <div class="search-bar" style="flex:1;min-width:220px;margin:0">
+            <span class="search-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg></span>
+            <input type="text" id="ev-search" placeholder="Rechercher un événement, un agent, un lieu…" oninput="evSearch=this.value;renderEvenements()" autocomplete="off">
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div id="ev-list"></div>
+          <div id="ev-empty" class="empty" style="display:none"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M8.5 15l2.3 2.3 4.7-4.8"/></svg></div><div class="empty-text">Aucun événement</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RETARDS & H.SUP ───────────────── -->
+    <div class="view" id="view-pointage">
+      <div class="view-page">
+        <div class="suivi-seg">
+          <button class="suivi-seg-btn on" data-seg="pointage" onclick="showView('pointage')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8.5V12.5l3 1.8M9.5 3h5"/></svg> Retards &amp; H. Sup.</button>
+        </div>
+        <div class="page-heading">
+          <div><h1>Retards & Heures Sup.</h1></div>
+          <button class="btn btn-primary" onclick="openPanel('panel-pointage')">+ Ajouter</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px" id="pt-stats"></div>
+        <div class="tabs">
+          <button class="tab on" onclick="tabPointage('tous',this)">Tous</button>
+          <button class="tab" onclick="tabPointage('retard',this)">Retards</button>
+          <button class="tab" onclick="tabPointage('hsup',this)">Heures Sup.</button>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div id="pt-list"></div>
+          <div id="pt-empty" class="empty"><div class="empty-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8.5V12.5l3 1.8M9.5 3h5"/></svg></div><div class="empty-text">Aucun événement enregistré</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── AGENTS ────────────────────────── -->
+    <div class="view" id="view-agents">
+      <div class="view-page">
+        <div class="page-heading">
+          <div><h1>Agents</h1><div class="page-heading-sub" id="agents-sub"></div></div>
+          <button class="btn btn-primary" onclick="openPanel('panel-agent',null)">+ Ajouter un agent</button>
+        </div>
+        <div class="tabs">
+          <button class="tab on" onclick="tabAgents('tous',this)">Tous</button>
+          <button class="tab" onclick="tabAgents('concierge',this)">Concierge</button>
+          <button class="tab" onclick="tabAgents('accueil',this)">Accueil</button>
+          <button class="tab" onclick="tabAgents('multisite',this)">Multisite</button>
+          <button class="tab" onclick="tabAgents('logistique',this)">Logistique</button>
+          <button class="tab" onclick="tabAgents('factotum',this)">Factotum</button>
+          <button class="tab" onclick="tabAgents('chantier',this)">Chantier</button>
+          <button class="tab" onclick="tabAgents('respope',this)">Responsables opé</button>
+          <button class="tab" onclick="tabAgents('archives',this)">Archivés</button>
+        </div>
+        <div class="search-bar">
+          <span class="search-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg></span>
+          <input type="text" placeholder="Rechercher un agent…" id="search-agents" oninput="renderAgents()">
+        </div>
+        <div class="card-grid" id="agents-grid"></div>
+      </div>
+    </div>
+
+    <!-- ── CLIENTS ───────────────────────── -->
+    <div class="view" id="view-clients">
+      <div class="view-page">
+        <div class="page-heading">
+          <div><h1>Clients</h1><div class="page-heading-sub" id="clients-sub"></div></div>
+          <button class="btn btn-primary" id="clients-add" onclick="openPanel('panel-client',null)">+ Nouveau client</button>
+        </div>
+        <div class="cli-layout">
+          <div class="cli-side">
+            <div class="search-bar" style="margin-bottom:10px">
+              <span class="search-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg></span>
+              <input type="text" placeholder="Client, site ou contact…" id="search-clients" oninput="renderClients()">
+            </div>
+            <div class="tabs" style="margin-bottom:8px" id="clients-tabs"></div>
+            <div class="cli-list" id="clients-list"></div>
+          </div>
+          <div id="clients-fiche" style="min-width:0"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SITES ─────────────────────────── -->
+    <div class="view" id="view-sites">
+      <div class="view-page">
+        <div class="page-heading">
+          <div><h1>Sites</h1><div class="page-heading-sub" id="sites-sub"></div></div>
+          <button class="btn btn-primary" onclick="openPanel('panel-site',null)">+ Ajouter un site</button>
+        </div>
+        <div class="cli-layout">
+          <div class="cli-side">
+            <div class="search-bar" style="margin-bottom:10px">
+          <span class="search-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg></span>
+          <input type="text" placeholder="Rechercher un site…" id="search-sites" oninput="renderSites()">
+        </div>
+            <div class="tabs" style="margin-bottom:8px" id="sites-tabs"></div>
+            <div class="cli-list" id="sites-list"></div>
+          </div>
+          <div id="sites-fiche" style="min-width:0"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TOURNÉES ──────────────────────── -->
+    <div class="view" id="view-tournees">
+      <div class="view-page">
+        <div class="page-heading">
+          <div><h1>Tournées</h1><div class="page-heading-sub" id="tournees-sub"></div></div>
+          <button class="btn btn-primary" onclick="openPanel('panel-tournee',null)">+ Nouvelle tournée</button>
+        </div>
+        <div id="tournees-list"></div>
+      </div>
+    </div>
+
+    <!-- ── PLANNING AGENTS ───────────────── -->
+    <div class="view" id="view-affect">
+      <div class="view-page">
+        <div class="page-heading">
+          <div><h1>Affectations</h1><div class="page-heading-sub">Règles récurrentes : agent → site, jours et horaires</div></div>
+          <button class="btn btn-primary" onclick="openPanel('panel-affect',null)">+ Nouvelle affectation</button>
+        </div>
+        <div id="affect-help" class="card" style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;font-size:13px;line-height:1.5">
+          <div style="flex:1">Le <b>planning</b> affiche le résultat de ces règles. Modifiez ici ce qui se répète chaque semaine. Pour un seul jour, ouvrez le planning puis « + » dans la cellule → Créneau ponctuel.</div>
+          <button class="btn btn-secondary btn-sm" onclick="closeAffectHelp()">Compris</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+          <div class="search-bar" style="flex:1;min-width:220px;margin:0">
+            <span class="search-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-4.3-4.3"/></svg></span>
+            <input type="text" placeholder="Rechercher par agent ou site…" id="search-affect" oninput="renderAffect()">
+          </div>
+          <button class="tab" id="affect-empty-chip" onclick="toggleAffectEmpty()">Sans affectation</button>
+        </div>
+        <div id="affect-list"></div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+
+  <!-- ══ PANNEAU DROIT ════════════════════════════════ -->
+    <div class="panel-scrim" id="panel-scrim" onclick="closePanel()"></div>
+  <aside class="side-panel" id="side-panel">
+    <button id="panel-expand" onclick="toggleAgentWide()" title="Déplier / replier le panneau"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <div class="panel-header">
+      <div class="panel-title" id="panel-title">—</div>
+      <button class="btn btn-sm" id="panel-next-absence" onclick="goNextAbsence()" title="Aller à l'absence suivante à couvrir" style="display:none;margin-left:auto;margin-right:8px;align-items:center;gap:5px">Absence suivante <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <button class="panel-close" onclick="closePanel()">×</button>
+    </div>
+    <div class="panel-body" id="panel-body"></div>
+    <div class="panel-footer" id="panel-footer"></div>
+  </aside>
+
+</div><!-- /app-body -->
+
+<div id="toast"></div>
+
+<!-- Scripts : ordre de chargement significatif (globaux partagés) -->
+<script src="js/core/auth-storage.js?v=20261127b"></script>
+<script src="js/core/dataverse.js?v=20261127b"></script>
+<script src="js/core/store.js?v=20261127b"></script>
+<script src="js/core/seed.js?v=20261127b"></script>
+<script src="js/core/utils.js?v=20261127b"></script>
+<script src="js/ui/navigation.js?v=20261127b"></script>
+<script src="js/ui/panel.js?v=20261127b"></script>
+<script src="js/ui/semaine.js?v=20261127b"></script>
+<script src="js/metier/absences-socle.js?v=20261127b"></script>
+<script src="js/vues/croise.js?v=20261127b"></script>
+<script src="js/vues/planning.js?v=20261127b"></script>
+<script src="js/panels/absence.js?v=20261127b"></script>
+<script src="js/panels/remplacer.js?v=20261127b"></script>
+<script src="js/vues/absences.js?v=20261127b"></script>
+<script src="js/vues/historique.js?v=20261127b"></script>
+<script src="js/vues/evenements-pointage.js?v=20261127b"></script>
+<script src="js/vues/agents.js?v=20261127b"></script>
+<script src="js/vues/sites.js?v=20261127b"></script>
+<script src="js/metier/couverture.js?v=20261127b"></script>
+<script src="js/vues/clients.js?v=20261127b"></script>
+<script src="js/vues/journal-client.js?v=20261127b"></script>
+<script src="js/vues/tournees.js?v=20261127b"></script>
+<script src="js/vues/affectations.js?v=20261127b"></script>
+<script src="js/ui/ajouter-menu.js?v=20261127b"></script>
+<script src="js/metier/exceptions.js?v=20261127b"></script>
+<script src="js/panels/creneau.js?v=20261127b"></script>
+<script src="js/outils/versioning.js?v=20261127b"></script>
+<script src="js/outils/import-export.js?v=20261127b"></script>
+<script src="js/outils/partage.js?v=20261127b"></script>
+<script src="js/outils/extraction.js?v=20261127b"></script>
+<script src="js/vues/jour.js?v=20261127b"></script>
+<script src="js/vues/mois.js?v=20261127b"></script>
+<script src="js/init.js?v=20261127b"></script>
+
+<!-- ══ MODAL EXTRACTION ════════════════════════════════════════ -->
+<div id="export-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; align-items:center; justify-content:center;" onclick="if(event.target===this) closeExport()">
+  <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; width:92%; max-width:680px; max-height:88vh; display:flex; flex-direction:column; box-shadow:var(--shadow-lg); overflow:hidden">
+    <div style="display:flex;align-items:center;gap:12px;padding:18px 22px 14px;border-bottom:1px solid var(--border)">
+      <div style="width:34px;height:34px;border-radius:9px;background:var(--blue);color:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" style="width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 15V4M8.5 7.5L12 4l3.5 3.5"/><path d="M5 13v6a1 1 0 001 1h12a1 1 0 001-1v-6"/></svg></div>
+      <div style="flex:1">
+        <div style="font-size:16px;font-weight:800;color:var(--text)">Extraction de données</div>
+        <div style="font-size:12px;color:var(--text3)">Plannings à envoyer aux agents · absences · heures sup. sur une période</div>
+      </div>
+      <button onclick="closeExport()" class="btn-icon"><svg viewBox="0 0 24 24" style="width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="tabs" id="export-tabs" style="padding:0 22px;margin-bottom:0"></div>
+    <div style="padding:18px 22px 6px;flex-shrink:0">
+      <div id="export-controls"></div>
+    </div>
+    <div style="flex:1;overflow:auto;padding:4px 22px 10px;min-height:120px">
+      <div id="export-preview"></div>
+    </div>
+    <div id="export-actions" style="display:flex;gap:8px;flex-wrap:wrap;padding:14px 22px;border-top:1px solid var(--border);flex-shrink:0"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL DONNÉES ══════════════════════════════════════════ -->
+<div id="data-modal" style="
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.55); z-index:999;
+  align-items:center; justify-content:center;
+">
+  <div style="
+    background:var(--white); border-radius:12px;
+    padding:36px 40px; max-width:420px; width:90%;
+    box-shadow:0 8px 32px rgba(0,0,0,.18);
+  ">
+
+    <!-- Étape 1 : nom utilisateur -->
+    <div id="step-name">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:28px;margin-bottom:10px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M6 9a6 6 0 1112 0c0 5 2 6.5 2 6.5H4S6 14 6 9"/><path d="M10 20.5a2 2 0 004 0"/></svg></div>
+        <div style="font-size:17px;font-weight:800;margin-bottom:6px">Bienvenue sur Gestion Opé</div>
+        <div style="font-size:13px;color:var(--text2)">Entrez votre prénom pour qu'on sache qui modifie les données.</div>
+      </div>
+      <input type="text" id="input-username" placeholder="Votre prénom (ex: Jonathan)"
+        style="width:100%;height:38px;padding:0 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:12px;font-family:var(--font)"
+        onkeydown="if(event.key==='Enter') saveName()">
+      <button onclick="saveName()" style="
+        width:100%;height:40px;background:var(--blue);color:#000;
+        border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;
+      ">Continuer →</button>
+    </div>
+
+    <!-- Étape 2 : sync -->
+    <div id="step-sync" style="display:none">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:28px;margin-bottom:10px"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M4 6.5A1.5 1.5 0 015.5 5h4l2 2.5h7A1.5 1.5 0 0120 9v9.5A1.5 1.5 0 0118.5 20h-13A1.5 1.5 0 014 18.5z"/></svg></div>
+        <div style="font-size:17px;font-weight:800;margin-bottom:4px">Synchroniser les données</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:2px">Connecté en tant que : <strong id="modal-username-display"></strong>
+          <button onclick="localStorage.removeItem('gope_username');openDataModal()" style="background:none;border:none;color:var(--blue);font-size:11px;cursor:pointer;margin-left:4px">changer</button>
+        </div>
+      </div>
+
+      <!-- Alerte conflit -->
+      <div id="conflict-warning" style="
+        display:none; background:var(--orange-light);
+        border:1px solid rgba(224,164,88,.32); border-radius:8px;
+        padding:12px 14px; margin-bottom:14px;
+        font-size:13px; line-height:1.5;
+      ">
+        <div id="conflict-text"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="confirmImport()" style="flex:1;padding:7px;background:var(--orange);color:#000;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">Charger quand même</button>
+          <button onclick="hideConflictWarning()" style="flex:1;padding:7px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer">Annuler</button>
+        </div>
+      </div>
+
+      <label style="
+        display:block; width:100%;
+        background:var(--blue); color:#000;
+        padding:11px 0; border-radius:8px; text-align:center;
+        font-size:14px; font-weight:700;
+        cursor:pointer; margin-bottom:10px;
+      ">
+        <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 4v10M8 11l4 4 4-4M5 20h14"/></svg> Charger le fichier partagé
+        <input type="file" accept=".json" style="display:none"
+          onchange="importData(this.files[0])">
+      </label>
+
+      <button onclick="exportData()" style="
+        display:block; width:100%;
+        background:var(--bg); color:var(--text);
+        border:1px solid var(--border); padding:10px 0; text-align:center;
+        border-radius:8px; font-size:13px; font-weight:600;
+        cursor:pointer; margin-bottom:10px;
+      "><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 16V6M8 9l4-4 4 4M5 20h14"/></svg> Exporter mes données</button>
+
+      <button onclick="skipImport()" style="
+        display:block; width:100%; background:none; border:none;
+        color:var(--text3); font-size:13px;
+        cursor:pointer; text-decoration:underline; text-align:center;
+      ">Continuer sans synchroniser</button>
+
+      <div style="font-size:11px;color:var(--text3);margin-top:16px;line-height:1.5;text-align:center">
+        <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.5.4.5 1 .5 1.6h6c0-.6 0-1.2.5-1.6A6 6 0 0012 3z"/></svg> Après chaque modification, exportez et remplacez<br>le fichier <strong>gestion-ope-data.json</strong> sur l'espace partagé.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
