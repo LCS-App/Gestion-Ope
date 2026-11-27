@@ -81,7 +81,9 @@ function dvToApp(R){
   const affec = R.affectation.map(f => ({ id:id(f.lcs_affectationid), agentId:id(LK(f,'lcs_agent')), siteId:id(LK(f,'lcs_site')), jours:jours(F(f,'lcs_jours')),
     debut:V(f,'lcs_debut'), fin:V(f,'lcs_fin'), semaine:SEM[F(f,'lcs_semaine')]||'toutes', dateDebut:(V(f,'lcs_datedebut')+'').slice(0,10), dateFin:(V(f,'lcs_datefin')+'').slice(0,10),
     pause:f.lcs_pause==null?0:f.lcs_pause, notes:V(f,'lcs_notes'), nature:NAT[F(f,'lcs_nature')]||'', _dvid:f.lcs_affectationid }));
-  const MOT = { 'Congés payés':'conges','Maladie':'maladie','Formation':'formation','Autre':'autre' };
+  /* Motifs : seuls « Absence » et « Formation » sont proposés. Les anciennes valeurs Dataverse « Maladie » et « Autre »
+     sont lues comme « Absence » (le motif maladie n'est plus affiché). « Congés payés » reste lisible pour l'historique. */
+  const MOT = { 'Congés payés':'conges','Maladie':'absence','Formation':'formation','Autre':'absence' };
   const remplAbs = {}, rempl = [];
   R.remplacement.forEach(r => { const src=r.lcs_idsource||'', abs=LK(r,'lcs_absence');
     if(abs && /^go:[^:|]+:[^:|]+:\d{4}-\d\d-\d\d$/.test(src)){ (remplAbs[abs]=remplAbs[abs]||[]).push(r); return; }
@@ -89,7 +91,7 @@ function dvToApp(R){
     rempl.push({ id:goId(src)||r.lcs_remplacementid, agentAbsentId:ab?id(LK(ab,'lcs_agent')):'', remplacantId:id(LK(r,'lcs_remplacant')), siteId:id(LK(r,'lcs_site')),
       afId:id(LK(r,'lcs_affectation'))||null, date:(V(r,'lcs_date')+'').slice(0,10), statut:F(r,'lcs_statut')==='Proposé'?'propose':'confirme', notes:V(r,'lcs_notes'), _dvid:r.lcs_remplacementid }); });
   const absences = R.absence.map(a => { const o={ id:id(a.lcs_absenceid), agentId:id(LK(a,'lcs_agent')), dateDebut:(V(a,'lcs_datedebut')+'').slice(0,10), dateFin:(V(a,'lcs_datefin')+'').slice(0,10),
-      motif:MOT[F(a,'lcs_motif')]||'autre', needsReplacement:!!a.lcs_aremplacer, siteId:id(LK(a,'lcs_site')), remplacantId:id(LK(a,'lcs_remplacant')), ignored:!!a.lcs_ignoree, notes:V(a,'lcs_notes'), _dvid:a.lcs_absenceid };
+      motif:MOT[F(a,'lcs_motif')]||'absence', needsReplacement:!!a.lcs_aremplacer, siteId:id(LK(a,'lcs_site')), remplacantId:id(LK(a,'lcs_remplacant')), ignored:!!a.lcs_ignoree, notes:V(a,'lcs_notes'), _dvid:a.lcs_absenceid };
     const rs=remplAbs[a.lcs_absenceid]||[];
     if(rs.length){ const g={}; rs.forEach(r=>{ const af=id(LK(r,'lcs_affectation')); (g[af]=g[af]||[]).push(r); }); o.remplacants={};
       Object.entries(g).forEach(([af,list])=>{ const rem=new Set(list.map(r=>LK(r,'lcs_remplacant')));
@@ -275,7 +277,8 @@ const _DVL = {
         rows.push({ lcs_libelle:agentNom(rem)+' remplace '+agentNom(a.agentId)+' · '+ds, lcs_affectation:_dvRef('affec',afId), lcs_site:_dvRef('sites',f.siteId), lcs_remplacant:_dvRef('agents',rem),
           lcs_date:ds, lcs_statut:'Confirmé', lcs_idsource:'go:'+a.id+':'+afId+':'+ds }); } });
     return { f:{ lcs_libelle:agentNom(a.agentId)+' · '+a.dateDebut+' → '+a.dateFin, lcs_agent:_dvRef('agents',a.agentId), lcs_datedebut:a.dateDebut||'', lcs_datefin:a.dateFin||'',
-        lcs_motif:{conges:'Congés payés',maladie:'Maladie',formation:'Formation'}[a.motif]||'Autre', lcs_aremplacer:!!a.needsReplacement, lcs_site:_dvRef('sites',a.siteId),
+        /* « Absence » est écrit dans l'option Dataverse « Autre » ; « Maladie » n'est plus jamais écrit */
+        lcs_motif:{conges:'Congés payés',formation:'Formation'}[a.motif]||'Autre', lcs_aremplacer:!!a.needsReplacement, lcs_site:_dvRef('sites',a.siteId),
         lcs_remplacant:_dvRef('agents',a.remplacantId), lcs_ignoree:!!a.ignored, lcs_notes:a.notes||'' },
       ch:[ { ent:'lcs_remplacement', fk:'lcs_absence', match:/^go:[^:|]+:[^:|]+:\d{4}-\d\d-\d\d$/, rows } ] }; },
   rempl: r => { const ab=gab().find(a => a.agentId===r.agentAbsentId && a.dateDebut<=r.date && r.date<=(a.dateFin||a.dateDebut));

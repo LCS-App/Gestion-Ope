@@ -166,7 +166,8 @@ function editAbsence(absId){
     const sel=document.getElementById('pa-agent'); if(sel){ sel.value=ab.agentId; sel.dispatchEvent(new Event('change')); }
     const dt=document.getElementById('pa-debut'); if(dt) dt.value=ab.dateDebut;
     const dtf=document.getElementById('pa-fin'); if(dtf) dtf.value=ab.dateFin||'';
-    const mot=document.getElementById('pa-motif'); if(mot) mot.value=ab.motif||'maladie';
+    // Motif hérité (ex. « Congés payés ») : conservé tel quel à l'édition, sans être proposé pour les nouvelles absences
+    const mot=document.getElementById('pa-motif'); if(mot){ const v=ab.motif||'absence'; if(![...mot.options].some(o=>o.value===v)) mot.add(new Option(({conges:'Congés payés'})[v]||v, v)); mot.value=v; }
     absNeedsRepl=!!ab.needsReplacement;
     const tgl=document.getElementById('pa-toggle'); if(tgl){ tgl.classList.toggle('on',absNeedsRepl); const sec=document.getElementById('pa-repl-section'); if(sec) sec.style.display=absNeedsRepl?'block':'none'; }
     if(typeof refreshPaRempl==='function') refreshPaRempl();

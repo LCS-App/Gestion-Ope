@@ -27,10 +27,8 @@ function buildPanelAbsence(body,footer){
     <div class="form-group">
       <label class="form-label">Motif</label>
       <select class="form-input" id="pa-motif">
-        <option value="maladie">Maladie</option>
-        <option value="conges">Congés</option>
+        <option value="absence">Absence</option>
         <option value="formation">Formation</option>
-        <option value="autre">Autre</option>
       </select>
     </div>
     <div class="divider"></div>

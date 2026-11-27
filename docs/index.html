@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20261117c">
+<link rel="stylesheet" href="css/app.css?v=20261126a">
 </head>
 <body>
 
@@ -157,7 +157,7 @@
       <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><circle cx="6" cy="6.5" r="2.4"/><circle cx="18" cy="17.5" r="2.4"/><path d="M8.4 6.5H15a3 3 0 010 6H9a3 3 0 000 6h6.6"/></svg>
       <span class="tooltip">Tournées</span>
     </button>
-    <button class="nav-btn" onclick="showView('affect')" id="nav-affect">
+    <button class="nav-btn" onclick="showView('affect')" id="nav-affect" style="display:none">
       <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><rect x="4" y="4" width="7" height="7" rx="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.6"/><rect x="13" y="13" width="7" height="7" rx="1.6"/></svg>
       <span class="tooltip">Affectations (règles récurrentes)</span>
     </button>
@@ -457,39 +457,39 @@
 <div id="toast"></div>
 
 <!-- Scripts : ordre de chargement significatif (globaux partagés) -->
-<script src="js/core/auth-storage.js?v=20261117c"></script>
-<script src="js/core/dataverse.js?v=20261117c"></script>
-<script src="js/core/store.js?v=20261117c"></script>
-<script src="js/core/seed.js?v=20261117c"></script>
-<script src="js/core/utils.js?v=20261117c"></script>
-<script src="js/ui/navigation.js?v=20261117c"></script>
-<script src="js/ui/panel.js?v=20261117c"></script>
-<script src="js/ui/semaine.js?v=20261117c"></script>
-<script src="js/metier/absences-socle.js?v=20261117c"></script>
-<script src="js/vues/croise.js?v=20261117c"></script>
-<script src="js/vues/planning.js?v=20261117c"></script>
-<script src="js/panels/absence.js?v=20261117c"></script>
-<script src="js/panels/remplacer.js?v=20261117c"></script>
-<script src="js/vues/absences.js?v=20261117c"></script>
-<script src="js/vues/historique.js?v=20261117c"></script>
-<script src="js/vues/evenements-pointage.js?v=20261117c"></script>
-<script src="js/vues/agents.js?v=20261117c"></script>
-<script src="js/vues/sites.js?v=20261117c"></script>
-<script src="js/metier/couverture.js?v=20261117c"></script>
-<script src="js/vues/clients.js?v=20261117c"></script>
-<script src="js/vues/journal-client.js?v=20261117c"></script>
-<script src="js/vues/tournees.js?v=20261117c"></script>
-<script src="js/vues/affectations.js?v=20261117c"></script>
-<script src="js/ui/ajouter-menu.js?v=20261117c"></script>
-<script src="js/metier/exceptions.js?v=20261117c"></script>
-<script src="js/panels/creneau.js?v=20261117c"></script>
-<script src="js/outils/versioning.js?v=20261117c"></script>
-<script src="js/outils/import-export.js?v=20261117c"></script>
-<script src="js/outils/partage.js?v=20261117c"></script>
-<script src="js/outils/extraction.js?v=20261117c"></script>
-<script src="js/vues/jour.js?v=20261117c"></script>
-<script src="js/vues/mois.js?v=20261117c"></script>
-<script src="js/init.js?v=20261117c"></script>
+<script src="js/core/auth-storage.js?v=20261126a"></script>
+<script src="js/core/dataverse.js?v=20261126a"></script>
+<script src="js/core/store.js?v=20261126a"></script>
+<script src="js/core/seed.js?v=20261126a"></script>
+<script src="js/core/utils.js?v=20261126a"></script>
+<script src="js/ui/navigation.js?v=20261126a"></script>
+<script src="js/ui/panel.js?v=20261126a"></script>
+<script src="js/ui/semaine.js?v=20261126a"></script>
+<script src="js/metier/absences-socle.js?v=20261126a"></script>
+<script src="js/vues/croise.js?v=20261126a"></script>
+<script src="js/vues/planning.js?v=20261126a"></script>
+<script src="js/panels/absence.js?v=20261126a"></script>
+<script src="js/panels/remplacer.js?v=20261126a"></script>
+<script src="js/vues/absences.js?v=20261126a"></script>
+<script src="js/vues/historique.js?v=20261126a"></script>
+<script src="js/vues/evenements-pointage.js?v=20261126a"></script>
+<script src="js/vues/agents.js?v=20261126a"></script>
+<script src="js/vues/sites.js?v=20261126a"></script>
+<script src="js/metier/couverture.js?v=20261126a"></script>
+<script src="js/vues/clients.js?v=20261126a"></script>
+<script src="js/vues/journal-client.js?v=20261126a"></script>
+<script src="js/vues/tournees.js?v=20261126a"></script>
+<script src="js/vues/affectations.js?v=20261126a"></script>
+<script src="js/ui/ajouter-menu.js?v=20261126a"></script>
+<script src="js/metier/exceptions.js?v=20261126a"></script>
+<script src="js/panels/creneau.js?v=20261126a"></script>
+<script src="js/outils/versioning.js?v=20261126a"></script>
+<script src="js/outils/import-export.js?v=20261126a"></script>
+<script src="js/outils/partage.js?v=20261126a"></script>
+<script src="js/outils/extraction.js?v=20261126a"></script>
+<script src="js/vues/jour.js?v=20261126a"></script>
+<script src="js/vues/mois.js?v=20261126a"></script>
+<script src="js/init.js?v=20261126a"></script>
 
 <!-- ══ MODAL EXTRACTION ════════════════════════════════════════ -->
 <div id="export-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; align-items:center; justify-content:center;" onclick="if(event.target===this) closeExport()">
