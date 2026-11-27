@@ -238,7 +238,7 @@ function renderPlanning(){
           <span class="shift-time">${c?'⚠ ':''}${e.debut?e.debut+(e.fin?'–'+e.fin:''):'Journée'}</span>
         </div>`; }).join('');
       const evBars=mkEv(evConf);
-      if(shifts.length===0) return evBars ? `<div class="day-cell">${evBars}<div class="day-add" title="Ajouter un créneau ce jour" onclick="openPanel('panel-jour','${agent.id}|${dateStr}||')">+</div></div>` : `<div class="day-cell"><div class="day-empty" title="Ajouter un créneau ce jour" onclick="openPanel('panel-jour','${agent.id}|${dateStr}||')">+</div></div>`;
+      if(shifts.length===0) return evBars ? `<div class="day-cell">${evBars}<div class="day-add" title="Ajouter : créneau ponctuel ou affectation" onclick="openAddMenu(event,'${agent.id}','${dateStr}')">+</div></div>` : `<div class="day-cell"><div class="day-empty" title="Ajouter : créneau ponctuel ou affectation" onclick="openAddMenu(event,'${agent.id}','${dateStr}')">+</div></div>`;
 
       shifts.forEach(s=>{ if(!siteFermeLe(s.siteId, day.date)) wkMin+=_shiftMin(s); });
       const conflictIds=new Set();
@@ -322,7 +322,7 @@ function renderPlanning(){
         </div>`;
       }).join('');
 
-      const addBtn = dayAbs ? '' : `<div class="day-add" title="Ajouter un autre créneau ce jour" onclick="openPanel('panel-jour','${agent.id}|${dateStr}||')">+</div>`;
+      const addBtn = dayAbs ? '' : `<div class="day-add" title="Ajouter : créneau ponctuel ou affectation" onclick="openAddMenu(event,'${agent.id}','${dateStr}')">+</div>`;
       return `<div class="day-cell">${evBars2}${bars}${addBtn}</div>`;
     }).join('');
 
